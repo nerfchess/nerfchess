@@ -1,0 +1,13 @@
+## before (HEAD~ audit-bespoke-coverage, retired included, no exit code)
+total cards: 2112; core bespoke: 319; plugin bespoke: 1841; MISSING: 0
+## after
+cards: 1423 live, 689 retired (left out); core bespoke: 319; plugin bespoke: 1841; MISSING: 0 (retired without art: 0)
+exit 0
+cards: 1423 live, 689 retired (included); core bespoke: 319; plugin bespoke: 1841; MISSING: 0
+## check-vfx-coverage after (local tsx, no npx -y)
+vfx-coverage: 616 specs cover every bespoke tier>=4 card (319 core signatures + 1841 plugin ids), no orphans; entrances: 2480/2480 library cards resolve (1103 motif, 1009 category, 368 neutral floor); variants: 368 generic arrivals, 0 tuple collision(s) (baseline 0)
+## em dashes left in K scripts
+scripts/audit-animations.ts:0
+scripts/audit-scene-complexity.ts:0
+scripts/check-vfx-coverage.cjs:0
+scripts/audit-bespoke-coverage.cjs:0

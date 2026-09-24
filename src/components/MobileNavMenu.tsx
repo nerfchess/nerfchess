@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession, type SessionDisplay } from "@/lib/session/SessionProvider";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { Button } from "@/components/ui/Button";
+import { useExitPresence } from "@/lib/useExitPresence";
 
 type MobileNavItem = { href: string; label: string; className?: string };
 type MobileNavGroup = { header: string; items: MobileNavItem[] };
@@ -16,7 +17,7 @@ type MobileNavGroup = { header: string; items: MobileNavItem[] };
 // Community) plus a "You" group for personal pages. Every destination the old
 // flat list reached stays reachable; friend challenges now route through the
 // lobby friends tab, matching the desktop Play menu.
-function buildGroups(user: AccountUser | null | undefined): MobileNavGroup[] {
+function buildGroups(user: SessionDisplay | null | undefined): MobileNavGroup[] {
   return [
     {
       header: "Play",
@@ -90,18 +91,10 @@ export function MobileNavMenu({
   hideAt?: "sm" | "md" | "none";
 } = {}) {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // The same session the header draws (F010): this menu used to fetch /me on
+  // its own and kept saying Sign in after the header had minted a guest.
+  const { user: account, display: user } = useSession();
   const pathname = usePathname();
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((me) => {
-      if (!cancelled) setUser(me);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Static class strings (Tailwind cannot see interpolated class names).
   const hideClass = hideAt === "none" ? "" : hideAt === "md" ? "md:hidden" : "sm:hidden";
@@ -112,11 +105,11 @@ export function MobileNavMenu({
   // Why: an ancestor with a z-index traps the whole subtree in its stacking
   // context, and `!z-50` on the panel only orders it WITHIN that context. Two
   // places broke on this. In-game the nav is `sticky top-0 z-20`, below the
-  // z-40 drawer bars — so the bottom of a tall menu (and its backdrop) rendered
+  // z-40 drawer bars, so the bottom of a tall menu (and its backdrop) rendered
   // underneath them, and tapping down there hit the drawer instead of the menu
   // item. On the lobby the header sits inside `main`, which globals.css pins at
   // z-index 2, while QuickMatch's sticky CTA is itself portalled to the body at
-  // z-40 — so "Find game" covered the lower menu entries and a tap there
+  // z-40, so "Find game" covered the lower menu entries and a tap there
   // started matchmaking. Escaping to the body removes the whole class of bug.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [panelPos, setPanelPos] = useState<{ top: number; left?: number; right?: number } | null>(
@@ -151,25 +144,55 @@ export function MobileNavMenu({
     };
   }, [open, measure]);
 
-  // Escape closes, matching every other dismissible surface.
+  // Focus follows the panel (F140). The panel is portalled to <body>, so
+  // without this a keyboard user opened it and kept tabbing through the page
+  // behind it. On open focus moves to the first link; Tab and Shift+Tab wrap
+  // inside the panel; Escape closes and every close hands focus back to the
+  // trigger (the HeaderSettingsMenu pattern).
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open && panelPos) {
+      if (!wasOpen.current) panelRef.current?.querySelector<HTMLElement>("a[href]")?.focus();
+      wasOpen.current = true;
+    } else if (!open && wasOpen.current) {
+      wasOpen.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [open, panelPos]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const links = panelRef.current?.querySelectorAll<HTMLElement>("a[href]");
+      if (!links || links.length === 0) return;
+      const first = links[0];
+      const last = links[links.length - 1];
+      const inside = panelRef.current?.contains(document.activeElement);
+      if (e.shiftKey && (document.activeElement === first || !inside)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !inside)) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
   // Empty groups (all items conditional and absent) render nothing, not a
-  // stray header. Each group also carries a running item offset so the
-  // per-item entrance stagger (--i) is cumulative across groups — a fixed
-  // stride would collide once a group holds more items than the stride.
-  const visibleGroups = buildGroups(user).filter((group) => group.items.length > 0);
-  const groups = visibleGroups.map((group, gi) => ({
-    ...group,
-    offset: visibleGroups.slice(0, gi).reduce((n, g) => n + g.items.length, 0),
-  }));
+  // stray header. The panel enters as one popover (.m-pop); there is no
+  // per-item stagger.
+  const groups = buildGroups(user).filter((group) => group.items.length > 0);
+
+  // Keeps the scrim and panel mounted for their mirrored exit (data-leaving).
+  const pop = useExitPresence(open);
+  const leaving = pop.leaving ? "" : undefined;
 
   return (
     <div className={"relative " + hideClass}>
@@ -182,7 +205,7 @@ export function MobileNavMenu({
         className="h-[44px] w-[44px]">
         {open ? <X size={18} /> : <Menu size={18} />}
       </Button>
-      {open && panelPos &&
+      {pop.mounted && panelPos &&
         createPortal(
           <>
             <button
@@ -190,13 +213,17 @@ export function MobileNavMenu({
               aria-hidden
               tabIndex={-1}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-[60] cursor-default bg-black/40"
+              data-leaving={leaving}
+              className="m-scrim fixed inset-0 z-[60] cursor-default bg-black/40"
             />
             {/* A plain dropdown box, the same surface the header's other
                 popovers use: panel fill, one hairline, 7px corners. Fixed and
                 lifted above the bar; max-h + internal scroll so a short
                 landscape viewport never traps the lower destinations. */}
             <div
+              ref={panelRef}
+              role="dialog"
+              aria-label="Site menu"
               style={{
                 top: panelPos.top,
                 left: panelPos.left,
@@ -206,7 +233,8 @@ export function MobileNavMenu({
                 borderRadius: "var(--ui-roundness)",
               }}
               data-testid="mobile-nav-panel"
-              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"
+              data-leaving={leaving}
+              className={(align === "left" ? "m-pop m-pop--start" : "m-pop m-pop--end") + " !fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"}
             >
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
@@ -219,9 +247,11 @@ export function MobileNavMenu({
                   <span className="min-w-0 truncate">{user.username}</span>
                   {/* Live displayed rating (best mode bucket), matching the
                       header chip and profile, not the frozen legacy column. */}
-                  <span className="ml-auto shrink-0 font-mono text-xs text-parchment-400">
-                    {Math.round(user.displayRating ?? user.rating)}
-                  </span>
+                  {account && (
+                    <span className="ml-auto shrink-0 font-mono text-xs text-parchment-400">
+                      {Math.round(account.displayRating ?? account.rating)}
+                    </span>
+                  )}
                 </>
               ) : (
                 "Sign in"
@@ -231,7 +261,7 @@ export function MobileNavMenu({
               <div key={group.header}>
                 <div className="mx-3 mb-1 mt-2 h-px bg-[color:var(--bg-raised)]" />
                 <div className="px-4 pb-1 pt-0.5 text-[12px] text-parchment-400">{group.header}</div>
-                {group.items.map((item, ii) => {
+                {group.items.map((item) => {
                   const activeItem = itemActive(item.href, pathname);
                   return (
                     <Link
@@ -239,7 +269,6 @@ export function MobileNavMenu({
                       href={item.href}
                       onClick={() => setOpen(false)}
                       aria-current={activeItem ? "page" : undefined}
-                      style={{ ["--i" as string]: group.offset + ii }}
                       className={
                         "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-[color:var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
                         (activeItem ? "border-gold-leaf bg-[color:var(--bg-raised)] pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +

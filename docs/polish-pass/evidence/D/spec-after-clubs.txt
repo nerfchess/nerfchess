@@ -1,0 +1,2 @@
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:630:7 › /clubs directory › search also finds clubs outside the loaded list (8.4s)
+  1 passed (15.7s)

@@ -1,0 +1,12 @@
+== /login 390 cookies: dc_session
+  t=292 cluster x=202 w=172 kids=3
+  t=1838 cluster x=147 w=227 kids=5
+  shift t=1838 0.0020
+  shift t=2333 0.0000
+  cls=0.0020
+== /achievements 390 cookies: dc_session
+  t=288 cluster x=202 w=172 kids=3
+  t=1299 cluster x=147 w=227 kids=5
+  shift t=1300 0.0020
+  shift t=1864 0.0000
+  cls=0.0020

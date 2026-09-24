@@ -1,0 +1,1 @@
+{"slug":"tutorial-first-game","url":"/tutorial/first-game","ms":54572,"findings":[{"route":"/tutorial/first-game","width":null,"theme":null,"kind":"redirect","severity":"info","detail":"redirects to /; not swept separately, the findings for this surface are under /"}]}

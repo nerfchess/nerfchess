@@ -1,0 +1,14 @@
+A. no persona, 20 seeds x 8 plies per tier (frozen clock, ceiling 20ms):
+  1350: 7 distinct 8-ply sequences of 20, 3 distinct first moves; most common x14: b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6
+  1650: 4 distinct 8-ply sequences of 20, 1 distinct first moves; most common x17: b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6
+  2000: 1 distinct 8-ply sequences of 20, 1 distinct first moves; most common x20: b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6
+  2400: 1 distinct 8-ply sequences of 20, 1 distinct first moves; most common x20: b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6
+
+B. 40 personas as White: 9 distinct first moves (g2g3x10 g1f3x6 b1c3x5 e2e4x5 c2c4x4 d2d4x4 b2b3x3 f2f4x2 d2d3x1)
+
+C. persona style on argmax tiers, 27 positions (frozen clock, ceiling 40ms):
+  1350: 53/57 styled personas take the sampling path; mean depth baked not reported, styled not reported (reported 0/27)
+  1650: 69/70 styled personas take the sampling path; mean depth baked not reported, styled not reported (reported 0/27)
+  2000: 20/21 styled personas take the sampling path; mean depth baked not reported, styled not reported (reported 0/27)
+  2400: 43/45 styled personas take the sampling path; mean depth baked not reported, styled not reported (reported 0/27)
+wrote /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/before-variety.json

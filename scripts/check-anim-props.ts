@@ -10,7 +10,19 @@
 // surviving offender, it may only SHRINK, and a stale entry fails loudly so
 // a converted keyframe cannot silently stay listed.
 //
-// Run: npx -y tsx scripts/check-anim-props.ts
+// Run: ./node_modules/.bin/tsx scripts/check-anim-props.ts
+//
+// Second gate (added in the 2026-09 polish pass, slice I): transitions and
+// TSX motion. brief section 11 names "adding transition: all or animating
+// layout properties" as a way a pass quietly fails, and the keyframe scan
+// could not see either: a `transition: all`, a bare `transition: .2s` (which
+// means all), a transition on width/height/top/left/margin/padding/inset in
+// any CSS file, and in TSX the Tailwind `transition-all` or
+// `transition-[height]` style classes, inline `transition: "width ..."`
+// strings, and framer `animate={{ height: ... }}` props. TRANSITION_BASELINE
+// holds the per-file count at gate birth for files this gate's owner cannot
+// edit; counts may only go down, and a count that dropped must be lowered
+// here so it cannot creep back.
 //
 // What counts as an offense: a @keyframes body declaring any of the paint or
 // layout properties below. clip-path is allowed (paint-only reveal, no
@@ -21,7 +33,9 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-const ROOT = join(__dirname, "..");
+// ANIM_PROPS_ROOT points the gate at another tree (the regression fixture in
+// scripts/polish/i/anim-props-test.ts).
+const ROOT = process.env.ANIM_PROPS_ROOT ?? join(__dirname, "..");
 const BANNED = /\b(box-shadow|filter|backdrop-filter|width|height|top|left|right|bottom|margin[a-z-]*|padding[a-z-]*|background-color|background)\s*:/;
 
 // Offenders grandfathered in at gate birth. Shrink-only: remove entries as
@@ -30,16 +44,64 @@ const BASELINE = new Set([
   "src/components/DraftOverlay.css::bank-pulse",
   "src/components/DraftOverlay.css::draft-timer-announce",
   "src/components/DraftOverlay.css::dock-pocket-flash",
-  "src/components/effects/fruition/fruition.css::frx-frame",
-  "src/components/effects/fruition/fruition.css::frx-frame-release",
 ]);
 
-function walk(dir: string, out: string[] = []): string[] {
+// Per-file offense counts for the transition / TSX gate. Shrink-only.
+// BuffCard and NerfCard: the faded tier numeral behind the card eases every
+// property on group hover; the fix (transition-[opacity,transform]) is
+// requested from the integrator in docs/polish-pass/slices/I.md.
+const TRANSITION_BASELINE: Record<string, number> = {
+  "src/components/BuffCard.tsx": 1,
+  "src/components/NerfCard.tsx": 1,
+};
+
+function walk(dir: string, out: string[] = [], ext = /\.css$/): string[] {
   for (const entry of readdirSync(dir)) {
     if (entry === "node_modules" || entry.startsWith(".")) continue;
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (entry.endsWith(".css")) out.push(full);
+    if (statSync(full).isDirectory()) walk(full, out, ext);
+    else if (ext.test(entry)) out.push(full);
+  }
+  return out;
+}
+
+const LAYOUT =
+  "(?:width|height|min-width|max-width|min-height|max-height|top|left|right|bottom|inset|margin(?:-[a-z]+)?|padding(?:-[a-z]+)?|gap|flex-basis|font-size|line-height)";
+const LAYOUT_RE = new RegExp(`^${LAYOUT}$`);
+// A transition segment whose first token is a time (or a duration token)
+// names no property, which the CSS spec reads as `all`.
+const TIME_FIRST = /^(?:[\d.]+m?s|var\(--dur[^)]*\)|calc\()/;
+
+/** Offending segments in one transition / transition-property value. */
+function badSegments(value: string): string[] {
+  const out: string[] = [];
+  for (const seg of value.split(/,(?![^(]*\))/)) {
+    const first = seg.trim().split(/\s+/)[0] ?? "";
+    if (!first) continue;
+    if (first === "all" || LAYOUT_RE.test(first) || TIME_FIRST.test(first)) out.push(seg.trim());
+  }
+  return out;
+}
+
+function transitionOffenses(rel: string, src: string): string[] {
+  const out: string[] = [];
+  if (rel.endsWith(".css")) {
+    // Keyframe bodies are the first gate's business; strip comments.
+    const css = src.replace(/\/\*[\s\S]*?\*\//g, "");
+    for (const m of css.matchAll(/(?:^|[;{\s])transition(?:-property)?\s*:\s*([^;}]+)/g)) {
+      if (/^\s*none\b/.test(m[1])) continue;
+      out.push(...badSegments(m[1]));
+    }
+    return out;
+  }
+  for (const m of src.matchAll(new RegExp(`\\btransition-all\\b|\\btransition-\\[[^\\]]*\\b${LAYOUT}\\b[^\\]]*\\]`, "g"))) {
+    out.push(m[0]);
+  }
+  for (const m of src.matchAll(/\btransition(?:Property)?\s*:\s*[`"']([^`"']+)[`"']/g)) {
+    out.push(...badSegments(m[1]));
+  }
+  for (const m of src.matchAll(new RegExp(`\\banimate=\\{\\{[^}]*\\b(?:width|height|top|left|right|bottom)\\s*:`, "g"))) {
+    out.push(m[0].slice(0, 60));
   }
   return out;
 }
@@ -85,6 +147,28 @@ for (const file of files) {
 
 const stale = [...BASELINE].filter((k) => !found.has(k));
 
+// Gate 2: transitions (all CSS) and TSX motion.
+const motionFiles = walk(join(ROOT, "src"), [], /\.(css|tsx|ts)$/);
+const transitionOffenders: string[] = [];
+const transitionStale: string[] = [];
+const seen = new Set<string>();
+for (const file of motionFiles) {
+  const rel = relative(ROOT, file).split("\\").join("/");
+  const bad = transitionOffenses(rel, readFileSync(file, "utf8"));
+  const allowed = TRANSITION_BASELINE[rel] ?? 0;
+  if (bad.length) seen.add(rel);
+  if (bad.length > allowed) {
+    transitionOffenders.push(`${rel} (${bad.length}, baseline ${allowed})\n      ${bad.join("\n      ")}`);
+  } else if (bad.length < allowed) {
+    transitionStale.push(`${rel}: ${bad.length} now, baseline says ${allowed}; lower it`);
+  }
+}
+for (const rel of Object.keys(TRANSITION_BASELINE)) {
+  if (!seen.has(rel) && !transitionStale.some((x) => x.startsWith(rel + ":"))) {
+    transitionStale.push(`${rel}: 0 now, baseline says ${TRANSITION_BASELINE[rel]}; remove it`);
+  }
+}
+
 let failed = false;
 if (offenders.length) {
   failed = true;
@@ -100,7 +184,23 @@ if (stale.length) {
     `[check-anim-props] ${stale.length} stale BASELINE entr(y/ies) - the keyframe was fixed or renamed; remove from the list:\n  - ${stale.join("\n  - ")}`,
   );
 }
+if (transitionOffenders.length) {
+  failed = true;
+  console.error(
+    `[check-anim-props] ${transitionOffenders.length} file(s) transition \`all\` or a layout property, or animate one with framer:\n\n  - ${transitionOffenders.join("\n  - ")}\n\n` +
+      "  Name the properties (transition-colors, transition-[opacity,transform], or\n" +
+      "  transition: opacity var(--dur-2) var(--ease-out)) and move with transform:\n" +
+      "  a scaleX/scaleY fill (EvalBar), a translate (the .m-* primitives in globals.css).\n" +
+      "  Never raise TRANSITION_BASELINE.",
+  );
+}
+if (transitionStale.length) {
+  failed = true;
+  console.error(`[check-anim-props] stale TRANSITION_BASELINE:\n  - ${transitionStale.join("\n  - ")}`);
+}
 if (failed) process.exit(1);
 console.log(
-  `[check-anim-props] clean: ${files.length} css files scanned, ${BASELINE.size} grandfathered keyframe(s) remain (shrink-only)`,
+  `[check-anim-props] clean: ${files.length} css files scanned, ${BASELINE.size} grandfathered keyframe(s) remain (shrink-only); ` +
+    `${motionFiles.length} files scanned for transition all / layout transitions, ` +
+    `${Object.values(TRANSITION_BASELINE).reduce((a, b) => a + b, 0)} grandfathered`,
 );

@@ -3,7 +3,7 @@
 // Both match views (OnlineMatch and the local /game page) render one
 // position:fixed drawer bar below the board on tablet widths only:
 //
-//   MobileBuffDrawer   `sm:block lg:hidden` — bottom: 0, bar 46px + safe area
+//   MobileBuffDrawer   `sm:block lg:hidden`, bottom: 0, bar 46px + safe area
 //
 // Below sm there is no fixed chrome at all: the page scrolls and everything
 // stacks under the board (MobileMatchStack). A portrait tablet is on that same
@@ -11,10 +11,10 @@
 // left to the sm..lg LANDSCAPE range that still puts a rail beside the board.
 //
 // The match column is `h-dvh` + `overflow-hidden`, so anything it fails to
-// reserve room for is not scrollable-to — it is simply hidden behind the bars.
+// reserve room for is not scrollable-to, it is simply hidden behind the bars.
 // It used to hardcode `pb-14` (56px) against as much as 88px of chrome, which
 // buried the bottom player row, the rating strip, and the game-actions
-// trigger — the only route to Draw/Resign/Takeback on a phone.
+// trigger, the only route to Draw/Resign/Takeback on a phone.
 //
 // The class strings below are written out IN FULL, never assembled from parts:
 // Tailwind's JIT scans source text for literal class names, so an interpolated
@@ -27,10 +27,11 @@ import { TABLET_STACK_PAD } from "./matchLayout";
  *
  * @param hasBuffDrawer whether MobileBuffDrawer is mounted (draft games only).
  *
- * Breakpoints mirror the drawers' own visibility:
- *   <sm  move bar (2.75rem) + inset, plus a second bar when the buff drawer is up
- *   sm   move bar hidden; buff bar (if present) sits on the edge and takes the inset
- *   lg   both hidden — ordinary page padding
+ * Breakpoints mirror the drawer's own visibility (F178: there is no phone
+ * move bar any more):
+ *   <sm  no fixed chrome, only the home-indicator inset
+ *   sm   the buff drawer's bar (if present) sits on the edge and takes the inset
+ *   lg   no drawer, ordinary page padding
  */
 export function bottomChromePadClass(hasBuffDrawer: boolean): string {
   // Phones have no fixed bars any more (the move strip, cards and chat stack

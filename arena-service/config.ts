@@ -25,7 +25,7 @@ export interface ArenaConfig {
   // spectator sockets (M3). Comma-separated.
   publicOrigins: string[];
   // Tier 3 / M3: with no DO configured, filler spawns only while a human was
-  // seen (a /lobby fetch or a live spectator socket) within this window —
+  // seen (a /lobby fetch or a live spectator socket) within this window,
   // replaces the DO's stand-down signal.
   presenceTtlMs: number;
   // Per-move search ceiling for FILLER games, in ms. See ARENA_SEARCH_CEILING_MS
@@ -33,10 +33,15 @@ export interface ArenaConfig {
   searchCeilingMs: number;
   // Tier 3 / M1: absolute URL of the Worker archive route
   // (https://nerfchess.com/api/arena/end). When set, finished games archive
-  // there — a plain Worker request, no DO wake — and the DO is only notified
+  // there, a plain Worker request, no DO wake, and the DO is only notified
   // display-only (aborted:true) to close any spectator replicas. Empty = ends
   // keep going to the DO's /arena/end exactly as before.
   endUrl: string;
+  // Slice HB, P20: roll filler drafts without FILLER_EXCLUDED_CARD_IDS (Chess
+  // Diff), like the DO's own filler. Off until the DO replica and the archive
+  // route apply the snapshot's and record's cardOverrides; with it on and an
+  // older DO, a replica re-rolls offers from the full pool and desyncs.
+  excludeFillerCards: boolean;
 }
 
 export function loadConfig(): ArenaConfig {
@@ -77,5 +82,6 @@ export function loadConfig(): ArenaConfig {
       .map((o) => o.trim())
       .filter(Boolean),
     presenceTtlMs: Number(process.env.ARENA_PRESENCE_TTL_MS ?? "60000"),
+    excludeFillerCards: process.env.ARENA_EXCLUDE_FILLER_CARDS === "true",
   };
 }

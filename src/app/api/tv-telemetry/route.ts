@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
+import { clientIp, memoryRateLimit, readJsonObject } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
+
+// Flood guard for this unauthenticated log sink (F066). A beacon is a few
+// hundred bytes and one page load sends at most MAX_BEACONS_PER_LOAD (200, see
+// src/lib/telemetry/tv.ts), so bigger bodies are refused and one address is
+// held to a rate well above a busy TV tab but far below a flood. In memory per
+// isolate: the sink never writes D1.
+const MAX_BODY_BYTES = 4096;
+const PER_IP_WINDOW_MS = 60_000;
+const PER_IP_MAX = 120;
 
 // TV / spectator telemetry sink. The client beacons here for tune-in health,
 // snapshot/version rejects, resyncs, gaps, hash mismatches, failover, and the
@@ -30,12 +40,11 @@ const KNOWN_EVENTS = new Set([
 ]);
 
 export async function POST(request: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = (await request.json()) as Record<string, unknown>;
-  } catch {
-    return NextResponse.json({ error: "Invalid body." }, { status: 400 });
+  if (!memoryRateLimit(`tv:${clientIp(request) ?? "unknown"}`, PER_IP_MAX, PER_IP_WINDOW_MS)) {
+    return NextResponse.json({ error: "Too many reports." }, { status: 429 });
   }
+  const body = await readJsonObject(request, { maxBytes: MAX_BODY_BYTES, requireJsonType: false });
+  if (body instanceof NextResponse) return body;
 
   const str = (v: unknown, cap: number) => (typeof v === "string" ? v.slice(0, cap) : undefined);
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);

@@ -1,38 +1,26 @@
-"use client";
+// "Play a Friend" lives inside the lobby's Friends tab, so /friend redirects
+// to /lobby?tab=friends on the server (F037). It used to be a client shim
+// that painted a headerless "Opening the lobby…" page and then called
+// router.replace, which every bell link and old share link went through.
+// Shared join links (?code=...), direct challenges (?challenge=...) and mode
+// links (?mode=...) are carried over so the Friends tab picks up where the old
+// page left off (auto-opening the join flow when a code is present).
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
-// "Play a Friend" now lives inside the lobby's Friends tab, so /friend is just
-// a thin redirect to /lobby?tab=friends. Shared join links (?code=...), direct
-// challenges (?challenge=...), and mode links (?mode=...) are preserved so the
-// Friends tab can pick up where the old page left off (auto-opening the join
-// flow when a code is present).
-export default function FriendRedirect() {
-  const router = useRouter();
-  useEffect(() => {
-    let target = "/lobby?tab=friends";
-    try {
-      const search = new URLSearchParams(window.location.search);
-      const out = new URLSearchParams();
-      out.set("tab", "friends");
-      const code = search.get("code");
-      const challenge = search.get("challenge");
-      const mode = search.get("mode");
-      if (code) out.set("code", code);
-      if (challenge) out.set("challenge", challenge);
-      if (mode) out.set("mode", mode);
-      target = `/lobby?${out.toString()}`;
-    } catch {}
-    router.replace(target);
-  }, [router]);
+type SearchParams = Record<string, string | string[] | undefined>;
 
-  return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      {/* A redirect shim is still a page while it is on screen, and this one
-          was on screen with no heading for 5 of 12 samples. */}
-      <h1 className="sr-only">Play a friend</h1>
-      <div className="text-[12px] text-parchment-400">Opening the lobby…</div>
-    </main>
-  );
+function first(v: string | string[] | undefined): string | null {
+  return (Array.isArray(v) ? v[0] : v) ?? null;
+}
+
+export default async function FriendRedirect({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const out = new URLSearchParams();
+  out.set("tab", "friends");
+  for (const key of ["code", "challenge", "mode"] as const) {
+    const value = first(params[key]);
+    if (value) out.set(key, value);
+  }
+  redirect(`/lobby?${out.toString()}`);
 }

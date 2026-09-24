@@ -1,7 +1,7 @@
 "use client";
 
 // The profile's left rail, Lichess's per-perf list: one row per rated mode
-// with its icon, an uppercase label, the rating, the trailing-window change
+// with its icon, a sentence-case label, the rating, the trailing-window change
 // in green or red, the game count, and the board rank when the player holds
 // one. A mode with no games reads "?" like an unrated perf.
 
@@ -49,7 +49,7 @@ export function RatingRail({
               className={"shrink-0 " + (row ? "text-parchment-300" : "text-parchment-500")}
             />
             <span className="min-w-0 flex-1">
-              <span className="block text-[12px] uppercase tracking-[0.06em] text-parchment-400">{c.label}</span>
+              <span className="block text-[12px] text-parchment-400">{c.label}</span>
               <span className="flex flex-wrap items-baseline gap-x-1.5">
                 <span className={"text-[17px] font-semibold tabular-nums " + (row ? "text-parchment-50" : "text-parchment-400")}>
                   {row ? Math.round(row.rating) : "?"}

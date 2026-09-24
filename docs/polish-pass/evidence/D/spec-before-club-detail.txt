@@ -1,0 +1,24 @@
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:309:7 › /clubs/[slug] signed out › a missing club shows the shared 404 copy (1.4m)
+  ✘  2 [chromium] › e2e/polish/social-routes.spec.ts:315:7 › /clubs/[slug] signed out › a failed load has an h1 and a Retry (1.0m)
+  ✘  3 [chromium] › e2e/polish/social-routes.spec.ts:327:7 › /clubs/[slug] signed out › the in-flight state is the route skeleton (1.0m)
+  ✘  4 [chromium] › e2e/polish/social-routes.spec.ts:335:7 › /clubs/[slug] signed out › a signed-out visitor gets a sign-in link back to the club (17.5s)
+  ✘  5 [chromium] › e2e/polish/social-routes.spec.ts:345:7 › /clubs/[slug] signed out › club events are links with sentence-case phases (1.0m)
+  ✘  6 [chromium] › e2e/polish/social-routes.spec.ts:358:7 › /clubs/[slug] member › a double submit posts once (5.0s)
+  ✘  7 [chromium] › e2e/polish/social-routes.spec.ts:382:7 › /clubs/[slug] member › the board field is 16px on a phone (2.6s)
+  ✘  8 [chromium] › e2e/polish/social-routes.spec.ts:398:7 › /clubs/[slug] owner on touch › delete is visible on touch, 44px, asks first and reports a failure (2.5s)
+    Error: expect(locator).toBeVisible() failed
+      315 |   test("a failed load has an h1 and a Retry", async ({ page }) => {
+  2) [chromium] › e2e/polish/social-routes.spec.ts:315:7 › /clubs/[slug] signed out › a failed load has an h1 and a Retry 
+    Error: expect(locator).toBeVisible() failed
+    Error: expect(locator).toBeVisible() failed
+    Error: expect(locator).toBeVisible() failed
+    Error: expect(locator).toHaveAttribute(expected) failed
+  8 failed
+    [chromium] › e2e/polish/social-routes.spec.ts:315:7 › /clubs/[slug] signed out › a failed load has an h1 and a Retry 
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:358:7 › /clubs/[slug] member › a double submit posts once (5.3s)
+  ✘  2 [chromium] › e2e/polish/social-routes.spec.ts:382:7 › /clubs/[slug] member › the board field is 16px on a phone (2.5s)
+    Expected: 1
+    Received: 2
+    Expected: "16px"
+    Received: "13px"
+  2 failed

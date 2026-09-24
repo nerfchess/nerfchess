@@ -70,34 +70,42 @@ async function playOneMove(page: Page, used: Set<string>): Promise<void> {
  * both the game-start "opening pick" (a buff pair dealt to each side, mirroring
  * the opening nerf) and the ply-5 cadence draft.
  *
- * Two states must be handled. Fresh, the offer shows its deal grid. After a ~20s
- * lock-in it does NOT auto-resolve; it MINIMIZES to a "Draft open" chip and
- * keeps the offer open (the clock resumes), and until the player acts the board
- * stays blocked. So this reopens the minimized panel when needed, takes the
- * first card, and only concludes success once neither the cards nor the reopen
- * chip remain. It never clicks the board (the offer's full-screen scrim would
- * swallow the click and hang), and every click carries a short timeout so a
- * transient non-actionable state can never stall the whole test.
+ * Three states must be handled. Fresh, the offer shows its deal grid. After
+ * its lock-in timer it does NOT auto-resolve; it minimizes, either to the
+ * compact "Draft pending" panel that lists the same cards (the default now)
+ * or, once tucked, to a "Show the draft" chip, and until the player acts the
+ * board stays blocked. So this reopens the chip when needed, takes the first
+ * card from whichever card list is up, and only concludes success once no
+ * card list and no chip remain. It never clicks the board (the offer's
+ * full-screen scrim would swallow the click and hang), and every click
+ * carries a short timeout so a transient non-actionable state can never
+ * stall the whole test.
  */
 async function takeFirstCard(page: Page): Promise<string> {
   const grid = page.locator(".draft-deal-grid");
+  const compact = page.locator("[data-draft-compact-cards]");
+  const cards = grid.or(compact);
   const reopen = page.getByRole("button", { name: "Show the draft" });
-  // The offer must be present first (dealt, or minimized to its chip) — else an
-  // empty board would look "resolved" before the cards even arrive.
-  await expect(grid.or(reopen)).toBeVisible({ timeout: 20_000 });
+  // The offer must be present first (dealt, or minimized), else an empty
+  // board would look "resolved" before the cards even arrive.
+  await expect(cards.or(reopen).first()).toBeVisible({ timeout: 20_000 });
 
   let picked = "";
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
-    // Minimized to the "Draft open" chip (lock-in expired): reopen it.
+    // Tucked into the chip: reopen it.
     if (await reopen.isVisible().catch(() => false)) {
       await reopen.click({ timeout: 3_000 }).catch(() => {});
-      await grid.waitFor({ state: "visible", timeout: 3_000 }).catch(() => {});
+      await cards.first().waitFor({ state: "visible", timeout: 3_000 }).catch(() => {});
     }
-    if (await grid.isVisible().catch(() => false)) {
-      const card = grid.locator(".draft-card-front > button").first();
+    const list = (await grid.isVisible().catch(() => false)) ? grid : compact;
+    if (await list.isVisible().catch(() => false)) {
+      // A card face is a plain box with a stretched pick button inside it
+      // (the card stopped being one wrapping <button> in 2715b85); the name
+      // is the face's first display line.
+      const card = list.locator("button.card-pick-target").first();
       const name = (
-        await card.locator(".font-display").first().innerText().catch(() => "")
+        await card.locator("xpath=..").locator(".font-display").first().innerText().catch(() => "")
       ).trim();
       if (name) {
         await card.click({ timeout: 3_000 }).catch(() => {});
@@ -105,14 +113,14 @@ async function takeFirstCard(page: Page): Promise<string> {
         if (await confirm.isVisible().catch(() => false)) {
           await confirm.click({ timeout: 3_000 }).catch(() => {});
           picked = name;
-          await grid.waitFor({ state: "hidden", timeout: 8_000 }).catch(() => {});
+          await list.waitFor({ state: "hidden", timeout: 8_000 }).catch(() => {});
         }
       }
     }
-    // Resolved once neither the cards nor the reopen chip remain.
-    const gridUp = await grid.isVisible().catch(() => false);
+    // Resolved once no card list and no chip remain.
+    const listUp = await cards.first().isVisible().catch(() => false);
     const chipUp = await reopen.isVisible().catch(() => false);
-    if (!gridUp && !chipUp) return picked;
+    if (!listUp && !chipUp) return picked;
     await page.waitForTimeout(300);
   }
   throw new Error("could not resolve the draft offer");

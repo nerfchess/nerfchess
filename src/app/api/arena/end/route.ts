@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, getEnvVar } from "@/lib/server/db";
-import { isHouseUserId } from "@/lib/server/bots";
 import { recordFinishedGame } from "@/lib/server/games";
+import { readJsonObject } from "@/lib/server/request";
+import { MAX_RECORD_BYTES, sanitizeArenaCardOverrides, validArenaEndRecord } from "@/lib/server/arenaRecord";
 
 export const dynamic = "force-dynamic";
 
@@ -17,29 +18,6 @@ export const dynamic = "force-dynamic";
 // Trust boundary (unchanged from /arena/end): the bearer token lets the arena
 // move HOUSE-account ratings only — both seats must be house user ids, so a
 // forged record can never touch a real user.
-
-// Mirrors the DO's ArenaEndRecord (worker.ts) — the subset of the arena's
-// ArenaFinishedRecord this route archives.
-type Color = "w" | "b";
-type StoredDraftAction =
-  | { ply: number; color: Color; a: "pick"; index: number; cards: { id: string; tier: number }[] }
-  | { ply: number; color: Color; a: "bank" }
-  | { ply: number; color: Color; a: "use"; buffIndex: number; picks: unknown[] };
-type ArenaEndRecord = {
-  id: string;
-  setup: { whiteNerfId: string; blackNerfId: string; seed: number; timeSec: number; incrementSec: number };
-  mode: "nerf" | "buff";
-  moves: string[];
-  bots: Record<Color, string>;
-  seats: Record<Color, { name: string }>;
-  result: { winner: Color | "draw" | null; reason: string };
-  startedAt: number;
-  completedAt: number;
-  draftSeed?: number;
-  cadence?: number;
-  draftActions?: StoredDraftAction[];
-  replayVersion?: number;
-};
 
 // Constant-time-ish comparison so the token cannot be probed byte by byte off
 // response timing. Mirrors keysMatch in /api/analytics/summary.
@@ -67,22 +45,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, ingest: false });
   }
 
-  let body: { record?: ArenaEndRecord };
-  try {
-    body = (await request.json()) as { record?: ArenaEndRecord };
-  } catch {
-    return NextResponse.json({ error: "bad_json" }, { status: 400 });
+  // Server-to-server call (no cookie), so no same-origin or content-type rule;
+  // the body is still size-capped and must be a JSON object.
+  const body = await readJsonObject(request, { maxBytes: MAX_RECORD_BYTES, requireJsonType: false });
+  if (body instanceof NextResponse) {
+    return NextResponse.json({ error: body.status === 413 ? "too_large" : "bad_json" }, { status: body.status });
   }
   const rec = body.record;
-  if (
-    !rec ||
-    typeof rec.id !== "string" ||
-    !isHouseUserId(rec.bots?.w) ||
-    !isHouseUserId(rec.bots?.b) ||
-    !rec.setup ||
-    !Array.isArray(rec.moves) ||
-    !rec.result
-  ) {
+  if (!validArenaEndRecord(rec)) {
     return NextResponse.json({ error: "bad_record" }, { status: 400 });
   }
 
@@ -120,6 +90,11 @@ export async function POST(request: Request) {
                 mode: rec.mode,
                 draftSeed: rec.draftSeed,
                 ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
+                // The pool the arena rolled offers under (HB3 R14), archived the
+                // way draftRecordFromMatch archives a DO match's overrides.
+                ...(sanitizeArenaCardOverrides(rec.cardOverrides)
+                  ? { cardOverrides: sanitizeArenaCardOverrides(rec.cardOverrides)! }
+                  : {}),
                 draftActions: rec.draftActions,
               },
             }

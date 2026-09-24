@@ -279,7 +279,6 @@ const IMP: Record<string, ImpCue> = {
   // Return of the Queen: THE LAMP TAKES - the lens seats with a hammerfall and the dark shatters
   bn4_return_of_the_queen: { at: 1040, x: 50, y: 47, rgb: "242 200 92", laser: true, glyph: 1, boom: true },
   // Harbor Queen: THE PROW STRIKES THE QUAY - the galley runs the water and hits the stones
-  bn4_harbor_queen: { at: 1000, rgb: "111 183 200", laser: true, boom: true, rot: -90, far: true },
   // Gilded Cage: THE CAGE DROPS ON HER - the bars slam and the queen's shadow splits
   hx4_gilded_cage: { at: 960, x: 50, y: 49, rgb: "217 174 78", laser: true, glyph: 0 },
   // Glass Case: THE VITRINE SEATS - the panes land together with a double ring
@@ -424,36 +423,7 @@ function HarborOars({ role, delayMs }: SceneProps) {
       </span>
     );
   }
-  return (
-    <AimLead d={delayMs} imp={IMP.bn4_harbor_queen} frame={<Frame base={delayMs} tone="rgba(111,183,200,0.3)" rim="rgba(18,48,58,0.42)" />}>
-      {/* tell: the coxswain's course, called down the whole line */}
-      <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.16), background: "#fdf0cf" })} />
-      {/* strike: the hull runs the real length of the vector */}
-      {/* sized to exactly ONE CELL, so translateX(--fx-len * 100%) is cells */}
-      <svg viewBox="0 0 24 12" className="g30-run absolute block" style={st({ ...d(delayMs, 250), ...box(1, 0.5), filter: "drop-shadow(0 0 4px rgba(111,183,200,0.8))" })}>
-        <path d="M1 4h20l2 2.4-3.4 3.6H4.4z" fill="#12303a" stroke="#6fb7c8" strokeWidth="1.1" {...SJ} />
-        <path d="M11.4 4V0.8" stroke="#fdf0cf" strokeWidth="1.2" {...SJ} />
-      </svg>
-      {/* the eight blades catch together, four a side */}
-      {EIGHT.map((i) => (
-        <span
-          key={i}
-          className="g30-oar absolute block"
-          style={st({
-            ...rayD(delayMs, 330, i % 4, 44),
-            ...box(1.5, 0.24, (i % 4) * 1.2 - 1.8, i < 4 ? -0.62 : 0.62),
-            background: "linear-gradient(90deg, #12303a, #6fb7c8)",
-            transformOrigin: i < 4 ? "10% 100%" : "10% 0%",
-          })}
-        />
-      ))}
-      {/* the wake stretches exactly as far as the boat pulled */}
-      <span className="g30-wake absolute block" style={st({ ...d(delayMs, 430), ...lane(0.7), background: "linear-gradient(90deg, rgba(253,240,207,0.75), rgba(111,183,200,0))" })} />
-      {/* settle: two splashes falling away from the caster */}
-      <span className="g30-sift absolute block" style={st({ ...d(delayMs, 640), ...box(1.1, 1.1, -1.4, 0.5), borderRadius: "50%", background: "radial-gradient(circle, rgba(253,240,207,0.7), transparent 70%)" })} />
-      <span className="g30-sift absolute block" style={st({ ...d(delayMs, 760), ...box(0.8, 0.8, 1.6, -0.5), borderRadius: "50%", background: "radial-gradient(circle, rgba(111,183,200,0.8), transparent 70%)" })} />
-    </AimLead>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1607,6 +1577,164 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g30-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function RuleRay({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g30-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g30-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g30-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <RuleRay x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+/* --- bn4_harbor_queen --------------------------------------------------------------
+   "For the rest of the game, your queen cannot be captured while she stands in
+   your half of the board. Across the middle line she sails at her own risk."
+   The caster's half fills as a harbour and a buoy line is strung along the
+   middle; the queen puts out from d1 under sail and moors on d4, a ward ring
+   round her; a bishop's capture loosed at her from the far side breaks on the
+   ring; an endless mark (for the rest of the game) is set at the quay; then
+   she sails across the buoys to d5 and her ring is shed there. */
+const C_HQR = { core: "#6fb7c8", glow: "#fdf0cf", deep: "#12303a" };
+
+function HarborQueenRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HarborOars lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HQR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Tint x="50%" y={rk(1.5)} w={100} h={50} color="rgba(111,183,200,0.3)" delayMs={d + 20} gd="2.3s" />
+      {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <Q key={`b${i}`} x={cl(i)} y={rk(3.5)} w={2.6} h={2.6} cls="g30-r-pip" delayMs={d + 100 + i * 30} v={{ "--gd": "2.1s" }} style={{ background: i % 2 ? c.glow : c.core, border: `1px solid ${c.deep}`, borderRadius: "50%" }} />
+      ))}
+      <Q x="50%" y={rk(3.5)} w={100} h={0.5} cls="g30-r-draw" delayMs={d + 100} v={{ "--gd": "2.1s" }} style={{ background: c.deep }} />
+      <Q x={QUEEN_X} y={rk(3)} w={11} h={11} cls="g30-r-go" delayMs={d + 240} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * 300%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={QUEEN_X} y={rk(3)} w={15} h={15} cls="g30-r-in" delayMs={d + 520} v={{ "--gd": "1s" }} style={{ border: `2.5px solid ${c.core}`, borderRadius: "50%" }} />
+      <Thread c0={7} r0={7} c1={3.6} r1={3.6} color={c.glow} delayMs={d + 560} gd="0.8s" />
+      <Q x={`calc(${QUEEN_X} + var(--fx-side, 1) * 5%)`} y={`calc(${rk(3)} - var(--fx-side, 1) * 5%)`} w={7} h={7} cls="g30-r-stamp" delayMs={d + 820} v={{ "--gd": "0.8s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 10h4M13 10h4M10 3v4M10 13v4M5 5l2.6 2.6M15 15l-2.6-2.6M15 5l-2.6 2.6M5 15l2.6-2.6" stroke={c.glow} strokeWidth="1.8" {...SJ} />
+        </svg>
+      </Q>
+      <Q x="10%" y={rk(1.8)} w={9} h={5} cls="g30-r-stamp" delayMs={d + 900} v={{ "--gd": "1.4s" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M12 6c-2.4-3.4-8-3.4-8 0s5.6 3.4 8 0 8-3.4 8 0-5.6 3.4-8 0z" fill="none" stroke={c.glow} strokeWidth="2" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={QUEEN_X} y={rk(4)} w={11} h={11} cls="g30-r-go" delayMs={d + 1260} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * 100%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={QUEEN_X} y={rk(4)} w={15} h={15} cls="g30-r-part" delayMs={d + 1440} v={{ "--gd": "0.7s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 40%)", "--r1": "0deg" }} style={{ border: `2px dashed ${c.core}`, borderRadius: "50%" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8 ---
   bn4_return_of_the_queen: S(LighthouseLens, {
@@ -1614,7 +1742,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- Tier 7 ---
-  bn4_harbor_queen: S(HarborOars, {
+  bn4_harbor_queen: S(HarborQueenRule, {
     ordering: "line", staggerMs: 55, victims: ["q"], hasLead: true, sound: "colossus", anchor: "aim",
   }),
 

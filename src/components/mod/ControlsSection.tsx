@@ -12,13 +12,13 @@
 
 import { useEffect, useState } from "react";
 import type { HouseState, PresetMap, SkillTier } from "./types";
-import { ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
+import { ConfirmButton, ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
 
-export function ControlsSection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: boolean }) {
+export function ControlsSection({ isOwner }: { isOwner: boolean }) {
   return (
     <div className="space-y-8">
       <HouseBotsControl />
-      <PersonasLink isAdmin={isAdmin} />
+      <PersonasLink />
       {isOwner && <GodPanelControl />}
       <NotificationsControl />
     </div>
@@ -41,6 +41,8 @@ function HouseBotsControl() {
   > | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   const ingest = (data: HouseState) => {
     setEnabled(data.enabled);
@@ -52,15 +54,22 @@ function HouseBotsControl() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/mod/house")
-      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : null))
+      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : Promise.reject(new Error(String(res.status)))))
       .then((data) => {
-        if (!cancelled && data) ingest(data);
+        if (!cancelled) ingest(data);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   const post = async (body: Record<string, unknown>) => {
     setSaving(true);
@@ -101,7 +110,15 @@ function HouseBotsControl() {
           />
         }
       />
-      {error && <p className="text-xs text-oxblood-glow">{error}</p>}
+      {error && <p className="text-[13px] text-oxblood-glow">{error}</p>}
+      {loadFailed && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 text-[13px] text-oxblood-glow">
+          <span>Could not load the house bot settings.</span>
+          <ModButton size="sm" onClick={retryLoad}>
+            Retry
+          </ModButton>
+        </div>
+      )}
 
       {/* Active games: how many house-vs-house filler games run at once — the
           games that keep the Watch tab / lobby looking busy. The slider pins a
@@ -111,11 +128,11 @@ function HouseBotsControl() {
           clears them from the lobby entirely. */}
       <div className={"border-t border-[color:var(--edge)] pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="house-games" className="text-[12px] text-parchment-400">
+          <label htmlFor="house-games" className="text-[13px] text-parchment-400">
             Filler games running
           </label>
           <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-50">
-            {games ?? "…"}
+            {games ?? (loadFailed ? "-" : "…")}
             <span className="text-parchment-500"> / {bounds.max}</span>
           </span>
         </div>
@@ -136,16 +153,39 @@ function HouseBotsControl() {
         />
       </div>
 
-      {strength && (
-        <HouseStrengthEditor
-          state={strength}
-          saving={saving}
-          disabled={enabled === false}
-          onSave={post}
-        />
-      )}
+      {/* The tier editor is a disclosure, closed on load. Its summary line is
+          drawn from the first frame, so the settings arriving never push the
+          sections below down (it is about 780px tall at 1280 and 3,770px on a
+          phone, and mounting it after the fetch shifted the whole page). */}
+      <details data-strength-editor className="border-t border-[color:var(--edge)] pt-1">
+        <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 text-[13px] text-parchment-400 sm:min-h-[32px]">
+          <span>Strength by tier</span>
+          <span className="text-parchment-500">{strengthSummary(strength, loadFailed)}</span>
+        </summary>
+        {strength ? (
+          <HouseStrengthEditor
+            state={strength}
+            saving={saving}
+            disabled={enabled === false}
+            onSave={post}
+          />
+        ) : (
+          <p className="pb-2 text-[13px] text-parchment-400">{loadFailed ? "Not loaded." : "Loading…"}</p>
+        )}
+      </details>
     </section>
   );
+}
+
+/** The tier editor's closed summary: whether any tier is tuned. */
+function strengthSummary(
+  strength: Pick<HouseState, "skillTiers"> | null,
+  failed: boolean,
+): string {
+  if (!strength) return failed ? "-" : "…";
+  const tuned = strength.skillTiers.filter((t) => t.overrides && Object.keys(t.overrides).length > 0).length;
+  const n = strength.skillTiers.length;
+  return tuned === 0 ? `${n} tiers, all default` : `${tuned} of ${n} tiers tuned`;
 }
 
 // The editable strength fields shown in the tier table. `pct` fields are stored
@@ -254,23 +294,29 @@ function HouseStrengthEditor({
   const anyOverride = skillTiers.some((t) => t.overrides && Object.keys(t.overrides).length > 0);
 
   return (
-    <div className={"border-t border-[color:var(--edge)] pt-3 " + (disabled ? "opacity-50" : "")}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[12px] text-parchment-400">Strength by tier</span>
+    <div className={"pb-1 pt-1 " + (disabled ? "opacity-50" : "")}>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="flex flex-wrap gap-1.5">
-          <ModButton
+          <ConfirmButton
             size="sm"
             disabled={saving || !anyOverride}
-            onClick={() => onSave({ resetSkillOverrides: true })}
+            confirmLabel="Confirm: reset all tiers"
+            onConfirm={() => onSave({ resetSkillOverrides: true })}
           >
             Reset all
-          </ModButton>
+          </ConfirmButton>
           <ModButton tone="primary" size="sm" disabled={saving} onClick={() => applyPreset(presets.weakened)}>
             Weakened 50/30/20
           </ModButton>
-          <ModButton tone="danger" size="sm" disabled={saving} onClick={() => applyPreset(presets.veryWeak)}>
+          <ConfirmButton
+            tone="danger"
+            size="sm"
+            disabled={saving}
+            confirmLabel="Confirm: very weak"
+            onConfirm={() => applyPreset(presets.veryWeak)}
+          >
             Very weak
-          </ModButton>
+          </ConfirmButton>
         </div>
       </div>
 
@@ -303,7 +349,7 @@ function HouseStrengthEditor({
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {STRENGTH_FIELDS.map((f) => (
                   <label key={f.key} className="block">
-                    <span className="block text-[12px] text-parchment-400">{f.label}</span>
+                    <span className="block text-[13px] text-parchment-400">{f.label}</span>
                     <StrengthInput
                       tier={t}
                       field={f}
@@ -327,7 +373,7 @@ function HouseStrengthEditor({
           only implied a scroll that never happened. The wrapper keeps
           overflow-x-auto as the safety net for a stray wide value. */}
       <div className="mt-2 hidden overflow-x-auto sm:block">
-        <table className="w-full border-collapse text-[12px]">
+        <table className="w-full border-collapse text-[13px]">
           <thead>
             <tr className="text-parchment-400">
               <th className="py-1 pr-2 text-left font-normal">Tier</th>
@@ -377,7 +423,7 @@ function HouseStrengthEditor({
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[12px] leading-snug text-parchment-500">
+      <p className="mt-2 text-[13px] leading-snug text-parchment-500">
         Move-quality weakening (topK / temp / noise), not just time. Changes reach live games within
         ~15s. Ratings drift is expected after a strength change. Highlighted values are overridden.
       </p>
@@ -387,8 +433,9 @@ function HouseStrengthEditor({
 
 // ---------------- personas ----------------
 
-function PersonasLink({ isAdmin }: { isAdmin: boolean }) {
-  if (!isAdmin) return null;
+// Every moderator can open the persona editor (F129: the page and
+// /api/mod/house/personas admit mods, not just admins).
+function PersonasLink() {
   return (
     <section className="plate p-4">
       <SectionHead
@@ -412,19 +459,30 @@ function GodPanelControl() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A failed GET used to leave the switch on its unknown state for good; it
+  // now says so and offers Retry, like the house bot settings above.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/mod/god-panel")
-      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : Promise.reject()))
       .then((data) => {
-        if (!cancelled && data) setEnabled(data.enabled);
+        if (!cancelled) setEnabled(data.enabled);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   const toggle = async () => {
     if (enabled === null || saving) return;
@@ -452,9 +510,17 @@ function GodPanelControl() {
         title="God panel"
         blurb="Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it."
         actionsInline
-        actions={<ModToggle label="God panel" on={enabled} busy={saving} onToggle={toggle} />}
+        actions={<ModToggle label="God panel" on={enabled} busy={saving} failed={loadFailed} onToggle={toggle} />}
       />
-      {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
+      {error && <p className="mt-2 text-[13px] text-oxblood-glow">{error}</p>}
+      {loadFailed && (
+        <div role="alert" className="mt-2 flex flex-wrap items-center gap-3 text-[13px] text-oxblood-glow">
+          <span>Could not load the god panel setting.</span>
+          <ModButton size="sm" onClick={retryLoad}>
+            Retry
+          </ModButton>
+        </div>
+      )}
     </section>
   );
 }
@@ -505,7 +571,7 @@ function NotificationsControl() {
         }
       />
       {testing && testing !== "sending" && (
-        <p className="mt-2 text-[12px] text-parchment-300">{testing}</p>
+        <p className="mt-2 text-[13px] text-parchment-300">{testing}</p>
       )}
     </section>
   );

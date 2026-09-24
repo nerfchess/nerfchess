@@ -3,7 +3,7 @@
 // Every bespoke tier>=4 card must carry a hand-tuned CardVfx, and every
 // CardVfx entry must belong to a card that actually has bespoke art. This was
 // previously a dev-only `console.warn` inside vfxSpecs.ts (runVfxSelfCheck),
-// which is stripped from production builds and scrolls past in dev — so it
+// which is stripped from production builds and scrolls past in dev, so it
 // rotted to 21 uncovered cards and 1 orphan before anyone noticed. Same
 // treatment as sig-plugins drift: a real script, wired into `test:rules`.
 //
@@ -12,27 +12,27 @@
 // Two rules, mirroring how Board actually resolves a card's canvas spec
 // (vfxSpecs.resolveCardVfx: `CARD_VFX[id] ?? EXTRA_CARD_VFX[id]`):
 //
-//   1. COVERAGE — a core SIGNATURES card of tier >= 4 with no entry in EITHER
+//   1. COVERAGE: a core SIGNATURES card of tier >= 4 with no entry in EITHER
 //      table silently falls back to the generated per-family default, losing
 //      the palette/travel/impact that was authored for its fiction. This is
 //      the contract vfxSpecs' own header states. Note the scope: PLUGIN cards
-//      are deliberately NOT required to carry a spec — each plugin set
+//      are deliberately NOT required to carry a spec: each plugin set
 //      documents itself as "one entry per card whose canvas moment should
 //      differ from the tier default" (see funnyVfx.ts), so the family default
 //      is a legitimate answer for them.
-//   2. ORPHANS — an entry keyed to a card with no bespoke art anywhere is
+//   2. ORPHANS: an entry keyed to a card with no bespoke art anywhere is
 //      dead weight, and usually a typo'd or renamed card id. Here plugins DO
-//      count: an entry is legitimate if any of the 13 modules draws that card.
+//      count: an entry is legitimate if any plugin module draws that card.
 //
-//   4. ENTRANCE VARIANTS — the cards WITHOUT bespoke art (no plugin scene, no
+//   4. ENTRANCE VARIANTS: the cards WITHOUT bespoke art (no plugin scene, no
 //      core signature, not an op_* generated arrival) share their bucket's
 //      generic scene, bent per-card by the deterministic variant tuple from
 //      entranceResolve.entranceVariant. Two cards in the same bucket landing
-//      on the SAME tuple would arrive pixel-identically — the exact sameness
+//      on the SAME tuple would arrive pixel-identically, the exact sameness
 //      the variant system exists to kill. The collision count is ratcheted by
 //      scripts/entrance-variant-baseline.json: it may only shrink.
 //
-//   3. ENTRANCES — every library card, buff AND nerf, must resolve to a
+//   3. ENTRANCES: every library card, buff AND nerf, must resolve to a
 //      renderable acquire-entrance. The probe runs the REAL resolver
 //      (src/components/effects/entranceResolve.ts: motif first, category
 //      second, neutral floor last) over the whole library, and this script
@@ -44,10 +44,10 @@
 //
 // The old in-file self-check got both halves slightly wrong: it looked only at
 // `CARD_VFX` for coverage (so a card covered via vfxExtra read as missing) and
-// only at god/great/basic PLAYS for orphans (so the other ten plugin modules'
+// only at god/great/basic PLAYS for orphans (so every other plugin module's
 // cards read as orphans). Plugin coverage here comes from PLUGIN_IDS in
 // sigPlugins.tsx, which check-sig-plugins.cjs already guarantees mirrors all
-// 13 modules — this script inherits that guarantee instead of re-deriving it.
+// plugin modules, so this script inherits that guarantee instead of re-deriving it.
 // SIGNATURES itself lives in BoardEffects.tsx, which cannot be imported
 // headlessly (JSX + a component graph), so its keys are read with the shared
 // source scanner.
@@ -78,7 +78,7 @@ function entranceRenderers() {
   };
 }
 
-/** Card ids any plugin module supplies art for (all 13 modules). */
+/** Card ids any plugin module supplies art for (every module registered in sigPluginsMerged.tsx). */
 function pluginIds() {
   const { committedIds } = require("./check-sig-plugins.cjs");
   return committedIds(fs.readFileSync(SIG_PLUGINS, "utf8"));
@@ -87,18 +87,20 @@ function pluginIds() {
 /**
  * The VFX tables and each card's tier, read from the real modules. These are
  * plain .ts (no JSX, no browser globals), so a short tsx sub-process can
- * import them and hand back JSON — no second copy of the tables to drift.
+ * import them and hand back JSON, no second copy of the tables to drift.
  * NODE_ENV=production keeps vfxSpecs' own dev self-check from firing here.
  */
 function vfxTables() {
   const probe = path.join(__dirname, "vfx-coverage-probe.mts");
-  const out = execFileSync("npx", ["-y", "tsx", probe], {
+  // The repo's own tsx, never `npx -y tsx`: npx can fetch an unpinned copy.
+  const tsx = path.join(__dirname, "..", "node_modules", ".bin", "tsx");
+  const out = execFileSync(tsx, [probe], {
     cwd: path.join(__dirname, ".."),
     env: { ...process.env, NODE_ENV: "production" },
     encoding: "utf8",
     maxBuffer: 32 * 1024 * 1024,
   });
-  // The probe prints one JSON line; tsx/npx may prepend install chatter.
+  // The probe prints one JSON line; keep only that line in case tsx adds chatter.
   const line = out.trim().split("\n").filter((l) => l.startsWith("{")).pop();
   if (!line) throw new Error(`vfx-coverage-probe produced no JSON:\n${out}`);
   return JSON.parse(line);
@@ -113,7 +115,7 @@ function main() {
 
   const errors = [];
 
-  // 1. Coverage — core SIGNATURES only (see the scope note in the header).
+  // 1. Coverage: core SIGNATURES only (see the scope note in the header).
   const missing = signatures
     .filter((id) => (tiers[id] ?? 0) >= 4 && !covered.has(id))
     .map((id) => `${id} (tier ${tiers[id]})`)
@@ -133,7 +135,7 @@ function main() {
     );
   }
 
-  // 3. Entrances — the whole library (buffs and nerfs), no fallthrough.
+  // 3. Entrances: the whole library (buffs and nerfs), no fallthrough.
   const renderers = entranceRenderers();
   const entries = Object.entries(entrances ?? {});
   const unresolved = [];

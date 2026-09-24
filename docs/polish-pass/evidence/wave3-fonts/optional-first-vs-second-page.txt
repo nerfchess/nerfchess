@@ -1,0 +1,2 @@
+plain Liberation Sans {"fcp":312,"css":["1755441e3a2fa970.p.woff2 link 96-118","558ca1a6aa3cb55e.p.woff2 link 97-118","layout.css?v=17902589112 link 97-126","page.css?v=1790258911260 link 98-117","1755441e3a2fa970.p.woff2 css 158-279"],"noto":["400loaded","500loaded","600loaded"]}
+plain+second Noto Sans {"fcp":196,"css":["1755441e3a2fa970.p.woff2 link 91-102","558ca1a6aa3cb55e.p.woff2 link 91-105","layout.css?v=17902589193 link 91-107","page.css?v=1790258919377 link 92-106","1755441e3a2fa970.p.woff2 css 123-123"],"noto":["400loaded","500loaded","600loaded"]}

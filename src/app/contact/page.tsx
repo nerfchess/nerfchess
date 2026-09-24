@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { LinkButton } from "@/components/ui/Button";
+import { SOCIAL_LINKS } from "@/components/SocialsRow";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Contact | Nerf Chess",
-};
+export const metadata: Metadata = staticMeta("/contact");
+
+/** "Join the Discord" for the server invite, "@handle on Instagram" for the
+ *  accounts, with the handle read from the shared link so it cannot drift. */
+function socialCta(href: string, label: string): string {
+  if (label === "Discord") return "Join the Discord";
+  const last = new URL(href).pathname.split("/").filter(Boolean).pop() ?? "";
+  return last ? `${last.startsWith("@") ? last : `@${last}`} on ${label}` : label;
+}
 
 export default function ContactPage() {
   return (
@@ -21,38 +28,18 @@ export default function ContactPage() {
           Instagram, TikTok, and YouTube.
         </p>
         <div className="pt-2 flex flex-wrap gap-3">
-          <a
-            href="https://discord.gg/a5bJYFrTx"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-none btn-leaf font-display"
-          >
-            Join the Discord
-          </a>
-          <a
-            href="https://www.instagram.com/officialnerfchess"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-none btn-ghost font-display"
-          >
-            @officialnerfchess on Instagram
-          </a>
-          <a
-            href="https://tiktok.com/@nerfchess"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-none btn-ghost font-display"
-          >
-            @nerfchess on TikTok
-          </a>
-          <a
-            href="https://www.youtube.com/@OfficialNerfChess"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-none btn-ghost font-display"
-          >
-            @OfficialNerfChess on YouTube
-          </a>
+          {SOCIAL_LINKS.map(({ href, label }) => (
+            <LinkButton
+              key={href}
+              tone={label === "Discord" ? "leaf" : "ghost"}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-2.5"
+            >
+              {socialCta(href, label)}
+            </LinkButton>
+          ))}
         </div>
       </InfoSection>
 

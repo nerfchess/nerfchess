@@ -1,0 +1,101 @@
+  /  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3403ms
+  /  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  38239ms
+  /  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0036 (sum 0.0036, 0 >0.01)  4894ms
+  /  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  11549ms
+  /  390x844|dark|full|user|normal  HTTP 200  CLS 0.0007 (sum 0.0007, 0 >0.01)  7377ms
+  /  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0002 (sum 0.0003, 0 >0.01)  2840ms
+  /faq  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  3001ms
+  /faq  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  3875ms
+  /faq  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0026 (sum 0.0026, 0 >0.01)  3847ms
+  /faq  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3313ms
+  /faq  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  2760ms
+  /faq  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3703ms
+  /tutorial  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  7271ms
+  /tutorial  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4898ms
+  /tutorial  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0031 (sum 0.0031, 0 >0.01)  4426ms
+  /tutorial  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3896ms
+  /tutorial  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4012ms
+  /tutorial  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  4082ms
+  /about  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5794ms
+  /about  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4639ms
+  /about  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0026 (sum 0.0026, 0 >0.01)  4017ms
+  /about  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3786ms
+  /about  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3750ms
+  /about  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3178ms
+  /guide  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5853ms
+  /guide  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4519ms
+  /guide  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.003 (sum 0.003, 0 >0.01)  4212ms
+  /guide  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3991ms
+  /guide  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  5035ms
+  /guide  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3903ms
+  /guide/buff-mode  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5715ms
+  /guide/buff-mode  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4462ms
+  /guide/buff-mode  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0027, 0 >0.01)  4087ms
+  /guide/buff-mode  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  5468ms
+  /guide/buff-mode  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3999ms
+  /guide/buff-mode  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3697ms
+  /guide/capture-the-king  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  7996ms
+  /guide/capture-the-king  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4746ms
+  /guide/capture-the-king  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4166ms
+  /guide/capture-the-king  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4427ms
+  /guide/capture-the-king  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3690ms
+  /guide/capture-the-king  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  4684ms
+  /guide/chess-roguelike  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5775ms
+  /guide/chess-roguelike  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4334ms
+  /guide/chess-roguelike  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.003 (sum 0.003, 0 >0.01)  3561ms
+  /guide/chess-roguelike  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3707ms
+  /guide/chess-roguelike  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3650ms
+  /guide/chess-roguelike  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  4738ms
+  /guide/chess-variants  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5935ms
+  /guide/chess-variants  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  5275ms
+  /guide/chess-variants  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0029 (sum 0.0029, 0 >0.01)  4039ms
+  /guide/chess-variants  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3610ms
+  /guide/chess-variants  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4699ms
+  /guide/chess-variants  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3968ms
+  /guide/chess-with-power-ups  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5963ms
+  /guide/chess-with-power-ups  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4758ms
+  /guide/chess-with-power-ups  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0027, 0 >0.01)  3812ms
+  /guide/chess-with-power-ups  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4138ms
+  /guide/chess-with-power-ups  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3904ms
+  /guide/chess-with-power-ups  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  4163ms
+  /guide/glossary  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  7492ms
+  /guide/glossary  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4038ms
+  /guide/glossary  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0029 (sum 0.0029, 0 >0.01)  3915ms
+  /guide/glossary  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4841ms
+  /guide/glossary  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  2904ms
+  /guide/glossary  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  4141ms
+  /guide/how-to-play  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  5575ms
+  /guide/how-to-play  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4480ms
+  /guide/how-to-play  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.003 (sum 0.003, 0 >0.01)  5300ms
+  /guide/how-to-play  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3852ms
+  /guide/how-to-play  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3925ms
+  /guide/how-to-play  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3883ms
+  /guide/nerf-mode  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  4148ms
+  /guide/nerf-mode  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4329ms
+  /guide/nerf-mode  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0027, 0 >0.01)  4476ms
+  /guide/nerf-mode  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  2847ms
+  /guide/nerf-mode  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4109ms
+  /guide/nerf-mode  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  4078ms
+  /terms-of-service  360x780|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service  9ms
+  /terms-of-service  390x844|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service  11ms
+  /terms-of-service  1280x800|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service  12ms
+  /terms-of-service  360x780|dark|full|user|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service  6ms
+  /terms-of-service  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  47107ms
+  /terms-of-service  1280x800|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  14197ms
+  /privacy-policy  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  10960ms
+  /privacy-policy  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4158ms
+  /privacy-policy  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0027, 0 >0.01)  4046ms
+  /privacy-policy  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3756ms
+  /privacy-policy  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4316ms
+  /privacy-policy  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3551ms
+  /guidelines  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  10732ms
+  /guidelines  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  4324ms
+  /guidelines  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0032 (sum 0.0032, 0 >0.01)  4637ms
+  /guidelines  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3949ms
+  /guidelines  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  7898ms
+  /guidelines  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  3544ms
+[cls] 96 cells, 0 above target 0.01, 4 over ceiling
+  ERROR /terms-of-service|360x780|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service
+  ERROR /terms-of-service|390x844|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service
+  ERROR /terms-of-service|1280x800|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service
+  ERROR /terms-of-service|360x780|dark|full|user|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/terms-of-service

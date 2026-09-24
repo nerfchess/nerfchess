@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+import { guardJsonWrite } from "@/lib/server/request";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
   hashPassword,
-  RESERVED_USERNAMES,
+  loginThrottled,
+  recordLoginFailure,
   sessionCookie,
   sessionTokenFromCookieHeader,
   userForSession,
+  usernameChangeStatements,
   validEmail,
   validPassword,
   validUsername,
@@ -14,16 +17,23 @@ import {
 import { RD_START, VOL_START } from "@/lib/glicko";
 import { containsProfanity } from "@/lib/profanity";
 import { verifyTurnstile } from "@/lib/server/turnstile";
+import { whoCookieHeader } from "@/lib/session/who";
+import { hintFromRow } from "../_lib/who";
+import { isReservedUsername } from "../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 
 export const dynamic = "force-dynamic";
 
+/** New accounts per client IP per 15-minute window (the login_attempts window). */
+const REGISTER_MAX_PER_IP = 10;
+
 export async function POST(request: Request) {
-  let body: { username?: unknown; password?: unknown; email?: unknown; turnstileToken?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  // Refuses cross-site browser requests (F046, login CSRF) and anything but
+  // a JSON object body under 16 KB (F047: `null` used to crash the field
+  // reads below with a 500). Shared with slice F: src/lib/server/request.ts.
+  const parsed = await guardJsonWrite(request);
+  if (parsed instanceof NextResponse) return parsed;
+  const body = parsed as { username?: unknown; password?: unknown; email?: unknown; turnstileToken?: unknown };
   // Bot check: no-op unless TURNSTILE_SECRET_KEY is configured.
   const turnstileToken = typeof body.turnstileToken === "string" ? body.turnstileToken : "";
   const humanOk = await verifyTurnstile(turnstileToken, request.headers.get("CF-Connecting-IP"));
@@ -40,7 +50,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+  if (isReservedUsername(username)) {
     return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
   }
   if (email && !validEmail(email)) {
@@ -55,6 +65,24 @@ export async function POST(request: Request) {
 
   const db = await getDb();
   const caller = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
+  // Power names (src/lib/godPanel.ts) unlock owner tools by name (F045): no
+  // new account or upgrading guest may take one it does not already hold.
+  if (claimsPowerUsername(username, caller?.username)) {
+    return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
+  }
+
+  // Account creation per client IP, on the same rolling-window counter the
+  // sign-in and guest guards use (F062). Turnstile is fail-open when its
+  // secret is unset, so without this nothing capped scripted sign-ups.
+  // A guest upgrading in place creates no row and is not counted.
+  const ip = request.headers.get("CF-Connecting-IP");
+  const ipKey = ip && !caller?.is_guest ? `register:${ip}` : null;
+  if (ipKey && (await loginThrottled(db, ipKey, REGISTER_MAX_PER_IP))) {
+    return NextResponse.json(
+      { error: "Too many accounts created from this network. Try again later." },
+      { status: 429 },
+    );
+  }
 
   const existing = await db
     .prepare("SELECT id FROM users WHERE username_lower = ?")
@@ -80,20 +108,39 @@ export async function POST(request: Request) {
   // race between check and write, and a signed-in non-guest re-posting their
   // own current username passes the check but violates the index on INSERT.
   // Map the constraint error to a 409 instead of letting it 500.
-  const conflict = () =>
-    NextResponse.json({ error: "That username or email is already in use." }, { status: 409 });
+  // Anything else is a real failure: logged, and a 500 rather than a
+  // misleading "already in use" (F062).
+  const conflict = (err: unknown) => {
+    if (err instanceof Error && /UNIQUE/i.test(err.message)) {
+      return NextResponse.json({ error: "That username or email is already in use." }, { status: 409 });
+    }
+    console.error("register: write failed", err);
+    return NextResponse.json({ error: "Could not create the account right now." }, { status: 500 });
+  };
   if (caller?.is_guest) {
     try {
-      await db
-        .prepare(
-          "UPDATE users SET username = ?, username_lower = ?, password_hash = ?, email = COALESCE(?, email), is_guest = 0 WHERE id = ?",
-        )
-        .bind(username, username.toLowerCase(), await hashPassword(password), email, caller.id)
-        .run();
-    } catch {
-      return conflict();
+      // One batch with the username history (F076): links to the guest's old
+      // /u/<GuestName> page keep resolving to the upgraded account, the same
+      // as after a rename, and the history row cannot exist without the rename.
+      await db.batch([
+        db
+          .prepare(
+            "UPDATE users SET username = ?, username_lower = ?, password_hash = ?, email = COALESCE(?, email), is_guest = 0 WHERE id = ?",
+          )
+          .bind(username, username.toLowerCase(), await hashPassword(password), email, caller.id),
+        ...usernameChangeStatements(db, caller.id, caller.username.toLowerCase(), username.toLowerCase()),
+      ]);
+    } catch (err) {
+      return conflict(err);
     }
-    return NextResponse.json({ id: caller.id, username });
+    // Same session, new name and no longer a guest: re-stamp the display
+    // cookie so the next page draws the registered header at once.
+    const upgraded = NextResponse.json({ id: caller.id, username });
+    upgraded.headers.append(
+      "Set-Cookie",
+      whoCookieHeader(hintFromRow({ ...caller, username, is_guest: 0 }), requestIsSecure(request)),
+    );
+    return upgraded;
   }
 
   const id = crypto.randomUUID();
@@ -108,12 +155,18 @@ export async function POST(request: Request) {
       )
       .bind(id, username, username.toLowerCase(), await hashPassword(password), email, Date.now(), RD_START, VOL_START)
       .run();
-  } catch {
-    return conflict();
+  } catch (err) {
+    return conflict(err);
   }
 
+  if (ipKey) await recordLoginFailure(db, ipKey); // counts one creation in the window
   const token = await createSession(db, id);
+  const secure = requestIsSecure(request);
   const response = NextResponse.json({ id, username });
-  response.headers.set("Set-Cookie", sessionCookie(token, requestIsSecure(request)));
+  response.headers.append("Set-Cookie", sessionCookie(token, secure));
+  response.headers.append(
+    "Set-Cookie",
+    whoCookieHeader(hintFromRow({ username, avatar: null, role: "user", is_guest: 0 }), secure),
+  );
   return response;
 }

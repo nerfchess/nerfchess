@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { GlossaryText } from "@/components/GlossaryText";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import { ALL_BUFFS } from "@/engine/buffs/library";
@@ -34,23 +35,6 @@ import { BUFF_BY_ID } from "@/lib/cardCodex";
 // so the full name, effect, and context of all ~1000 cards ship in the crawled
 // markup: the codex list itself is a client component and never was.
 
-// BreadcrumbList structured data: Home > Codex > (Buffs|Nerfs) > card.
-function CardBreadcrumbJsonLd({ section, name, path }: { section: string; name: string; path: string }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Nerf Chess", item: "https://nerfchess.com" },
-      { "@type": "ListItem", position: 2, name: "Codex", item: "https://nerfchess.com/codex" },
-      { "@type": "ListItem", position: 3, name: section, item: "https://nerfchess.com/codex" },
-      { "@type": "ListItem", position: 4, name, item: `https://nerfchess.com${path}` },
-    ],
-  };
-  return (
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-  );
-}
-
 // The codex tab each family opens on, so the breadcrumb's family link lands
 // on the right list. Items browse under the Buff tab, matching the browser.
 const SECTION_TAB: Record<string, string> = {
@@ -60,6 +44,21 @@ const SECTION_TAB: Record<string, string> = {
   Boons: "boons",
   Nerfs: "rules",
 };
+
+// BreadcrumbList structured data: Home > Codex > family > card, built by the
+// shared seo helper (escaped, absolute URLs). The family crumb carries its own
+// tab URL so no two crumbs share one (F246).
+function CardBreadcrumbJsonLd({ section, name, path }: { section: string; name: string; path: string }) {
+  return (
+    <BreadcrumbJsonLd
+      crumbs={[
+        { name: "Codex", path: "/codex" },
+        { name: section, path: `/codex?tab=${SECTION_TAB[section] ?? "buffs"}` },
+        { name, path },
+      ]}
+    />
+  );
+}
 
 // The visible breadcrumb trail: Codex > family > this card. Mirrors the
 // BreadcrumbList JSON-LD below so readers and crawlers see the same path.
@@ -198,7 +197,7 @@ function RetiredNote({ id }: { id: string }) {
         <>
           {" "}
           See{" "}
-          <Link href={targetPath} className="text-gold-leaf hover:underline">
+          <Link href={targetPath} className="text-gold-leaf underline underline-offset-2">
             {target.name}
           </Link>{" "}
           instead.
@@ -229,7 +228,7 @@ function formatHistoryDate(iso: string): string {
 
 // A plate section that opens on demand. Native <details>, so the content is
 // still server-rendered and crawlable (the SEO reason this page exists) while
-// the default view stays short — playtest feedback was that the card page
+// the default view stays short: playtest feedback was that the card page
 // buried the rule under reference material.
 function DisclosureSection({ title, children }: { title: string; children: ReactNode }) {
   return (

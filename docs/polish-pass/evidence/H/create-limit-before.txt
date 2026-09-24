@@ -1,0 +1,3 @@
+  ok  socketGuard exports WindowLimiter and MATCH_CREATE_LIMITS (F067)
+FAIL  friend games and bot games both spend the create limit (F067)
+FAIL  the address key is a digest, never the raw address

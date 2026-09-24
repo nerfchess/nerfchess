@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useReducedMotion } from "@/lib/useReducedMotion";
-import { useMotionTempo, tempoScale } from "@/components/useMotionTempo";
+import { detectReduced, useReducedMotion } from "@/lib/useReducedMotion";
+import { releaseAllLowTime } from "@/lib/lowTimeMotion";
+import { detectTempo, useMotionTempo, tempoScale } from "@/components/useMotionTempo";
 import { useModalChrome } from "@/lib/useModalChrome";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -646,8 +648,28 @@ function splitReason(reason: string) {
 
 // The game-over chime fires once per finished game, not once per mount:
 // dismissing and reopening the result screen, or a reconnect replaying the
-// end frame, remounts this component and must stay silent.
+// end frame, remounts this component and must stay silent. The module Set
+// alone forgot everything on a hard reload, so reopening a finished game's
+// page rang the ending again (F218); the ledger also lives in sessionStorage
+// for the tab's lifetime. Storage can be blocked, so every access is guarded
+// and the Set still covers the session when it is.
 const playedGameOverKeys = new Set<string>();
+const VOICED_STORAGE_KEY = "nc:gameover-voiced";
+function alreadyVoiced(key: string): boolean {
+  if (playedGameOverKeys.has(key)) return true;
+  playedGameOverKeys.add(key);
+  try {
+    const raw = window.sessionStorage.getItem(VOICED_STORAGE_KEY);
+    const list: unknown = raw ? JSON.parse(raw) : [];
+    const keys = Array.isArray(list) ? list.filter((k): k is string => typeof k === "string") : [];
+    if (keys.includes(key)) return true;
+    // Bounded: the newest 50 endings are plenty for one tab.
+    window.sessionStorage.setItem(VOICED_STORAGE_KEY, JSON.stringify([...keys, key].slice(-50)));
+  } catch {
+    // Storage blocked or malformed: the in-memory Set above still applies.
+  }
+  return false;
+}
 
 // Count a figure from `from` up to `to` over a short beat, so the post-game
 // rating change reads as earned rather than snapping into place. Jumps straight
@@ -697,7 +719,53 @@ const reelIcon = (
   </svg>
 );
 
-export function GameOver({
+// THE SETTLE. The ending used to land in the same frame as the move that
+// caused it, so the backdrop covered the board before the final position had
+// registered and the check chime of a mating move ran into the game-over
+// chime (F205). The panel now waits one short beat while the board holds the
+// final position, then plays its three acts from zero. Only endings that
+// happen ON the board settle; a resignation, an agreed draw, an abort or an
+// interruption was a button press and answers at once. Scaled by the tempo,
+// so it is 0 with motion off and never delays anything a player needs.
+const SETTLE_MS = 600;
+const OFF_BOARD_ENDING =
+  /^(resignation|draw by agreement|abandonment|aborted|game interrupted|server update interrupted|house players are paused)/i;
+
+export function settleMsFor(result: GameResult, scale: number): number {
+  if (scale <= 0 || result.winner === null) return 0;
+  return OFF_BOARD_ENDING.test(result.reason.trim()) ? 0 : Math.round(SETTLE_MS * scale);
+}
+
+// Games whose ending has already settled once: reopening the panel from "Show
+// result" is a button press and must answer at once, not settle again.
+const settledGameOverKeys = new Set<string>();
+
+export function GameOver(props: Props) {
+  const { result, gameId, startedAt } = props;
+  // Read through the low-time hold (see F204 below): the game is over.
+  const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
+  const [settleMs] = useState(() =>
+    key == null || settledGameOverKeys.has(key)
+      ? 0
+      : settleMsFor(result, detectReduced(true) ? 0 : tempoScale(detectTempo(true))),
+  );
+  const [settled, setSettled] = useState(settleMs === 0);
+  // The game ending is what ends the low-time hold, so the settle frames
+  // already run at the player's own tempo, and the panel's CSS beats agree
+  // with its motion reads from their first paint.
+  useLayoutEffect(() => {
+    releaseAllLowTime();
+    if (key != null) settledGameOverKeys.add(key);
+  }, [key]);
+  useEffect(() => {
+    if (settled) return;
+    const t = window.setTimeout(() => setSettled(true), settleMs);
+    return () => window.clearTimeout(t);
+  }, [settled, settleMs]);
+  return settled ? <GameOverPanel {...props} /> : null;
+}
+
+function GameOverPanel({
   result,
   myColor,
   myNerf,
@@ -791,14 +859,19 @@ export function GameOver({
   // the reveal on the panel itself, where it cannot animate out of sight.
   const [rulesOpen, setRulesOpen] = useState(false);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
-  const reduceMotion = useReducedMotion();
+  // Both motion reads look through the low-time hold: this panel exists
+  // because the game ended, which is what ends the hold, but it mounts in the
+  // same commit whose effects release it, so a plain read took the scramble's
+  // "off" as the whole ending's tempo (F204). The GameOver wrapper lifts the
+  // hold before the first paint so the CSS beats agree with these.
+  const reduceMotion = useReducedMotion(undefined, { ignoreLowTimeHold: true });
   // Tempo. `beat` multiplies every duration and delay in the ending, on both
   // sides of the CSS boundary: it is handed to the stylesheet as --beat and
   // used here for the framer springs, the rating count-up and the one timer.
   // Without it "fast" reached nothing in this panel — globals.css clamps
   // `transition-duration` only, which is not what a keyframe, a framer
   // transition or a requestAnimationFrame count-up is made of.
-  const tempo = useMotionTempo();
+  const tempo = useMotionTempo({ ignoreLowTimeHold: true });
   const beat = reduceMotion ? 0 : tempoScale(tempo);
   const choreograph = beat > 0;
   // The lid over the opponent's rule retires itself once its beat has played.
@@ -923,7 +996,11 @@ export function GameOver({
       opponentNerf && oppRevealed
         ? `Opponent rule: ${opponentNerf.name} (${opponentNerf.description})`
         : null,
-      typeof window !== "undefined" ? window.location.origin : "https://nerfchess.com",
+      // An online game shares its own page, which unfurls as a game card
+      // (the site root never could, so a shared result showed nothing of the
+      // game, F240); a local bot game has no public page and keeps the site.
+      (typeof window !== "undefined" ? window.location.origin : "https://nerfchess.com") +
+        (serverGameId ? `/game/${encodeURIComponent(serverGameId)}` : ""),
     ].filter(Boolean);
     const text = lines.join("\n");
     try {
@@ -983,10 +1060,7 @@ export function GameOver({
 
   useEffect(() => {
     const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
-    if (key) {
-      if (playedGameOverKeys.has(key)) return;
-      playedGameOverKeys.add(key);
-    }
+    if (key && alreadyVoiced(key)) return;
     // The result screen is the one place that knows how the game ended from
     // THIS seat, so it voices the outcome rather than the neutral dong: a
     // rising fanfare for a win, a soft fall for a loss, an unresolved pair for

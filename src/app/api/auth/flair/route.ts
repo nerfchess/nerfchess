@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { guardJsonWrite } from "@/lib/server/request";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isFlairEmoji, LAUREL_FLAIR } from "@/lib/flair";
@@ -12,12 +13,12 @@ export const dynamic = "force-dynamic";
 // be claimed while the account currently holds a top-10 leaderboard spot
 // (checked here, statelessly, on every claim).
 export async function POST(request: Request) {
-  let body: { flair?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  // Refuses cross-site browser requests (F046, login CSRF) and anything but
+  // a JSON object body under 16 KB (F047: `null` used to crash the field
+  // reads below with a 500). Shared with slice F: src/lib/server/request.ts.
+  const parsed = await guardJsonWrite(request);
+  if (parsed instanceof NextResponse) return parsed;
+  const body = parsed as { flair?: unknown };
 
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));

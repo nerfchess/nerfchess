@@ -3,16 +3,23 @@
 @tailwind utilities;
 
 /* Phones must never scroll sideways. `clip` (not `hidden`) so position:sticky
-   descendants keep working — hidden would turn the root into a scroll
+   descendants keep working, hidden would turn the root into a scroll
    container and detach sticky elements. */
 html,
 body {
   overflow-x: clip;
 }
+/* Reserve the scrollbar's lane on every page, so a centred layout does not
+   slide sideways when late content makes the page tall enough to scroll (or
+   a short error state makes it stop). Overlay-scrollbar platforms reserve
+   nothing, so phones are unchanged (F009). */
+html {
+  scrollbar-gutter: stable;
+}
 
 :root {
   /* =========================================================================
-     DESIGN TOKENS — the base palette, matched to Lichess.
+     DESIGN TOKENS, the base palette, matched to Lichess.
      ------------------------------------------------------------------------
      These canonical tokens are the source of truth for the whole site. The
      DARK values live here; the one other theme (light) overrides the same
@@ -48,8 +55,8 @@ body {
      lighter than the menus and modals of the app. Measured on the running site,
      that one percent was the largest single contrast failure left: muted body
      text (`parchment-400`, the floor named in section 10 of the design system)
-     measured 4.44:1 on it across 269 rendered elements — the codex rows, the
-     lobby chips, every glossary <details> — a hair under AA, everywhere at
+     measured 4.44:1 on it across 269 rendered elements, the codex rows, the
+     lobby chips, every glossary <details>, a hair under AA, everywhere at
      once. Dropped one rung to sit BETWEEN the panel and the raised step, which
      is where a zebra tint belongs (page 8 < panel 14 < zebra 16 < raised 18 <
      hover 22). The same text now measures 4.95:1 on it, and no rung moved past
@@ -64,7 +71,7 @@ body {
   --ui-roundness: 0px;
   --btn-roundness: 2px;
 
-  /* Board — Lichess brown, with a last-move/selection highlight stored as an
+  /* Board, Lichess brown, with a last-move/selection highlight stored as an
      rgb triple so it can be laid down at 40% opacity. */
   --board-light: #f0d9b5;
   --board-dark: #b58863;
@@ -85,7 +92,7 @@ body {
   --text-primary-rgb: 198 198 198;
   --text-secondary-rgb: 151 151 151;
 
-  /* Accents — the four semantic colors.
+  /* Accents, the four semantic colors.
      Accent blue = links / primary buttons / focus / "act here".
      Nerf red = Nerf mode / curses / resign / danger.
      Buff blue = Buff mode / powers / boons.
@@ -132,7 +139,7 @@ body {
   --c-accent-warm-rgb: 214 79 0;
 
   /* -------------------------------------------------------------------------
-     LEGACY ALIASES — every name below resolves to a token above. Components
+     LEGACY ALIASES, every name below resolves to a token above. Components
      keep using these; the palette flows through automatically.
      ------------------------------------------------------------------------- */
   --paper: var(--text-primary);
@@ -269,6 +276,104 @@ html[data-anim="fast"] *::before,
 html[data-anim="fast"] *::after {
   transition-duration: 80ms !important;
 }
+/* The same setting as a multiplier for keyframe animations, which the clamp
+   above never reaches. Chrome keyframes read calc(var(--dur-N) * var(--tempo)).
+   The --dur tokens themselves stay put: GameOver already scales its acts by
+   --beat, and folding fast into the tokens would shorten those twice. */
+:root { --tempo: 1; }
+html[data-anim="fast"] { --tempo: 0.6; }
+
+/* --- Chrome motion primitives -----------------------------------------------
+   One motion per idea, so every popover opens the same way, every modal
+   closes the same way and every toast leaves the way it came. Enter on
+   --dur-2 --ease-out, exit on --dur-1 --ease-io (a mirrored, quicker leave).
+   To exit, keep the element mounted with data-leaving set for --dur-1;
+   src/lib/useExitPresence.ts does both and unmounts at once with motion off.
+
+     .m-pop      popovers, menus, dropdowns: grow from the trigger. Origin is
+                 --m-origin (default top centre); .m-pop--up opens upward,
+                 .m-pop--start / .m-pop--end anchor a left or right trigger.
+     .m-scrim    the dim behind a modal or drawer: fades.
+     .m-modal    dialogs: rise 8px and settle from 98%.
+     .m-toast    toasts and board notices: rise from --m-dy (6px), leave back.
+     .m-enter    one element arriving in a list: fades from --m-dx / --m-dy.
+     .m-list     a list whose first eight children enter in a 30ms stagger;
+                 anything past the cap appears with the eighth.
+     .m-chevron  disclosure chevrons: rotate 180deg (or 90deg with
+                 .m-chevron--quarter) when data-open="true".
+
+   The individual translate / scale / rotate properties are used rather than
+   transform, so a primitive composes with a positioning transform already on
+   the element (a -translate-x-1/2 centre) instead of overwriting it. Enters
+   fill backwards only, so nothing is pinned once they finish and hover
+   transforms keep working. With data-anim="off" (the in-app switch, reduced
+   motion, or the opted-in OS preference) the backstop above lands every one on
+   its end state in the first frame. */
+.m-pop {
+  transform-origin: var(--m-origin, top center);
+  animation: m-pop-in calc(var(--dur-2) * var(--tempo)) var(--ease-out) backwards;
+}
+.m-pop--up { --m-origin: bottom center; --m-dy: 4px; }
+.m-pop--start { --m-origin: top left; }
+.m-pop--end { --m-origin: top right; }
+.m-pop--up.m-pop--start { --m-origin: bottom left; }
+.m-pop--up.m-pop--end { --m-origin: bottom right; }
+.m-pop[data-leaving] {
+  pointer-events: none;
+  animation: m-pop-out calc(var(--dur-1) * var(--tempo)) var(--ease-io) forwards;
+}
+@keyframes m-pop-in {
+  from { opacity: 0; translate: 0 var(--m-dy, -4px); scale: 0.97; }
+}
+@keyframes m-pop-out {
+  to { opacity: 0; translate: 0 var(--m-dy, -4px); scale: 0.97; }
+}
+.m-scrim { animation: m-fade-in calc(var(--dur-2) * var(--tempo)) var(--ease-out) backwards; }
+.m-scrim[data-leaving] {
+  pointer-events: none;
+  animation: m-fade-out calc(var(--dur-1) * var(--tempo)) var(--ease-io) forwards;
+}
+@keyframes m-fade-in { from { opacity: 0; } }
+@keyframes m-fade-out { to { opacity: 0; } }
+.m-modal { animation: m-modal-in calc(var(--dur-2) * var(--tempo)) var(--ease-out) backwards; }
+.m-modal[data-leaving] {
+  pointer-events: none;
+  animation: m-modal-out calc(var(--dur-1) * var(--tempo)) var(--ease-io) forwards;
+}
+@keyframes m-modal-in { from { opacity: 0; translate: 0 8px; scale: 0.98; } }
+@keyframes m-modal-out { to { opacity: 0; translate: 0 8px; scale: 0.98; } }
+.m-toast { animation: m-toast-in calc(var(--dur-2) * var(--tempo)) var(--ease-out) backwards; }
+.m-toast[data-leaving] {
+  pointer-events: none;
+  animation: m-toast-out calc(var(--dur-1) * var(--tempo)) var(--ease-io) forwards;
+}
+@keyframes m-toast-in { from { opacity: 0; translate: 0 var(--m-dy, 6px); } }
+@keyframes m-toast-out { to { opacity: 0; translate: 0 var(--m-dy, 6px); } }
+.m-enter,
+.m-list > * {
+  animation: m-enter calc(var(--dur-2) * var(--tempo)) var(--ease-out)
+    calc(var(--m-i, 0) * 30ms * var(--tempo)) backwards;
+}
+@keyframes m-enter { from { opacity: 0; translate: var(--m-dx, 0) var(--m-dy, 4px); } }
+.m-list > :nth-child(2) { --m-i: 1; }
+.m-list > :nth-child(3) { --m-i: 2; }
+.m-list > :nth-child(4) { --m-i: 3; }
+.m-list > :nth-child(5) { --m-i: 4; }
+.m-list > :nth-child(6) { --m-i: 5; }
+.m-list > :nth-child(7) { --m-i: 6; }
+.m-list > :nth-child(n + 8) { --m-i: 7; }
+.m-chevron { transition: rotate var(--dur-1) var(--ease-io); }
+.m-chevron[data-open="true"] { rotate: 180deg; }
+.m-chevron--quarter[data-open="true"] { rotate: 90deg; }
+/* A native <details> disclosure has no React state to stamp data-open with;
+   its own [open] attribute drives the same turn. */
+details[open] > summary .m-chevron { rotate: 180deg; }
+details[open] > summary .m-chevron--quarter { rotate: 90deg; }
+/* The backstop clamps durations but not delays, so a staggered child would
+   otherwise sit invisible for its delay. Enters simply do not run. */
+html[data-anim="off"] :is(.m-pop, .m-scrim, .m-modal, .m-toast, .m-enter, .m-list > *):not([data-leaving]) {
+  animation: none;
+}
 
 /* Site theme (Settings > Appearance): two palettes, dark and light, plus
    "system" which resolves to one of them before it reaches the DOM. Each one
@@ -303,7 +408,10 @@ html[data-theme="midnight"] {
   --accent-gold-hi: #6db2f5;
   --accent-gold-rgb: 76 159 240;
   --accent-gold-hi-rgb: 109 178 245;
-  --accent-gold-dim-rgb: 51 118 186;
+  /* The dark scheme's dim rung, not a lighter navy one: 51 118 186 held the
+     white .btn-leaf label at 4.73:1 but its hover lift fell to 4.17:1. On this
+     rung rest is 5.25:1 and hover 4.63:1 (wave 3 contrast). */
+  --accent-gold-dim-rgb: 42 111 176;
   --accent-buff: #6aa8e0;
   --accent-buff-hi: #92c1ea;
   --accent-buff-rgb: 106 168 224;
@@ -360,13 +468,21 @@ html[data-theme="light"] {
      Same meanings, same hues. */
   --accent-nerf: #c0413b;
   --accent-nerf-rgb: 192 65 59;
-  --accent-nerf-hi-rgb: 209 88 82;
+  /* The mode -hi rungs step DOWN on paper for the same reason as the gold one
+     above: text-mode-nerfGlow / buffGlow are the mode labels (ModeBadge, the
+     header's Nerf TV), and the old lighter steps measured 4.02:1 and 4.26:1 on
+     white, under AA at 12-13px. Nerf takes the existing scorched deep rung
+     (8.37 white, 6.98 page), Buff the paper gold-hi blue (7.18, 5.98). */
+  --accent-nerf-hi-rgb: 138 46 44;
   --accent-buff: #2b6aa0;
   --accent-buff-rgb: 43 106 160;
-  --accent-buff-hi-rgb: 58 127 187;
+  --accent-buff-hi-rgb: 20 88 159;
   --accent-positive: #4c7a1c;
   --accent-positive-rgb: 76 122 28;
-  --accent-positive-hi-rgb: 98 153 36;
+  /* Steps down onto the base green for the same reason as the mode rungs:
+     text-verdigris-glow on paper measured 3.44:1 on white. The base measures
+     5.11:1 (wave 3 contrast). */
+  --accent-positive-hi-rgb: 76 122 28;
   --text-on-accent: #ffffff;
   --c-metal-top: hsl(0 0% 96%);
   --c-metal-bottom: hsl(0 0% 93%);
@@ -377,7 +493,7 @@ html[data-theme="light"] {
   /* Brass is a TEXT colour here (dates, ranks, medals, the `text-brag` label on
      every /updates entry), and brass on paper has to go dark for the same
      reason the semantic three above do. At 48% lightness it measured 2.93:1 on
-     both the white panel and the page across 34 rendered elements — 12px
+     both the white panel and the page across 34 rendered elements, 12px
      uppercase labels, so the 4.5:1 body threshold applies, not the 3:1 large
      one. 31% measures 5.77:1 on the panel and 4.65:1 on the page. The hue and
      the saturation are untouched: this is the same brass, set for ink on
@@ -416,7 +532,7 @@ html[data-light] .text-parchment-500 { color: var(--text-muted); }
 
    Measured on the running site with a real pointer, not by reading hex out of
    the CSS: the header's "Sign in" went from 2.75:1 at rest to 1.03:1 the moment
-   it was hovered, and /tv's icon button from 10.86:1 to 1.71:1 — the label
+   it was hovered, and /tv's icon button from 10.86:1 to 1.71:1, the label
    disappeared into the page under the pointer. Across the bundle that is 77
    hover call sites and 10 alpha ones.
 
@@ -437,7 +553,7 @@ html[data-light] .hover\:text-parchment-300:hover { color: var(--text-primary); 
 /* Alpha modifiers compound the same miss twice over: 60% of the dark #979797
    over white measures 1.75:1, and even re-tinted to the paper rung a 60% wash
    only reaches 2.6:1. So they resolve to a SOLID lower rung instead, which is
-   what the ramp is for — a dimmer tone names a lower rung, it does not dilute a
+   what the ramp is for, a dimmer tone names a lower rung, it does not dilute a
    higher one. Applied in both schemes, because the dark side fails too:
    text-parchment-400/60 measures 2.7:1 on the dark panel and
    text-parchment-300/60 3.36:1. The remaining call sites (Board.tsx and the mod
@@ -480,8 +596,7 @@ button[class*="rounded"]:not([class*="rounded-full"]),
 [role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: var(--btn-roundness) !important; }
 /* A thumb switch is a pill with a round knob, the one button that is not a
    box. Opted into by class, since a few labelled toggles are still boxes. */
-button.settings-toggle,
-button.pill-switch { border-radius: 999px !important; }
+button.settings-toggle { border-radius: 999px !important; }
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -561,27 +676,6 @@ body {
 .press { transition: transform var(--dur-1) var(--ease-out); }
 .press:active { transform: scale(var(--feel-press)); }
 
-/* Hover lift: a 1px rise with a WARM near-black shadow (never a colored glow),
-   only where a true pointer exists so touch devices get no sticky hover. */
-@media (hover: hover) {
-  .hover-lift {
-    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
-  }
-  .hover-lift:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 26px -18px rgba(0, 0, 0, 0.75);
-  }
-}
-
-/* Capped staggered entrance: the first several children of a dense list fade
-   in with a beat; everything past the cap appears at once, so long lists never
-   cascade slowly. Opacity-only on purpose — a `both`-filled transform would
-   lock the element and break per-row :hover lifts. Collapsed when motion off. */
-@keyframes row-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
 /* --- Ornament rules → hairline dividers ---
    The label between the hairlines is a SECTION LABEL, and section 3 of
    design-system.md retires the tracked-out allcaps device for exactly this
@@ -635,7 +729,7 @@ body {
    utility on the same element (fixed, absolute, sticky, z-30...) wins. This
    rule sits after Tailwind's utilities in the sheet, so at equal specificity
    it would silently demote e.g. the mobile buff drawer's `fixed z-40` panel
-   to relative/z-2 — leaving its own z-30 backdrop painted on top and eating
+   to relative/z-2, leaving its own z-30 backdrop painted on top and eating
    every tap (the un-clickable Use button on phones). */
 :where(.plate) {
   position: relative;
@@ -682,7 +776,7 @@ body {
 /* A plate used as a floating menu is absolutely positioned (many dropdowns
    carry no `absolute` utility of their own and rely on this). Floating surfaces
    also step ONE rung up the ink ladder (ink-600) so menus and modals read as
-   closer to the viewer — depth from lightness, not a heavier shadow. */
+   closer to the viewer, depth from lightness, not a heavier shadow. */
 .plate.dropdown {
   position: absolute;
   background: var(--surface-raise);
@@ -853,7 +947,7 @@ html[data-light] {
 .draft-face {
   /* Flat face: the tier shows in the edge ring and the numeral, not a wash. */
   box-shadow: inset 0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.35);
-  transition: box-shadow 220ms var(--ease-out), border-color 220ms var(--ease-out);
+  transition: box-shadow var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
 }
 .draft-face:hover {
   box-shadow:
@@ -892,7 +986,12 @@ html[data-light] {
 .btn-gold,
 .btn-slab,
 .btn-glass--primary {
-  background: var(--accent);
+  /* The fill is the accent's dim rung, not the accent itself: a white 13-14px
+     label on --accent measures 3.27:1 (dark) and 2.79:1 (midnight), under AA.
+     The dim rung is the same hue one step down and clears 4.5:1 in every
+     scheme (5.25 dark and midnight, 6.84 light). Links and focus rings keep
+     --accent; only the filled label needed the deeper ground. */
+  background: rgb(var(--accent-dim-rgb));
   color: var(--text-on-accent);
   border: 0;
   font-weight: 500;
@@ -901,14 +1000,17 @@ html[data-light] {
     inset 0 1px 3px -2px rgba(255, 255, 255, 0.5),
     inset 0 -4px 6px -3px rgba(0, 0, 0, 0.35),
     0 1px 3px 0 rgba(0, 0, 0, 0.2);
-  transition: filter 150ms ease, box-shadow 150ms ease;
+  /* Only the hover brightness eases; the bevel never changes on this look. */
+  transition: filter var(--dur-1) var(--ease-out);
 }
 .btn-leaf:hover:not(:disabled),
 .btn-cta:hover:not(:disabled),
 .btn-gold:hover:not(:disabled),
 .btn-slab:hover:not(:disabled),
 .btn-glass--primary:hover:not(:disabled) {
-  filter: brightness(1.15);
+  /* 1.08, not 1.15: the lift stays readable (4.63:1 dark and midnight,
+     6.12:1 light). */
+  filter: brightness(1.08);
 }
 .btn-leaf:disabled,
 .btn-cta:disabled,
@@ -936,7 +1038,10 @@ html[data-light] {
     0 1px 3px 0 rgba(0, 0, 0, 0.2);
   text-shadow: var(--c-metal-text-shadow);
   font-weight: 500;
-  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  /* The hover swaps a gradient image, which cannot tween, so easing the
+     background colour under it and the bevel shadow only painted work nobody
+     saw (F193). The label colour is the one visible tween. */
+  transition: color var(--dur-1) var(--ease-out);
 }
 .btn-ghost:hover:not(:disabled),
 .btn-glass:hover:not(:disabled) {
@@ -968,7 +1073,7 @@ html[data-light] .btn-glass {
     inset 0 1px 3px -2px rgba(255, 255, 255, 0.4),
     inset 0 -4px 6px -3px rgba(0, 0, 0, 0.35),
     0 1px 3px 0 rgba(0, 0, 0, 0.2);
-  transition: filter 150ms ease;
+  transition: filter var(--dur-1) var(--ease-out);
 }
 .btn-cursed:hover:not(:disabled) {
   filter: brightness(1.12);
@@ -1152,30 +1257,19 @@ html[data-anim="off"] .victory-burst { display: none; }
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.35),
     inset 0 -1px 0 rgba(255, 255, 255, 0.04);
-  transition: border-color 160ms ease, box-shadow 180ms ease;
+  transition: border-color var(--dur-1) var(--ease-out);
 }
 .input-rune::placeholder { color: var(--paper-dim); }
+/* Focus lights the sill (the border), not a halo: no glow (design-system.md). */
 .input-rune:focus {
   border-color: rgb(var(--accent-hi-rgb) / 0.6);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.35),
-    0 0 16px -8px rgb(var(--accent-hi-rgb) / 0.55);
 }
 
 /* Relic icon housing: header/utility icon buttons sit in a square-edged rune
    frame that warms on hover, matching the site's crisp 1px geometry. */
 .nav-icon-btn {
   border-radius: var(--btn-roundness);
-  transition: color 150ms ease, background-color 150ms ease;
-}
-
-/* A very slow opacity pulse gives the ambient washes a sense of life without
-   competing with the live-TV board's real motion. Opacity only — never size,
-   position, or hue — so it stays calm. Frozen when animations are off in
-   Settings (handled by the global gates below). */
-@keyframes aura-breathe {
-  0%, 100% { opacity: 0.82; }
-  50% { opacity: 1; }
+  transition: color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
 }
 
 /* The hero board: a plain box like every other box on the page, with a 6px
@@ -1194,99 +1288,24 @@ html:not([data-light]) .tv-frame {
   box-shadow: 0 0 0 1px var(--edge), 0 10px 30px -18px rgb(0 0 0 / 0.6);
 }
 
-/* Live dot with an expanding echo, so "LIVE" is impossible to miss. The echo
-   is square on purpose — it matches the flat 1px-corner geometry. */
+/* The live dot: one expanding echo, so "live" is impossible to miss. It is the
+   site's single live-status idiom (F197): presence, live games, the hero TV
+   and the in-game chips all use it rather than Tailwind's pulse or ping. A
+   status indicator, not decoration, which is why it may loop; it stands still
+   under data-anim="off" (rule below). The echo takes the dot's own corners,
+   square on a square dot and round on a round one. */
 .dot-live { position: relative; }
 .dot-live::after {
   content: "";
   position: absolute;
   inset: 0;
+  border-radius: inherit;
   background: inherit;
   animation: dot-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 @keyframes dot-ping {
   0% { transform: scale(1); opacity: 0.75; }
   75%, 100% { transform: scale(2.6); opacity: 0; }
-}
-
-/* Periodic light sweep across the primary CTA: a thin sheen crosses the button
-   every few seconds so "Play Someone" quietly asks for the click. */
-.cta-shine { position: relative; overflow: hidden; }
-.cta-shine::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 42%;
-  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.32), transparent);
-  transform: translateX(0) skewX(-18deg);
-  pointer-events: none;
-  animation: cta-sweep 5s ease-in-out 1.2s infinite;
-}
-/* translateX (compositor-only) instead of animating `left` (which relayouts
-   and repaints every frame, forever, on the landing page). The element is 42%
-   of the button wide, so translateX percentages are element-relative: the old
-   -60%->130% left travel = 190% of button width = 190/42 ≈ 452% of the sheen's
-   own width. Same sweep, no per-frame paint. */
-@keyframes cta-sweep {
-  0%, 62% { transform: translateX(0) skewX(-18deg); }
-  86%, 100% { transform: translateX(452%) skewX(-18deg); }
-}
-
-/* The home screen's signature animation: the knight plays Geometry Dash. A
-   200%-wide obstacle strip (blocks + spikes on a ground line) scrolls past on
-   a 24s seamless loop while the knight holds its lane and jumps with a full
-   flip. Obstacles are spaced every 12.5% of the strip and the strip crosses
-   one track-width every 12s, so an obstacle reaches the knight's lane exactly
-   every 3s — the jump animation runs the same 3s period, phase-locked with a
-   negative delay. Pure decoration, transform/opacity only. */
-.knight-track {
-  position: relative;
-  height: 46px;
-  overflow: hidden;
-  pointer-events: none;
-}
-/* Neon course floor: a faint vertical grid scrolls left under the action to
-   sell speed, Geometry-Dash style. Decorative only, killed when animations are
-   off in Settings. */
-.knight-track::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  height: 22px;
-  background-image: repeating-linear-gradient(
-    90deg,
-    rgb(var(--accent-rgb) / 0.09) 0,
-    rgb(var(--accent-rgb) / 0.09) 1px,
-    transparent 1px,
-    transparent 26px
-  );
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
-  animation: gd-grid-scroll 2s linear infinite;
-  will-change: transform;
-}
-@keyframes gd-grid-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-26px); }
-}
-/* Structure variants: a two-high tower, a wide low platform, a runt spike. */
-.gd-block--tall { height: 17px; }
-/* One 3s beat: grounded, then a 1s jump with a full 360 flip. Obstacles cross
-   the knight's lane at t = 3n + 0.84s (strip spacing 12.5% / scroll speed
-   4.167% per second, lane at 18%), so the -0.66s delay puts the jump's apex
-   (50% of the cycle) exactly on the collision ticks. */
-.gd-knight > span {
-  display: inline-block;
-  animation: gd-jump 3s cubic-bezier(0.3, 0, 0.4, 1) -0.66s infinite;
-}
-@keyframes gd-jump {
-  0%, 33% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
-  67%, 100% { transform: translateY(0) rotate(360deg); }
 }
 
 /* --- Board splash: big board-wide event announcement -------------------------
@@ -1332,30 +1351,24 @@ html:not([data-light]) .tv-frame {
 
 /* Header search. Mobile: the panel is a full-width dropdown positioned under
    the bar (fixed inset-x/top in the markup), so its width is defined by those
-   insets and it can never roll off the left edge. It just fades/drops in. */
+   insets and it can never roll off the left edge. It opens with the shared
+   popover motion (.m-pop above), dropping from the bar.
+   Wide desktop (lg+), lichess-style, the field sits LEFT of the search icon, so
+   the same motion grows it from its right edge, the icon it came from. Below
+   lg the drop-under panel is kept even once the inline nav appears (md),
+   because a 17rem leftward field at tablet widths lands on top of the
+   "Rules"/"Leaderboard" links. It used to roll out with a clip-path reveal on
+   its own 0.24s timing, a second popover motion with no exit (F196). */
 .header-search-panel {
-  animation: search-fade 0.2s var(--ease-out) both;
+  --m-origin: top center;
+  animation: m-pop-in calc(var(--dur-2) * var(--tempo)) var(--ease-out) backwards;
 }
-@keyframes search-fade {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-/* Wide desktop (lg+), lichess-style: the field rolls out LEFTWARD from the
-   search icon instead of dropping down. Below lg the drop-under panel above is
-   kept even once the inline nav appears (md), because a 17rem leftward rollout
-   at tablet widths lands on top of the "Rules"/"Leaderboard" links. The
-   rollout is a clip-path reveal at the final width: the input is never
-   squashed (the old width animation promised that, at the price of running
-   layout every frame) and the reveal composites cleanly. */
 @media (min-width: 1024px) {
   .header-search-panel {
     width: min(17rem, calc(100vw - 8.5rem));
-    animation: search-grow 0.24s var(--ease-out) both;
+    --m-origin: center right;
+    --m-dy: 0px;
   }
-}
-@keyframes search-grow {
-  from { clip-path: inset(0 0 0 calc(100% - 2.5rem)); opacity: 0; }
-  to { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 
 /* --- Top-nav micro-interactions -------------------------------------------
@@ -1367,7 +1380,8 @@ html:not([data-light]) .tv-frame {
    tween. */
 .nav-item {
   position: relative;
-  transition: color 160ms ease, background-color 160ms ease, transform 120ms ease;
+  transition: color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
 }
 /* .nav-icon-btn: relic housing treatment lives with the cosmic dungeon
    shared components (see the buttons section above). */
@@ -1414,7 +1428,7 @@ html[data-piece-source="lichess"] .piece-asset {
 .sq-light { background-color: var(--sq-light); }
 .sq-dark  { background-color: var(--sq-dark); }
 /* Checked king (Settings > Board & Pieces > Check highlight): the square burns
-   an unmissable red — the radial burst under the piece, a thick pulsing red
+   an unmissable red, the radial burst under the piece, a thick pulsing red
    ring, and a red-hot glow on the king itself (owner request: "turn the
    opponent's king red when you check"). Works for EITHER side's king; the
    pulse is dropped when animations are off in Settings but the red stays. */
@@ -1443,7 +1457,7 @@ html[data-anim="off"] .sq-check::after {
 }
 /* Frosted glass chip: the shared treatment for floating in-game chrome
    (targeting banner, opponent notices, draft chips). Translucent, blurred,
-   lit from the top edge — the "glass shiny" look. */
+   lit from the top edge, the "glass shiny" look. */
 .glass-chip {
   border-radius: 1px;
   /* Flat, opaque chrome: no frosted glass, no gradient sheen. */
@@ -1485,7 +1499,7 @@ html[data-anim="off"] .sq-pickable {
    UNDER the piece. While the viewer holds any such grant, .edge-aura washes
    a whisper of the same tint along their edge of the board crop.
    Perf law (DraftOverlay.css header): keyframes touch only transform and
-   opacity — the gradients and the ring are static paints. No big blurry
+   opacity, the gradients and the ring are static paints. No big blurry
    blobs: one crisp circle ring + a contained soft radial. Animations off in
    Settings stills both to their static full-opacity paint (gate near the
    bottom of this file). */
@@ -1550,7 +1564,7 @@ html[data-anim="off"] .sq-pickable {
 /* --- Pieces wearing their effects --------------------------------------------
    The affected PIECE changes, not just its square: filter-only treatments so
    every piece set (inline SVG and lichess assets alike) picks them up. Kept
-   readable — tint and glow, never so heavy the piece type gets ambiguous. */
+   readable, tint and glow, never so heavy the piece type gets ambiguous. */
 .piece-frozen {
   filter: saturate(0.35) brightness(1.15) drop-shadow(0 0 3px rgba(159, 216, 255, 0.9))
     drop-shadow(0 0 8px rgba(122, 176, 224, 0.5));
@@ -1582,7 +1596,7 @@ html[data-anim="off"] .piece-treat {
 }
 
 /* Hostile variant for nerf-affected squares (NerfAura): the same pooled glow
-   but slower and heavier — an ember smolder, not a blessing — with the orbit
+   but slower and heavier, an ember smolder, not a blessing, with the orbit
    running backward and the cheerful shine sweep dropped. */
 .nerf-aura::before {
   animation-duration: 3.6s;
@@ -1604,7 +1618,7 @@ html[data-anim="off"] .piece-treat {
    same aura: "orbit" (the classic three glints, also the id-less default),
    "rune" (a slowly turning square rune frame), "motes" (sparks rising off the
    piece), "diamond" (a pulsing diamond ring), "arcs" (twin arcs circling), or
-   "halo" (no decoration — the calm pool alone). Same perf law: keyframes are
+   "halo" (no decoration, the calm pool alone). Same perf law: keyframes are
    transform/opacity only; alphas stay at or below the base aura's, so no
    variant ever obscures the piece. Animations off in Settings stills the frames
    and hides the transient motes (gate near the bottom of this file). */
@@ -1671,7 +1685,7 @@ html[data-anim="off"] .piece-treat {
   to { transform: rotate(360deg); }
 }
 /* Hostile (nerf) tempo for the variant layers: slower and reversed, matching
-   the reversed orbit — an ill omen circling, not a blessing. */
+   the reversed orbit, an ill omen circling, not a blessing. */
 .nerf-aura .empower-rune { animation-duration: 26s; animation-direction: reverse; }
 .nerf-aura .empower-arcs { animation-duration: 10s; animation-direction: reverse; }
 .nerf-aura .empower-mote { animation-duration: 4.2s; }
@@ -1775,7 +1789,7 @@ html[data-anim="off"] .piece-treat {
   z-index: 60;
   transform: translate(-50%, -50%);
   /* A tighter, closer shadow reads as a light piece skimming the board rather
-     than one hoisted far above it — and repaints cheaper on the moving ghost. */
+     than one hoisted far above it, and repaints cheaper on the moving ghost. */
   filter: drop-shadow(0 6px 8px rgba(0,0,0,0.38));
 }
 
@@ -1807,7 +1821,7 @@ html[data-anim="off"] .piece-treat {
 
 /* Freeze (Wall, Frost, Immobilizer...): a single icy flash when the effect
    lands on a piece, settling into the calm persistent tint. Runs once on
-   mount — never loops. */
+   mount, never loops. */
 /* Skin-neutral: the tint colour comes from the skin's own bg class (ice, glue,
    stun, tar...), so this one-shot only pops the wash in without forcing a
    colour, or a glued square would flash icy blue. */
@@ -1974,12 +1988,19 @@ html[data-anim="off"] .piece-treat {
 /* --- Skeleton placeholders (first-load shimmer) ---
    Flat, square blocks tinted onto the ink surface. A single light sweep passes
    across them; when animations are off in Settings the sweep is dropped and the
-   block holds as a static muted placeholder. */
+   block holds as a static muted placeholder.
+   Show-delay (F026): a block stays transparent for its first 150ms and then
+   fades in on --dur-1, so a load that resolves inside that window never
+   flashes a grey frame. Opacity only: the block keeps its box from the first
+   frame, so nothing shifts. The delay is not motion, so it holds with
+   Animations off too (the backstop clamps the fade, not the delay). */
 .skeleton {
+  --skeleton-delay: 150ms;
   position: relative;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.055);
   border-radius: 0;
+  animation: m-fade-in calc(var(--dur-1) * var(--tempo)) var(--ease-out) var(--skeleton-delay) backwards;
 }
 .skeleton::after {
   content: "";
@@ -1992,7 +2013,8 @@ html[data-anim="off"] .piece-treat {
     rgba(255, 255, 255, 0.07) 50%,
     transparent 100%
   );
-  animation: skeleton-sweep 1.6s ease-in-out infinite;
+  /* One slow loop, on the house curve and the Animations tempo. */
+  animation: skeleton-sweep calc(1600ms * var(--tempo)) var(--ease-io) var(--skeleton-delay) infinite;
 }
 @keyframes skeleton-sweep {
   100% { transform: translateX(100%); }
@@ -2012,7 +2034,7 @@ nav, header { position: relative; z-index: 30; }
 .site-nav {
   /* NO backdrop-filter here: a filter turns the nav into a containing block
      for position:fixed descendants, and the Settings modal (rendered inside
-     the nav) then anchors to the nav instead of the viewport — the broken
+     the nav) then anchors to the nav instead of the viewport, the broken
      "preferences way too high" bug. The nav scrolls with the page anyway, so
      blur bought nothing and cost paint time on low-end devices. */
   background: var(--bg-base);
@@ -2028,11 +2050,9 @@ nav, header { position: relative; z-index: 30; }
      so 1px cards stay square and pills stay round. */
 }
 
-html[data-anim="off"] .animate-rise, html[data-anim="off"] .animate-seal, html[data-anim="off"] .animate-sigil, html[data-anim="off"] .animate-flicker, html[data-anim="off"] .animate-reveal, html[data-anim="off"] .animate-bob,
+html[data-anim="off"] .animate-sigil, html[data-anim="off"] .animate-flicker, html[data-anim="off"] .animate-bob,
 html[data-anim="off"] .draft-in,
-html[data-anim="off"] .hero-aura,
-html[data-anim="off"] .dot-live::after, html[data-anim="off"] .cta-shine::after, html[data-anim="off"] .header-search-panel,
-html[data-anim="off"] .gd-world, html[data-anim="off"] .gd-knight > span, html[data-anim="off"] .knight-track::before, html[data-anim="off"] .knight-track::after,
+html[data-anim="off"] .dot-live::after, html[data-anim="off"] .header-search-panel,
 html[data-anim="off"] .board-splash, html[data-anim="off"] .board-splash-card,
 html[data-anim="off"] .sq-strike, html[data-anim="off"] .sq-freeze, html[data-anim="off"] .sq-freeze-flake, html[data-anim="off"] .sq-shield-in, html[data-anim="off"] .walnut-piece, html[data-anim="off"] .banana-peel,
 html[data-anim="off"] .sq-walnut,
@@ -2064,7 +2084,7 @@ html[data-anim="off"] * { transition: none !important; }
    The unconditional 36px underneath it is the other half of the same defect.
    Section 7 asks for 44x44 on touch AND 36px on a mouse, and those bespoke call
    sites measured 29.5px on a fine pointer at EVERY width (31.5px for
-   /analysis's board tools) — the width query had only ever hidden that below
+   /analysis's board tools), the width query had only ever hidden that below
    640.
 
    `:not([class*="min-h-"])` is load-bearing and was added after measuring, not
@@ -2082,7 +2102,7 @@ html[data-anim="off"] * { transition: none !important; }
 .btn-cta:not([class*="min-h-"]) { min-height: 36px; }
 /* The touch floor excludes only the sizes that already CLEAR it (Button.tsx's
    44 / 48 / 52), so it still lifts a call site that pinned itself to the 36px
-   desktop size and then shipped to a phone — the home page's two "Play" chips
+   desktop size and then shipped to a phone, the home page's two "Play" chips
    were exactly that, and a blanket `:not([class*="min-h-"])` dropped them from
    44px to 36px on touch, which the measurement caught. */
 @media (pointer: coarse) {
@@ -2112,9 +2132,9 @@ html[data-anim="off"] * { transition: none !important; }
      transforms on the same element and snapped when the pointer crossed the
      moving edge. The pop is the ring and the shadow, both on one easing. */
   transition:
-    box-shadow 220ms var(--ease-out),
-    border-color 220ms var(--ease-out),
-    transform 120ms var(--ease-out);
+    box-shadow var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
 }
 @media (hover: hover) {
   .card-juicy:hover {
@@ -2139,7 +2159,7 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
   color: var(--text-heading);
 }
 
-/* Decorative corners — subtle brass tick marks for editorial framing */
+/* Decorative corners, subtle brass tick marks for editorial framing */
 .card-corner {
   position: absolute;
   width: 14px;
@@ -2160,7 +2180,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 /* The hero "TV" panel blurs the LIVE animating board behind it, a backdrop
    filter re-run every frame. Animations-off swaps it for a plain translucent
    panel (no blur), which reads nearly identical over the dark art. */
-html[data-anim="off"] .tv-frame { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 /* Continuous decorative sweeps stop pinning the main thread/compositor. */
 
 /* === THEME CUSTOMIZATION (settings-driven) === */
@@ -2201,7 +2220,7 @@ html[data-light] select {
 }
 /* This catch-all outranks every `placeholder:text-parchment-*` utility (13 call
    sites), so it is the ONLY thing that decides what a placeholder looks like on
-   paper — and #86816f measured 3.90:1 on a white field and 3.14:1 on a field
+   paper, and #86816f measured 3.90:1 on a white field and 3.14:1 on a field
    sitting on the page. Placeholder text is text: it carries the only
    description some fields have, so it takes the 4.5:1 body threshold. The muted
    rung is the dimmest tone in the ramp that clears it (5.49:1 / 4.62:1), and
@@ -2443,7 +2462,7 @@ html[data-anim="off"] .nerf-reveal-cell {
    out, and the roadmap calls it the game's most shareable moment.
 
    It used to be a React conditional. The sealed "?" button was replaced by the
-   rule card between one frame and the next, with no transition of any kind —
+   rule card between one frame and the next, with no transition of any kind ,
    the single flattest moment in the product sat on top of its best material.
 
    So it now speaks the same language as the in-game nerf reveal directly above
@@ -2457,11 +2476,11 @@ html[data-anim="off"] .nerf-reveal-cell {
      0-260ms    the seal breaks: one tier-tinted band sweeps
                 DOWN the card and is gone                     (--ease-io)
      160-480ms  the rule's NAME lands last, dropping in and
-                settling — the word you waited a game for     (--ease-spring)
+                settling, the word you waited a game for     (--ease-spring)
 
    Reduced motion and animations-off never reach here: GameOver only sets the
-   class when motion is on, and the rule card itself — permanent, legible, and
-   announced through role="status" — is the feedback in every mode. */
+   class when motion is on, and the rule card itself, permanent, legible, and
+   announced through role="status", is the feedback in every mode. */
 @keyframes nerf-unseal-in {
   0% { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -2504,7 +2523,7 @@ html[data-anim="off"] .nerf-reveal-cell {
   100% { opacity: 0; transform: translateY(260%); }
 }
 /* The name lands last and lands hardest: it is the answer to the question the
-   whole game asked. --ease-spring is sanctioned here — this is the reveal. */
+   whole game asked. --ease-spring is sanctioned here, this is the reveal. */
 .nerf-unseal .nerf-unseal__name {
   animation: nerf-unseal-name calc(320ms * var(--beat, 1)) var(--ease-spring, ease-out)
     calc((160ms + var(--unseal-delay, 0ms)) * var(--beat, 1)) both;
@@ -2556,7 +2575,7 @@ html[data-anim="off"] .nerf-unseal__seal > i { animation: none; opacity: 0; }
 /* The lid over the opponent's rule. It is an OVERLAY on the finished card, not
    a placeholder swapped out for it: the card sits underneath at its true size
    from the first frame, so the panel never resizes and the buttons under it
-   never move while the ending plays. Inert and invisible to assistive tech —
+   never move while the ending plays. Inert and invisible to assistive tech ,
    the rule beneath is already in the accessibility tree, because information
    is never what an animation withholds. */
 .ending-seal {
@@ -2606,9 +2625,12 @@ html[data-anim="off"] .nerf-unseal__seal > i { animation: none; opacity: 0; }
   line-height: 1.2;
   text-align: center;
 }
-/* Animations off, or an operating system asking for reduced motion: the acts
-   simply are not a sequence. Everything is printed at once and the lid is not
-   rendered at all, so nothing can be left covering the rule if an animation
+/* Animations off (which is also where reduced motion and, when the player opted
+   in to Follow system motion, the OS preference land): the acts simply are not
+   a sequence. There is deliberately no prefers-reduced-motion query here: with
+   Follow system motion off (the default) it froze these CSS acts while
+   GameOver's framer spring still played, a half-animated ending (F190).
+   Everything is printed at once and the lid is not rendered at all, so nothing can be left covering the rule if an animation
    never runs. GameOver drops the classes in JS as well; these are the backstop
    that keeps a delayed beat from ever hiding content. */
 html[data-anim="off"] .ending-act {
@@ -2617,17 +2639,6 @@ html[data-anim="off"] .ending-act {
   transform: none;
 }
 html[data-anim="off"] .ending-seal { display: none; }
-@media (prefers-reduced-motion: reduce) {
-  .ending-act,
-  .nerf-unseal,
-  .nerf-unseal .nerf-unseal__name {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-  .ending-seal { display: none; }
-  .nerf-unseal__seal > i { animation: none; opacity: 0; }
-}
 
 /* Subtle running-clock pulse (under 30s). Clock urgency is one of the few
    effects allowed to loop (see design-system.md motion rules). Opacity-only so
@@ -2678,7 +2689,7 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
    Keeps the waiting card / collapsed banner reading as ALIVE (not soft-locked)
    while the opponent finishes their simultaneous draft. A soft gold breath on
    the box-shadow, a live "ping" ripple behind the status dot, and a gently
-   fading ellipsis — all compositor-cheap and all dropped when animations are
+   fading ellipsis, all compositor-cheap and all dropped when animations are
    off in Settings so the notice stays legible without motion. */
 .corner-notice {
   /* The breath used to animate box-shadow directly (a full repaint every
@@ -2728,130 +2739,10 @@ html[data-anim="off"] .waiting-ellipsis::after {
 html[data-anim="off"] .waiting-ping { opacity: 0; }
 html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 
-/* === Ambient gold-dust star field (home + lobby) =============================
-   A fixed, pointer-events-none field of candlelight motes behind the page:
-   three parallax dust layers (each ONE animated node carrying a tiled
-   radial-gradient speckle), a handful of 4-point brass glints that twinkle,
-   and two slow diagonal shooting stars. Everything is transform/opacity only,
-   no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
-   animated nodes (10 on phones). The dust is the ACTIVE THEME's accent
-   (--accent-rgb) rather than a literal brass, so Neon's dust is magenta and
-   Jade's is green — it used to be gold in every theme, which read as the
-   default palette leaking through whatever the player had chosen. Warm
-   candle-white highlights stay literal: they are light, not hue.
-   Fully dropped when animations are off in Settings, in perf mode, and under
-   the light theme (pale dust on paper is just noise). */
-.starfield {
-  position: fixed;
-  inset: 0;
-  z-index: -1; /* behind main's content, above the page gradient */
-  pointer-events: none;
-  overflow: hidden;
-}
-/* Each dust layer drifts diagonally down-right by exactly one background tile,
-   then loops — seamless because the pattern repeats at the tile size. The
-   element is oversized top-left by one tile so the drift never exposes a gap.
-   Custom-property keyframes let all three layers share one animation. */
-.star-layer {
-  will-change: transform;
-  --tile: 360px;
-  position: absolute;
-  top: calc(-1 * var(--tile));
-  left: calc(-1 * var(--tile));
-  right: 0;
-  bottom: 0;
-  background-repeat: repeat;
-  background-size: var(--tile) var(--tile);
-  will-change: transform;
-  animation: star-drift 240s linear infinite;
-}
-@keyframes star-drift {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(var(--tile), var(--tile), 0); }
-}
-/* Far layer: the faintest, slowest dust. */
-.star-layer--far {
-  --tile: 360px;
-  animation-duration: 260s;
-  background-image:
-    radial-gradient(1px 1px at 23px 41px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
-    radial-gradient(1px 1px at 133px 89px, rgb(var(--accent-rgb) / 0.34), transparent 60%),
-    radial-gradient(1px 1px at 279px 157px, rgb(255 233 170 / 0.4), transparent 60%),
-    radial-gradient(1px 1px at 81px 231px, rgb(var(--accent-rgb) / 0.3), transparent 60%),
-    radial-gradient(1px 1px at 317px 305px, rgb(var(--accent-rgb) / 0.44), transparent 60%),
-    radial-gradient(1px 1px at 191px 337px, rgb(255 233 170 / 0.26), transparent 60%);
-}
-/* Mid layer: slightly larger sparks, a notch quicker. */
-.star-layer--mid {
-  --tile: 460px;
-  animation-duration: 170s;
-  background-image:
-    radial-gradient(1.4px 1.4px at 61px 117px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
-    radial-gradient(1.2px 1.2px at 233px 47px, rgb(255 233 170 / 0.42), transparent 60%),
-    radial-gradient(1.4px 1.4px at 397px 203px, rgb(var(--accent-rgb) / 0.38), transparent 60%),
-    radial-gradient(1.2px 1.2px at 147px 331px, rgb(var(--accent-rgb) / 0.46), transparent 60%),
-    radial-gradient(1.4px 1.4px at 329px 411px, rgb(255 233 170 / 0.32), transparent 60%);
-}
-/* Near layer: the brightest, fastest dust — hidden on phones. */
-.star-layer--near {
-  --tile: 560px;
-  animation-duration: 110s;
-  background-image:
-    radial-gradient(1.8px 1.8px at 97px 73px, rgb(255 233 170 / 0.55), transparent 60%),
-    radial-gradient(1.6px 1.6px at 341px 181px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
-    radial-gradient(1.8px 1.8px at 203px 359px, rgb(var(--accent-rgb) / 0.42), transparent 60%),
-    radial-gradient(1.6px 1.6px at 471px 449px, rgb(255 233 170 / 0.38), transparent 60%),
-    radial-gradient(2px 2px at 519px 61px, rgb(var(--accent-rgb) / 0.34), transparent 60%);
-}
-/* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
-   opacity on individually offset beats so the field never reads mechanical. */
-.star-glint {
-  will-change: transform, opacity;
-  position: absolute;
-  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(var(--accent-rgb) / 0.8) 34%, rgb(var(--accent-rgb) / 0) 72%);
-  clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
-  animation: star-twinkle var(--glint-dur, 4.5s) ease-in-out var(--glint-delay, 0s) infinite;
-}
-@keyframes star-twinkle {
-  0%, 100% { opacity: 0.2; transform: scale(0.62); }
-  50% { opacity: 1; transform: scale(1); }
-}
-/* Shooting star: a brass streak crossing diagonally down-right (bright head
-   leading, tail trailing), alive for ~1.3s of a 28s cycle. Two in the DOM on
-   staggered delays = one pass roughly every 14 seconds. */
-.star-shoot {
-  will-change: transform, opacity;
-  position: absolute;
-  width: 120px;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.4) 45%, rgb(255 236 180 / 0.95));
-  opacity: 0;
-  transform: translate3d(0, 0, 0) rotate(38deg);
-  animation: star-shoot 28s linear var(--shoot-delay, 5s) infinite;
-}
-@keyframes star-shoot {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(38deg); }
-  0.6% { opacity: 0.9; }
-  4.6% { opacity: 0; transform: translate3d(56vmin, 44vmin, 0) rotate(38deg); }
-  100% { opacity: 0; transform: translate3d(56vmin, 44vmin, 0) rotate(38deg); }
-}
-/* Phones: drop the near layer and the large glints (fewer, calmer nodes). */
-@media (max-width: 640px) {
-  .star-layer--near,
-  .star-glint--lg {
-    display: none;
-  }
-}
-/* Perf mode and the light theme drop the whole field. */
-html[data-light] .starfield {
-  display: none;
-}
-
 /* Each waiting seek / challenge / live game is one flat row: a solid ink
    step above the panel, a 1px hairline border, and the mode color as a flat
    2px left border (warm for Nerf, cool for Buff, brass for legacy/draft).
-   Hover only firms the borders — no lift, no glow. */
+   Hover only firms the borders, no lift, no glow. */
 .hall-row {
   --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
   /* A flat raised row; only the mode's left bar carries colour at rest and
@@ -2918,26 +2809,20 @@ html[data-light] .hall-row {
   100% { opacity: 0; transform: translate3d(7px, -36px, 0) scale(1); }
 }
 
-/* Animations off in Settings: still the dust, hide the transients (shooting
-   stars, motes), keep every static paint. */
-html[data-anim="off"] .star-layer,
-html[data-anim="off"] .star-glint {
-  will-change: transform, opacity;
-  animation: none !important;
-}
-html[data-anim="off"] .star-shoot,
+/* Animations off in Settings: hide the transient motes, keep every static
+   paint. */
 html[data-anim="off"] .hall-mote {
   animation: none !important;
   opacity: 0 !important;
 }
 
 /* ============================================================
-   Recording mode — owner-only 9:16 vertical layout for capturing
+   Recording mode, owner-only 9:16 vertical layout for capturing
    YouTube Shorts / Instagram Reels. Purely visual; toggled from the
    in-game moderation (god) panel. It screen-centers the board in a
    9:16 crop and drops both clocks (with names) into a bar near the
    bottom of the frame. The normal command / move-list rails stay fully
-   usable — they just move out into the side margins, outside the crop,
+   usable, they just move out into the side margins, outside the crop,
    so they never show in the exported clip. Nothing here touches game
    state.
    ============================================================ */
@@ -3064,7 +2949,7 @@ html[data-anim="off"] .btn-leaf:hover:not(:disabled) { transform: none; }
   inset: 0;
   box-shadow: inset 0 0 0 2px var(--st);
   background: color-mix(in srgb, var(--st) 16%, transparent);
-  animation: sq-status-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: sq-status-in 0.35s var(--ease-out) both;
 }
 .sq-status-frame--soft {
   box-shadow: inset 0 0 0 1px var(--st);
@@ -3084,7 +2969,7 @@ html[data-anim="off"] .btn-leaf:hover:not(:disabled) { transform: none; }
   background: var(--st);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
   font: 800 12px/1 var(--font-mono), ui-monospace, monospace;
-  animation: sq-status-chip-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: sq-status-chip-in 0.4s var(--ease-out) both;
 }
 .sq-status-chip svg { width: auto; height: 62%; flex: none; }
 .sq-status-chip__n { font-size: 12px; line-height: 1; }
@@ -3134,7 +3019,7 @@ html[data-anim="off"] .sq-status-chip { animation: none; }
 }
 .nerf-enter__card {
   transform-origin: 50% 0%;
-  animation: nerf-enter-unfold 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: nerf-enter-unfold 0.7s var(--ease-out) both;
 }
 @keyframes nerf-enter-unfold {
   0% { opacity: 0; transform: rotateX(-78deg) translateY(-6px); }
@@ -3143,7 +3028,7 @@ html[data-anim="off"] .sq-status-chip { animation: none; }
   100% { opacity: 1; transform: rotateX(0deg) translateY(0); }
 }
 .nerf-enter__line {
-  animation: nerf-enter-line 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: nerf-enter-line 0.5s var(--ease-out) both;
 }
 .nerf-enter__line:nth-of-type(1) { animation-delay: 0.32s; }
 .nerf-enter__line:nth-of-type(2) { animation-delay: 0.42s; }
@@ -3161,7 +3046,7 @@ html[data-anim="off"] .sq-status-chip { animation: none; }
   height: 34px;
   margin-left: -17px;
   pointer-events: none;
-  animation: nerf-enter-seal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: nerf-enter-seal 0.9s var(--ease-out) both;
 }
 .nerf-enter__seal-half {
   position: absolute;
@@ -3221,6 +3106,3 @@ html[data-anim="off"] .nerf-enter__seal { opacity: 0; }
    sees a well-formed time rather than "2 05". */
 html[data-anim="off"] .clock-sep,
 html[data-anim="fast"] .clock-sep { animation: none; opacity: 1; }
-@media (prefers-reduced-motion: reduce) {
-  .clock-sep { animation: none; opacity: 1; }
-}

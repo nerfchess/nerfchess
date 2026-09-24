@@ -1,0 +1,53 @@
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium] › e2e/content-states.spec.ts:114:7 › content route layout stability (390x844) › /codex keeps the list still while the library loads (19.0s)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:482:7 › codex deep links › ?tab= and filters are the first render (108ms)
+
+
+  1) [chromium] › e2e/content-states.spec.ts:114:7 › content route layout stability (390x844) › /codex keeps the list still while the library loads 
+
+    Error: [{"selector":"div#codex-results.mt-4 > ul.grid.grid-cols-1.gap-2 > li","text":"Eternal FreezeIXTurn every enemy knight, bishop, r...","score":0.0296,"count":5,"maxDy":-48,"maxDx":0,"maxDh":8,"maxDw":0},{"selector":"div#codex-results.mt-4","text":"AscendancyXChoose up to four of your pieces other ...","score":0.0145,"count":1,"maxDy":22,"maxDx":0,"maxDh":-22,"maxDw":0},{"selector":"main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center","text":"GuestSleepyPatzer ·Sign in","score":0.001,"count":1,"maxDy":0,"maxDx":-10,"maxDh":0,"maxDw":10}]
+
+    expect(received).toBeLessThan(expected)
+
+    Expected: < 0.015
+    Received:   0.0451
+
+      116 |     await page.goto("/codex");
+      117 |     const report = await readCls(page);
+    > 118 |     expect(report.cls, JSON.stringify(report.offenders.slice(0, 3))).toBeLessThan(CLS_CEILING);
+          |                                                                      ^
+      119 |   });
+      120 | });
+      121 |
+        at /home/user/nerfchess/e2e/content-states.spec.ts:118:70
+
+    Error Context: test-results/content-states-content-rou-da2a1-ill-while-the-library-loads-chromium/error-context.md
+
+  2) [chromium] › e2e/content-states.spec.ts:482:7 › codex deep links › ?tab= and filters are the first render 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+    -   "Hex",
+    +   "Buff",
+      ]
+
+      484 |     const html = await res.text();
+      485 |     const selected = [...html.matchAll(/role="tab" aria-selected="true"[^>]*>([^<]+)/g)].map((m) => m[1]);
+    > 486 |     expect(selected).toEqual(["Hex"]);
+          |                      ^
+      487 |     expect(html).toMatch(/value="frost"/);
+      488 |   });
+      489 | });
+        at /home/user/nerfchess/e2e/content-states.spec.ts:486:22
+
+    Error Context: test-results/content-states-codex-deep--2b6ac-ilters-are-the-first-render-chromium/error-context.md
+
+  2 failed
+    [chromium] › e2e/content-states.spec.ts:114:7 › content route layout stability (390x844) › /codex keeps the list still while the library loads 
+    [chromium] › e2e/content-states.spec.ts:482:7 › codex deep links › ?tab= and filters are the first render 

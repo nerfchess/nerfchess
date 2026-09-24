@@ -1,6 +1,9 @@
 import type { ActiveEffect, BuffInstance, BuffOffer, BuffPick, BuffTarget, DraftFlags, DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
 import type { PublicSpectatorSnapshot } from "@/engine/game";
+import { SEAT_SUPERSEDED_CLOSE } from "@/lib/socketProtocol";
+
+export { SEAT_SUPERSEDED_CLOSE };
 
 // ---------------- spectator event envelope ----------------
 
@@ -376,6 +379,10 @@ export type MPEvent =
   | { type: "god-panel-used"; by: string; action: string; at: number }
   | { type: "disconnected" }
   | { type: "reconnecting"; attempt: number }
+  /** The server handed this seat to another tab or device (close code
+   *  SEAT_SUPERSEDED_CLOSE). Auto-reconnect is off until reclaim() or until
+   *  the reader focuses this tab; show "open in another tab" with a way back. */
+  | { type: "superseded" }
   | { type: "error"; message: string; code?: string };
 
 type ServerFrame =
@@ -549,8 +556,8 @@ export function clearOnlineSeat(gameId: string) {
 // The game this device is currently playing, so other tabs/pages (the home
 // page in particular) can offer a "return to your game" shortcut after the
 // player wanders off or closes the tab mid-game.
-const ACTIVE_GAME_KEY = "nerfchess.activeGame.v1";
-const ACTIVE_GAME_TTL_MS = 24 * 60 * 60 * 1000;
+export const ACTIVE_GAME_KEY = "nerfchess.activeGame.v1";
+export const ACTIVE_GAME_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type ActiveGame = { id: string; at: number };
 
@@ -675,6 +682,11 @@ export class MPSession {
   private reconnectTimer: number | null = null;
   private reconnectAttempt = 0;
   private wakeListenersOn = false;
+  // The server closed this seat's socket because the same seat was claimed
+  // from another tab or device (F082). While set, nothing reconnects on its
+  // own: an automatic reclaim would close the other tab's socket, which would
+  // reclaim in turn, and the two would steal the seat back and forth forever.
+  private superseded = false;
 
   private readonly onWake = () => {
     // The tab came back to the foreground (mobile app-switch, bfcache restore,
@@ -686,6 +698,13 @@ export class MPSession {
     if (!this.seat && !this.watchingId && !this.searching) return;
     // Ignore the "hidden" half of a visibilitychange (we only act on wake).
     if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+    if (this.superseded) {
+      // Only the tab the reader is actually using takes the seat back: a
+      // background tab also sees "online" and "pageshow", and reclaiming from
+      // there would restart the steal loop.
+      if (typeof document !== "undefined" && document.hasFocus()) this.reclaim();
+      return;
+    }
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       if (this.reconnectTimer !== null) {
         window.clearTimeout(this.reconnectTimer);
@@ -720,7 +739,7 @@ export class MPSession {
   }
 
   private scheduleReconnect() {
-    if (this.destroyed || !this.autoReconnect) return;
+    if (this.destroyed || !this.autoReconnect || this.superseded) return;
     if (!this.seat && !this.watchingId && !this.searching) return;
     if (this.reconnectTimer !== null) return;
     this.reconnectAttempt++;
@@ -754,6 +773,26 @@ export class MPSession {
     } catch {
       this.scheduleReconnect();
     }
+  }
+
+  /** Take this session's seat back after another tab or device claimed it
+   *  (the `superseded` event). The other socket is closed with the same code,
+   *  so exactly one tab holds the seat. Returns false when there is no seat. */
+  reclaim(): boolean {
+    if (this.destroyed || !this.seat) return false;
+    this.superseded = false;
+    this.reconnectAttempt = 0;
+    if (this.reconnectTimer !== null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    void this.tryReconnect();
+    return true;
+  }
+
+  /** True while another tab or device holds this session's seat. */
+  isSuperseded(): boolean {
+    return this.superseded;
   }
 
   on(fn: (e: MPEvent) => void) {
@@ -878,7 +917,7 @@ export class MPSession {
         }
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event: CloseEvent) => {
         window.clearTimeout(failTimer);
         // A SUPERSEDED socket's close must not touch shared session state.
         // Only "lost" was generation-guarded before, so a late onclose from an
@@ -896,6 +935,14 @@ export class MPSession {
         // Closed before it ever opened: drop the in-flight marker so a retry
         // isn't blocked behind a promise the failTimer will reject.
         if (!opened) this.connecting = null;
+        if (opened && event?.code === SEAT_SUPERSEDED_CLOSE && this.seat) {
+          // Another tab or device claimed this seat. Do not reconnect: that
+          // would steal it back and start the loop (see `superseded`).
+          this.superseded = true;
+          this.emitConnectionState("lost");
+          this.emit({ type: "superseded" });
+          return;
+        }
         if (opened) {
           this.emitConnectionState("lost");
           this.emit({ type: "disconnected" });
@@ -945,6 +992,9 @@ export class MPSession {
       case "created":
         this.code = frame.d.id;
         this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        // This socket now holds the seat, so a stale superseded flag from an
+        // earlier seat must not keep auto-reconnect off for this one.
+        this.superseded = false;
         this.reconnectAttempt = 0;
         if (this.persistFriendSession) {
           saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -954,6 +1004,9 @@ export class MPSession {
       case "start":
         this.code = frame.d.id;
         this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        // This socket now holds the seat, so a stale superseded flag from an
+        // earlier seat must not keep auto-reconnect off for this one.
+        this.superseded = false;
         this.reconnectAttempt = 0;
         if (this.persistFriendSession) {
           saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -983,6 +1036,9 @@ export class MPSession {
         // are not persisted here as friend sessions; /game/[id] reclaims them
         // via the saved online seat.
         this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        // This socket now holds the seat, so a stale superseded flag from an
+        // earlier seat must not keep auto-reconnect off for this one.
+        this.superseded = false;
         this.searching = false;
         this.reconnectAttempt = 0;
         this.emit({ type: "paired", id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -1143,6 +1199,8 @@ export class MPSession {
   async resume(saved: MPSavedSession): Promise<void> {
     this.code = saved.id;
     this.seat = saved;
+    // Resuming is the reader asking for this seat, the same as reclaim().
+    this.superseded = false;
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {
@@ -1167,7 +1225,8 @@ export class MPSession {
   // rebuild from. Used when the client replica detects it has drifted from
   // the server (e.g. a server-accepted move the replica considers illegal).
   resync(): boolean {
-    if (this.destroyed || (!this.seat && !this.watchingId)) return false;
+    // A superseded seat is held by another tab; a resync would steal it.
+    if (this.destroyed || this.superseded || (!this.seat && !this.watchingId)) return false;
     if (this.reconnectTimer !== null) {
       window.clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

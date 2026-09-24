@@ -11,8 +11,8 @@
      state is carried by the card's own zone overlay, never by the play;
    - all bwp-* classes are hidden outright when animations are off in
      Settings (guard at the bottom of this file);
-   - whole plays land inside ~1.4-1.9s. Tier 7-8 bespoke scenes stack a
-     second, later shock ring plus a board-edge glow (bwp-edge) for scale.
+   - whole plays land inside ~1.4-1.9s. Tier 3 and above cards reworked as
+     rule scenes carry no wash, shock ring or glow; there is no glow class.
 
    DIRECTION. Five of these tracks read the board-geometry custom properties
    published on the effect wrapper (see effects/geometry.ts), so a boon points
@@ -48,14 +48,6 @@
   100% { opacity: 0; transform: scale(0.74); }
 }
 .bwp-tell { animation: bwp-tell calc(0.36s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
-
-/* Board-edge glow — tier 7-8 grandeur only. */
-@keyframes bwp-edge {
-  0% { opacity: 0; transform: scale(0.92); }
-  35% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.03); }
-}
-.bwp-edge { animation: bwp-edge calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Arrivals ------------------------------------------------------------- */
 
@@ -389,6 +381,55 @@
   100% { opacity: 0; transform: rotate(342deg) scale(0.92); }
 }
 .bwp-whirl { animation: bwp-whirl calc(1.45s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
+
+/* --- Rule scenes (slice TC-boon-curse) ------------------------------------ */
+
+/* Vantage Point / Home Guard: a piece (or blade) pushes toward the caster's
+   edge by --reach and is thrown back to where it stood. --rb-side overrides
+   the direction for art already mirrored by a static --fx-side flip. */
+@keyframes bwp-rebuff {
+  0% { opacity: 0; transform: translateY(0); }
+  14% { opacity: 1; transform: translateY(0); }
+  40% { transform: translateY(calc(var(--rb-side, var(--fx-side, 1)) * var(--reach, 40%))); }
+  52% { transform: translateY(calc(var(--rb-side, var(--fx-side, 1)) * var(--reach, 40%) * 0.35)); }
+  66% { transform: translateY(calc(var(--rb-side, var(--fx-side, 1)) * var(--reach, 40%) * -0.12)); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.bwp-rebuff { animation: bwp-rebuff calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* Vantage Point / Covenant of Return: a piece comes back toward the caster
+   by --steps ranks (default one; it starts that many of its own heights
+   further from the caster's edge). */
+@keyframes bwp-stepoff {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -117% * var(--steps, 1))); }
+  18% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -117% * var(--steps, 1))); }
+  54% { transform: translateY(0); }
+  84% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.bwp-stepoff { animation: bwp-stepoff calc(1s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* Drive Them Out: an invader is thrown back across the border toward its own
+   side by --reach (negative runs away from the caster) and is gone. */
+@keyframes bwp-expel {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  16% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 8%)) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * var(--reach, -150%))) rotate(var(--rot, 20deg)); }
+}
+.bwp-expel { animation: bwp-expel calc(0.95s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* The Long Truce: a sword standing at the border is lowered and laid flat
+   (--lw picks which way it falls), then fades. */
+@keyframes bwp-lower {
+  0% { opacity: 0; transform: rotate(0deg); }
+  16% { opacity: 1; transform: rotate(0deg); }
+  36% { transform: rotate(0deg); }
+  66% { transform: rotate(var(--lw, 84deg)); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--lw, 84deg)); }
+}
+.bwp-lower { animation: bwp-lower calc(1.3s * var(--fx-dur, 1)) var(--ease-io) both; }
 
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every boon play outright. The FLAGSHIP impact

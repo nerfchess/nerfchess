@@ -127,12 +127,30 @@ export default function SuggestRulePage() {
           ...payloadForType(type),
         }),
       });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error || "Could not send your suggestion.");
+      if (!res.ok) {
+        // The body is only JSON when our route answered. A proxy error page, a
+        // 502 or an empty body used to surface as a raw SyntaxError here.
+        let data: { error?: unknown } = {};
+        try {
+          data = (await res.json()) as { error?: unknown };
+        } catch {
+          // Not JSON: fall through to the plain message for the status.
+        }
+        setState("error");
+        setError(
+          typeof data.error === "string" && data.error.trim()
+            ? data.error
+            : res.status === 429
+              ? "Too many suggestions from here just now. Wait a few minutes and try again."
+              : "Could not send your suggestion. Try again in a moment.",
+        );
+        return;
+      }
       setState("sent");
-    } catch (err) {
+    } catch {
+      // fetch itself rejected: offline, or the connection dropped.
       setState("error");
-      setError(err instanceof Error ? err.message : "Could not send your suggestion.");
+      setError("Could not reach the server. Check your connection and try again.");
     }
   };
 
@@ -205,14 +223,14 @@ export default function SuggestRulePage() {
           <form onSubmit={submit} className="mt-7 plate p-5 sm:p-6 space-y-5">
             <div>
               <label className="text-[12px] text-parchment-400 mb-1 block" htmlFor="rule-name">
-                {cfg.nameLabel} <span className="opacity-60">(optional)</span>
+                {cfg.nameLabel} <span>(optional)</span>
               </label>
               <input
                 id="rule-name"
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, 80))}
                 placeholder={cfg.namePlaceholder}
-                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-base font-display w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-base font-display w-full focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
               />
             </div>
 
@@ -227,7 +245,7 @@ export default function SuggestRulePage() {
                 required
                 rows={5}
                 placeholder={cfg.descPlaceholder}
-                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-2xl px-4 py-3 text-sm w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 resize-y"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-2xl px-4 py-3 text-sm w-full focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 resize-y"
               />
               <div className="mt-1 text-right font-mono text-[12px] text-parchment-500">
                 {description.length}/1000
@@ -236,18 +254,22 @@ export default function SuggestRulePage() {
 
             <div>
               <label className="text-[12px] text-parchment-400 mb-1 block" htmlFor="rule-contact">
-                How to credit / reach you <span className="opacity-60">(optional)</span>
+                How to credit / reach you <span>(optional)</span>
               </label>
               <input
                 id="rule-contact"
                 value={contact}
                 onChange={(e) => setContact(e.target.value.slice(0, 120))}
                 placeholder="username, email, discord…"
-                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-sm w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-sm w-full focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
               />
             </div>
 
-            {error && <div className="text-sm text-oxblood-glow">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-oxblood-glow">
+                {error}
+              </div>
+            )}
 
             <Button tone="cta"
               type="submit"

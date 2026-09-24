@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/server/social";
+import { guardJsonWrite, PRIVATE_NO_STORE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,8 @@ export async function GET(request: Request) {
     .bind(user.id)
     .first<{ n: number }>();
 
-  return NextResponse.json({
+  return NextResponse.json(
+    {
     notifications: rows.results.map((n) => {
       const actorName = n.live_actor_name ?? n.actor_name;
       // Notification text embeds the actor name verbatim at send time. When the
@@ -62,21 +64,24 @@ export async function GET(request: Request) {
       };
     }),
     unread: unread?.n ?? 0,
-  });
+    },
+    { headers: { "Cache-Control": PRIVATE_NO_STORE } },
+  );
 }
 
 // Mark notifications read: { ids: string[] } for specific ones, {} for all.
 export async function POST(request: Request) {
+  // An empty body means "mark all read"; anything else must be a JSON object
+  // (a body of null used to crash here with a 500, F047).
+  const body = await guardJsonWrite(request, { allowEmpty: true });
+  if (body instanceof NextResponse) return body;
   const guard = await requireUser(request);
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;
 
-  let body: { ids?: unknown } = {};
-  try {
-    body = await request.json();
-  } catch {}
-
-  const ids = Array.isArray(body.ids) ? body.ids.filter((x): x is string => typeof x === "string").slice(0, 100) : null;
+  const ids = Array.isArray(body.ids)
+    ? body.ids.filter((x): x is string => typeof x === "string" && x.length <= 64).slice(0, 100)
+    : null;
   if (ids && ids.length > 0) {
     const placeholders = ids.map(() => "?").join(",");
     await db

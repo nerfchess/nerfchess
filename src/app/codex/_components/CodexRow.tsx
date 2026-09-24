@@ -15,6 +15,9 @@ function entryIcon(e: CodexEntry): LucideIcon {
   return ic ?? Sparkles;
 }
 
+/** The copy-link control's state: idle, confirmed, or refused by the browser. */
+export type CopyState = "idle" | "copied" | "failed";
+
 // A compact 44px list row: face icon, name, tier chip (via the shared .tier-*
 // classes), and a one-line description ellipsis. The whole row is a real link
 // to the card's detail page, so a modified click (or middle click) opens the
@@ -24,13 +27,13 @@ function entryIcon(e: CodexEntry): LucideIcon {
 export function CodexRow({
   entry,
   expanded,
-  copied,
+  copy,
   onToggle,
   onCopy,
 }: {
   entry: CodexEntry;
   expanded: boolean;
-  copied: boolean;
+  copy: CopyState;
   onToggle: () => void;
   onCopy: () => void;
 }) {
@@ -51,7 +54,11 @@ export function CodexRow({
     onToggle();
   };
 
-  const rowStyle: CSSProperties = { contentVisibility: "auto", containIntrinsicSize: "auto 48px" };
+  // The placeholder size is the content box of a real row (44px border box
+  // less the two 1px borders). It was 48px, so rows first laid out 50px tall
+  // and shrank to 44px as they entered the viewport, walking the list up to
+  // 48px under the reader (0.03 CLS on a phone).
+  const rowStyle: CSSProperties = { contentVisibility: "auto", containIntrinsicSize: "auto 42px" };
 
   // The Copy button is a SIBLING of the card link, not a child: nesting one
   // interactive control inside another is invalid and lets a Copy click also
@@ -121,7 +128,7 @@ export function CodexRow({
         className="hidden min-h-[44px] shrink-0 self-center items-center gap-1 rounded-none px-2 text-[13px] text-parchment-400 hover:bg-[color:var(--bg-raised)] hover:text-parchment-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] sm:inline-flex [@media(pointer:fine)]:min-h-[32px]"
       >
         <Link2 size={14} aria-hidden />
-        {copied ? "Copied" : "Copy"}
+        {copy === "copied" ? "Copied" : copy === "failed" ? "Copy failed" : "Copy"}
       </button>
       <ChevronRight
         size={16}

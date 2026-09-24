@@ -1,0 +1,3 @@
+[check-anim-props] 2 stale BASELINE entr(y/ies) - the keyframe was fixed or renamed; remove from the list:
+  - src/components/effects/fruition/fruition.css::frx-frame
+  - src/components/effects/fruition/fruition.css::frx-frame-release

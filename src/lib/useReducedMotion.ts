@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { lowTimeMotionHeld } from "@/lib/lowTimeMotion";
 import { loadSettings } from "@/lib/settings";
 
 /**
@@ -21,24 +22,37 @@ import { loadSettings } from "@/lib/settings";
  * once (framer-motion's captures its value at mount).
  *
  * @param force overrides detection entirely; pass when a parent already knows.
+ * @param opts.ignoreLowTimeHold read the player's own setting through the
+ *   low-time hold (src/lib/lowTimeMotion.ts). Only for a surface that exists
+ *   because the game ended, which is what ends the hold: the result screen
+ *   mounts in the same commit that releases it and must not take its first
+ *   frame from the scramble's "off".
  */
-export function useReducedMotion(force?: boolean): boolean {
-  // Initial value is read during render (via the useState initializer), so no
-  // synchronous setState is needed in the effect; the effect only subscribes to
-  // later changes when the caller is not controlling the value with `force`.
-  const [detected, setDetected] = useState<boolean>(detectReduced);
+export function useReducedMotion(
+  force?: boolean,
+  opts?: { ignoreLowTimeHold?: boolean },
+): boolean {
+  const ignoreHold = !!opts?.ignoreLowTimeHold;
+  // Initial value is read during render (via the useState initializer).
+  const [detected, setDetected] = useState<boolean>(() => detectReduced(ignoreHold));
   useEffect(() => {
     if (force !== undefined) return;
-    const update = () => setDetected(detectReduced());
+    const update = () => setDetected(detectReduced(ignoreHold));
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     mq.addEventListener("change", update);
     const observer = new MutationObserver(update);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-anim"] });
+    // Read once more now that we are subscribed. The attribute can flip
+    // between render and this effect (a sibling's effect in the same commit
+    // releases the low-time hold when the game ends), and a MutationObserver
+    // attached after that write never hears of it, which left the game-over
+    // panel stuck in its motion-off branch for the whole ending (F204).
+    update();
     return () => {
       mq.removeEventListener("change", update);
       observer.disconnect();
     };
-  }, [force]);
+  }, [force, ignoreHold]);
   return force ?? detected;
 }
 
@@ -48,10 +62,12 @@ export function useReducedMotion(force?: boolean): boolean {
  *  devices that ask apps to reduce motion). Once applyUiPrefs has stamped
  *  html[data-anim] it already folded all of that in, so the attribute alone is
  *  authoritative; the settings read below only covers the pre-stamp window. */
-export function detectReduced(): boolean {
+export function detectReduced(ignoreLowTimeHold = false): boolean {
   if (typeof window === "undefined") return false;
   const anim = document.documentElement.getAttribute("data-anim");
-  if (anim) return anim === "off";
+  // Under the hold the attribute says "off" whatever the player chose, so a
+  // caller that looks through the hold falls back to the settings below.
+  if (anim && !(ignoreLowTimeHold && lowTimeMotionHeld())) return anim === "off";
   const s = loadSettings();
   if (s.reducedMotion || s.animationSpeed === "off") return true;
   return s.followSystemMotion && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

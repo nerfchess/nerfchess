@@ -1,0 +1,45 @@
+  ok  src/lib/server/socketGuard.ts exists
+  ok  a normal move frame passes
+  ok  a frame without d passes
+  ok  JSON null is rejected as bad_frame
+  ok  a bare number is rejected as bad_frame
+  ok  a bare string is rejected as bad_frame
+  ok  an array is rejected as bad_frame
+  ok  an object without t is rejected as bad_frame
+  ok  a numeric t is rejected as bad_frame
+  ok  an empty t is rejected as bad_frame
+  ok  a 40-char t is rejected as bad_frame
+  ok  broken JSON is rejected as bad_json
+  ok  a 9KB string frame is rejected before parsing
+  ok  a 9KB binary frame is rejected before parsing
+  ok  a 3000-char euro frame (9KB UTF-8, 3KB of units) is under the unit precheck
+  ok  a 27KB UTF-8 frame is rejected
+  ok  a burst of 40 frames at once passes
+  ok  the next frame in the same instant is dropped
+  ok  one second later 10 more pass
+  ok  a sustained flood is closed after about 200 drops (took 190)
+  ok  5 frames a second for two minutes never drops
+  ok  socketGuard exports WindowLimiter and MATCH_CREATE_LIMITS (F067)
+  ok  a create loop gets 20 matches per window, not 1000 (got 20)
+  ok  another account is not affected
+  ok  the account can create again after the window
+  ok  the limiter's key map stays bounded (size 50)
+  ok  found the ok:false /healthz bodies
+  ok  no ok:false /healthz body carries error text or a stack
+  ok  found the /healthz handler
+  ok  /healthz does not return the D1 error text
+  ok  /healthz does not return the tick error text
+  ok  /healthz does not return desync detail (game id, draft actions)
+  ok  /healthz does not return the engine reject detail
+  ok  /healthz lobby probe does not return the error message
+  ok  worker JSON sets nosniff
+  ok  /healthz sends the nosniff header
+  ok  the public worker fetch never forwards /mod/online
+  ok  the DO serves the internal /mod/online route
+  ok  webSocketClose prunes per-socket throttle state
+  ok  lastChatAt entries are deleted (F090)
+  ok  friend games and bot games both spend the create limit (F067)
+  ok  the address key is a digest, never the raw address
+  ok  a superseded seat is closed with SEAT_SUPERSEDED_CLOSE (F082)
+
+all socket guard checks passed

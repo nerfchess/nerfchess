@@ -342,7 +342,7 @@ function FriendRow({
         )}
         {presence.state === "online" && (
           <LinkButton tone="leaf"
-            href={`/friend?challenge=${encodeURIComponent(f.username)}`}
+            href={`/lobby?tab=friends&challenge=${encodeURIComponent(f.username)}`}
             className="px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
             Challenge
@@ -598,10 +598,10 @@ function SkeletonRows() {
     <div className="space-y-2" aria-hidden>
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className="flex items-center gap-3 rounded border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
-          <div className="h-[34px] w-[34px] shrink-0 animate-pulse rounded-none bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
+          <div className="skeleton h-[34px] w-[34px] shrink-0" />
           <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="h-3.5 w-1/3 animate-pulse rounded bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
-            <div className="h-2.5 w-1/4 animate-pulse rounded bg-white/[0.07] motion-reduce:animate-none" />
+            <div className="skeleton h-3.5 w-1/3" />
+            <div className="skeleton h-2.5 w-1/4" />
           </div>
         </div>
       ))}

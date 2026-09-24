@@ -1,0 +1,6 @@
+F212 before (old inline logic, simulated with its exact semantics):
+{"scenario":"one tick crosses 10s and 5s (12s -> 4s)","played":["low"],"urgentMarkedFired":true}
+
+After: ./node_modules/.bin/tsx scripts/polish/j/test-clock-warn.ts
+[test-clock-warn] OK: 4 scenarios
+(jump scenario: [null, "urgent", null]; per-cue throttle so the urgent cue is never gated by the low cue)

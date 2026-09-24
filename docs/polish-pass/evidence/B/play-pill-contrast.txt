@@ -1,0 +1,13 @@
+/play pressed option pills, text contrast against the pill ground (e2e/polish/play-shell.spec.ts,
+"pressed option pills clear AA"), shared dev server, 2026-09-23.
+
+before (HEAD setupParts.tsx: accent text on a 20% accent wash, the Elo at 70% opacity): 2 of 2 fail
+  dark  ["Buff 4.17","Medium~1500 4.17","~1500 2.83","Random 4.17","10+0 4.17"]
+  light ["Buff 5.52","Medium~1500 5.52","~1500 3.10","Random 5.52","10+0 5.52"]
+after (accent text and edge on the pill's own raised surface, the Elo undimmed): 2 of 2 pass
+  dark  ["Buff 4.76","Medium~1500 4.76","~1500 4.76","Random 4.76","10+0 4.76"]
+  light ["Buff 6.75","Medium~1500 6.75","~1500 6.75","Random 6.75","10+0 6.75"]
+
+polish:axe on /play after (axe-after-play.json): the 4 pill nodes are gone in both schemes at 360 and
+1280. What is left is one .btn-leaf node (the shared primary Button, dark scheme), also on /lobby;
+that is the Button component's colours, requested from its owner.

@@ -1,0 +1,7 @@
+animation registry: 2452 tier 1-8 upgrades (1533 buffs, 551 hexes, 368 nerfs)
+status: keep 2452 | minor polish 0 | partial 0 | full 0
+shared flagships: 0 total, 0 at tier>=5 across 0 groups
+no hand-made art: 0 cards still on the generated fallback (baseline 0); list them with node scripts/audit-bespoke-coverage.cjs
+
+FAIL: 1 problem(s)
+  - F6: docs/animation-registry.json is stale (346 cards: buff:loyal_pawn tier 1 -> 6; buff:second_wind tier 1 -> 2; buff:phase_rook tier 2 -> 3; buff:camel_knight tier 2 -> 3; buff:decoy tier 2 -> 3; buff:sidestep_king tier 3 -> 2; +340 more). Regenerate it with --write in its own commit.

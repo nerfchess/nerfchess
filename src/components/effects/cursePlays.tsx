@@ -19,10 +19,15 @@
 //                  shackle ring (binds, compulsions, ransoms)
 //   MidasVeil    — a gilded veil sweeps the ranks and figures gild one by
 //                  one where it passes (transferring / accumulating marks)
-// plus SIX fully bespoke scenes for the tier 7–8 flagships (Death Knell,
-// The Hollow Crown, Tide of Ash, Crown of Thorns, Pauper's Crown, Beacon of
-// Woe). The CARD -> TEMPLATE / PALETTE / GLYPH table is the PLAYS registry
-// at the bottom of this file.
+// plus scenes of their own rule (registered with S) for every live tier 4
+// and above card. The rule scenes (Doomed Vow, Curse Engine, Hollow Crown,
+// Pauper's Crown, Inverted Crown, Powder Keg, Effigy of Dread, and in round
+// 3 Creeping Blight, Curse of Recoil, Exile's Mark, Hydra Hex, Standing
+// Guard, Mutiny and Sinking Mire) draw the squares and pieces the rule
+// touches, placed in <BoardFrame> from the caster's side, with no wash,
+// ring or impact composite. The
+// CARD -> TEMPLATE / PALETTE / GLYPH table is the PLAYS registry at the
+// bottom of this file.
 
 // STAGING. Every card declares an anchor, so a hex happens where it was
 // actually laid. `Stage` is the shared <BoardWideStage>, which clamps itself
@@ -150,7 +155,6 @@ const FLOURISH_IMPACT: Record<string, ImpactSpec> = {
   overexert: { l: 44, t: 52, s: 14, at: 820, man: "r", shock: true }, // the overworked rook cracks clean in half
   tollroad: { l: 51, t: 56, s: 12, at: 900, laser: true, shock: true }, // the toll stamp drops like a gate
   bloodlust: { l: 58, t: 54, s: 14, at: 900, man: "p", shock: true }, // the compelled queen's next victim bursts
-  exile: { l: 60, t: 44, s: 12, at: 1100, laser: true }, // the far border beam marks the exile line
   debtor: { l: 36, t: 52, s: 13, at: 820, shock: true }, // each tally lands like a dropped weight
   coronationtax: { l: 58, t: 54, s: 12, at: 940, laser: true, shock: true }, // the tax bolt arcs to the frozen piece
   pilgrimage: { l: 60, t: 46, s: 13, at: 780, laser: true }, // shrine light hammers down on the destination
@@ -160,41 +164,32 @@ const FLOURISH_IMPACT: Record<string, ImpactSpec> = {
   omen: { l: 42, t: 20, s: 13, at: 740, shock: true }, // the belfry bursts as the crows explode out
   halfmeasure: { l: 44, t: 60, s: 12, at: 940, shock: true }, // the loud beat of the metronome lands
   midnight: { l: 61, t: 24, s: 15, at: 1240, laser: true, shock: true }, // the midnight strike lasers the clock face
-  toil: { l: 61, t: 54, s: 13, at: 880, man: "r", shock: true }, // the overloaded rook buckles and splits
   slowpoison: { l: 54, t: 46, s: 13, at: 1000, shock: true }, // the dose lands with a soft, awful thump
   jammedgate: { l: 51, t: 42, s: 14, at: 900, laser: true, shock: true }, // the portcullis slams down a light-column
-  powderkeg: { l: 44, t: 50, s: 16, at: 1080, shock: true }, // the keg's preview blast rocks the ground
   collapse: { l: 44, t: 54, s: 15, at: 780, man: "n", shock: true }, // a piece goes down with the caving floor
-  doomedvow: { l: 43, t: 42, s: 13, at: 1000, laser: true }, // the axe-light falls on the condemned
   /* BlightGarden */
   footprints: { l: 47, t: 62, s: 12, at: 920, shock: true }, // each print ices shut with a crack
-  creep: { l: 60, t: 44, s: 12, at: 1120, shock: true }, // the outrider tile bites into fresh ground
   gravebloom: { l: 56, t: 52, s: 13, at: 780, laser: true }, // grave-light pillars over the rising mound
   stormwall: { l: 55, t: 22, s: 14, at: 1120, laser: true, shock: true }, // the first lightning column strikes the crest
   sentry: { l: 42, t: 54, s: 13, at: 1020, shock: true }, // the pacing tile stomps its beat
-  mire: { l: 44, t: 46, s: 14, at: 900, shock: true }, // the bog's heart gulps with a wet thud
   miasma: { l: 53, t: 50, s: 13, at: 1100, man: "n", shock: true }, // the third dose splits the sickened knight
   maw: { l: 55, t: 50, s: 14, at: 1000, man: "r", shock: true }, // the void's meal is torn in half
   wildfire: { l: 46, t: 46, s: 14, at: 940, laser: true, shock: true }, // the fire-column jumps piece to piece
-  effigy: { l: 44, t: 40, s: 14, at: 820, laser: true }, // dread-light hammers the effigy's post
   avalanche: { l: 50, t: 52, s: 16, at: 1060, shock: true }, // the slide slams into the sealed squares
   /* ChainWeb */
   twin: { l: 62, t: 58, s: 13, at: 940, shock: true }, // the sympathetic jerk cracks the far square
   noreins: { l: 62, t: 26, s: 13, at: 960, shock: true }, // the runaway rook blows through its post
-  recoil: { l: 46, t: 60, s: 13, at: 920, man: "b", shock: true }, // the recoiling bishop splinters mid-flight
   ransom: { l: 30, t: 62, s: 13, at: 900, laser: true, shock: true }, // the surety chains hammer down on the pawns
   courtlock: { l: 30, t: 55, s: 14, at: 940, laser: true, shock: true }, // the padlock drops in a column of light
   bindingoath: { l: 46, t: 58, s: 13, at: 1060, shock: true }, // the oath-knot cinches with a ground blow
   bloodbond: { l: 62, t: 58, s: 13, at: 1080, shock: true }, // the sympathetic freeze lands on the partner
   sharedfate: { l: 62, t: 58, s: 14, at: 1040, man: "r", shock: true }, // the bound twin shatters where it stands
-  kingsguard: { l: 56, t: 54, s: 13, at: 1000, laser: true }, // the guard-light pins the nearest piece
   noretreat: { l: 42, t: 44, s: 13, at: 880, shock: true }, // the taut rein snaps the deserter back HARD
   /* MidasVeil */
   coin: { l: 60, t: 34, s: 13, at: 1100, laser: true, shock: true }, // the cursed coin lands like a meteor
   gilded: { l: 44, t: 42, s: 14, at: 1000, shock: true }, // the gold sickness sets with a heavy pulse
   fifthcolumn: { l: 54, t: 36, s: 13, at: 800, laser: true }, // the turncoat's new colors sear down onto it
   handeddown: { l: 60, t: 36, s: 13, at: 1020, shock: true }, // the inherited curse lands on the next bearer
-  mutiny: { l: 34, t: 36, s: 14, at: 940, man: "n", shock: true }, // the mutineer breaks its old allegiance apart
   sleeper: { l: 42, t: 38, s: 13, at: 1020, laser: true, shock: true }, // the wake-signal spears the sleeper cell
   agingblade: { l: 42, t: 36, s: 14, at: 860, man: "q", shock: true }, // the queen's old self shears away in halves
 };
@@ -706,17 +701,6 @@ function HexBrand({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           ))}
         </>
       )}
-      {/* wave3 Exile's Mark — a marked piece dragged toward the far half or it crumbles */}
-      {flourish === "exile" && (
-        <>
-          <span className="absolute block" style={{ left: "34%", top: "57%", width: "34%", height: "0.9%", rotate: "-6deg" }}>
-            <span className="cwp-beam absolute inset-0 block" style={{ background: `repeating-linear-gradient(90deg, ${tint(p1, 0.85)} 0 6px, transparent 6px 11px)`, animationDelay: `${delayMs + 560}ms` }} />
-          </span>
-          <span className="cwp-tug absolute block" style={{ left: "36%", top: "50%", width: "5.5%", height: "8%", "--dx": "420%", "--dy": "-30%", animationDelay: `${delayMs + 660}ms` } as CSSProperties}>
-            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
-          </span>
-        </>
-      )}
       {/* wave3 Debtor's Mark — freeze-debt tallies pile up beside an idle piece */}
       {flourish === "debtor" && (
         <>
@@ -791,7 +775,7 @@ function HexBrand({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
    Template 2: OmenBell — a spectral bell lowers over the board and ROCKS;
    toll ripples (the signature beat) wash out from its mouth while the card's
    glyph glows beneath it.
-   Flourishes: omen, halfmeasure, midnight, toil.
+   Flourishes: omen, halfmeasure, midnight.
    ========================================================================== */
 function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
@@ -891,29 +875,6 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           </span>
         </>
       )}
-      {/* bespoke: Weight of Toil — the overworked rook staggers under a grain
-          sack while sweat-glints fly off it */}
-      {flourish === "toil" && (
-        <>
-          <span className="cwp-hold absolute block" style={{ left: "63%", top: "56%", width: "6%", height: "9%", animationDelay: `${delayMs + 640}ms` }}>
-            <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
-          </span>
-          <span className="cwp-facein absolute block" style={{ left: "62.4%", top: "50%", width: "7.5%", height: "6%", animationDelay: `${delayMs + 700}ms` }}>
-            <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
-              <path d="M1.4 6.8 C1 3.4 3 1 5 1 C7 1 9 3.4 8.6 6.8 C6.4 5.8 3.6 5.8 1.4 6.8 Z" fill="#8a6a3a" stroke="#4a3a22" strokeWidth="0.5" {...SJ} />
-              <path d="M3.6 3.4 H6.4" stroke="#4a3a22" strokeWidth="0.5" strokeLinecap="round" />
-            </svg>
-          </span>
-          {[
-            { l: 61, t: 55, dx: "-140%", dy: "-60%", rot: "-40deg" },
-            { l: 70, t: 56, dx: "150%", dy: "-70%", rot: "40deg" },
-          ].map((v, i) => (
-            <span key={i} className="cwp-spark absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.4%", height: "1.4%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 820 + i * 120}ms` } as CSSProperties}>
-              <Mote color="#bfe6ff" />
-            </span>
-          ))}
-        </>
-      )}
       {/* wave3 Slow Poison — a green drop seeps into a piece that withers a rank down */}
       {flourish === "slowpoison" && (
         <>
@@ -945,21 +906,6 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           </span>
         </>
       )}
-      {/* wave3 Powder Keg — a lit keg on an empty square counts down to a blast */}
-      {flourish === "powderkeg" && (
-        <>
-          <span className="cwp-pop absolute block" style={{ left: "46%", top: "54%", width: "8%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
-            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
-              <rect x="1.4" y="3" width="7.2" height="8" rx="1" fill={tint(p0, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="0.6" />
-              <path d="M5 3 C5.4 1.6 6.4 1 7 1.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="cwp-flame absolute block" style={{ left: "56%", top: "42%", width: "4%", height: "5%", animationDelay: `${delayMs + 820}ms` }}>
-            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3 6.2 4.6 4 8 C1.8 4.6 2 3 4 0.8 Z" fill="#ff9d3d" /></svg>
-          </span>
-          <span className="cwp-scorch absolute block rounded-full" style={{ left: "38%", top: "48%", width: "24%", height: "24%", border: `2.5px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 1040}ms` }} />
-        </>
-      )}
       {/* wave3 Collapsing Floor — a chosen rank caves in, freezing what stands on it */}
       {flourish === "collapse" && (
         <>
@@ -973,23 +919,6 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           ))}
         </>
       )}
-      {/* wave3 Doomed Vow — a condemned piece pleads under a falling axe unless the king comes */}
-      {flourish === "doomedvow" && (
-        <>
-          <span className="cwp-hold absolute block" style={{ left: "46%", top: "56%", width: "6%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
-            <Man kind="b" fill={tint(p1, 0.9)} stroke={p2} />
-          </span>
-          <span className="cwp-drop absolute block" style={{ left: "44%", top: "44%", width: "10%", height: "10%", animationDelay: `${delayMs + 820}ms` }}>
-            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-              <path d="M5 0.8 V9" stroke="#8a6a3a" strokeWidth="0.7" strokeLinecap="round" />
-              <path d="M5 1 C7 1.2 8.4 2.4 8.6 4 L5 3.4 Z" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.4" {...SJ} />
-            </svg>
-          </span>
-          <span className="cwp-glint absolute block" style={{ left: "60%", top: "56%", width: "3%", height: "3%", animationDelay: `${delayMs + 1120}ms` }}>
-            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill="#c94a5a" /></svg>
-          </span>
-        </>
-      )}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1200} />
     </Stage>
   );
@@ -999,7 +928,7 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
    Template 3: BlightGarden — rot takes the ground: dark tiles SPREAD one by
    one from the struck point (the signature beat) while weeds sprout from the
    seams and the card's glyph rises at the heart of the patch.
-   Flourishes: footprints, creep, gravebloom, stormwall.
+   Flourishes: footprints, gravebloom, stormwall.
    ========================================================================== */
 const BLIGHT_TILES = [
   { l: 45, t: 43, d: 0, s: 10 },
@@ -1059,25 +988,6 @@ function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: Te
           ))}
         </>
       )}
-      {/* bespoke: Creeping Blight — the rot reaches further: an outrider tile
-          crawls beyond the patch on a stretching tendril */}
-      {flourish === "creep" && (
-        <>
-          <span className="absolute block" style={{ left: "53%", top: "46%", width: "12%", height: "0.8%", rotate: "18deg" }}>
-            <span className="cwp-beam absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${tint(p1, 0.9)}, ${tint(p2, 0.4)})`, animationDelay: `${delayMs + 820}ms` }} />
-          </span>
-          <span className="cwp-spreadtile absolute block" style={{ left: "62%", top: "48%", width: "7.5%", height: "5.4%", animationDelay: `${delayMs + 1020}ms` }}>
-            <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
-              <path d="M7 0.6 L13.4 5 L7 9.4 L0.6 5 Z" fill={tint(p0, 0.8)} stroke={tint(p1, 0.9)} strokeWidth="0.7" {...SJ} />
-            </svg>
-          </span>
-          <span className="cwp-sprout absolute block" style={{ left: "64.6%", top: "43%", width: "2.6%", height: "5%", animationDelay: `${delayMs + 1180}ms` }}>
-            <svg viewBox="0 0 6 10" className="block h-full w-full" aria-hidden="true">
-              <path d="M3 9.6 C3 5.4 4.2 4 5 2.4 M3 9.6 C3 6.6 2.2 4.6 1.4 3.6" fill="none" stroke={tint(p1, 0.9)} strokeWidth="0.7" strokeLinecap="round" />
-            </svg>
-          </span>
-        </>
-      )}
       {/* bespoke: Gravebloom — a burial mound rises off-patch and two long-
           memoried flowers open over it */}
       {flourish === "gravebloom" && (
@@ -1135,19 +1045,6 @@ function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: Te
           <span className="cwp-beam absolute block" style={{ left: "34%", top: "64%", width: "30%", height: "0.8%", background: tint(p1, 0.7), transformOrigin: "0% 50%", animationDelay: `${delayMs + 640}ms` }} />
         </>
       )}
-      {/* wave3 Sinking Mire — a plus-shaped mire that shrinks one square per turn */}
-      {flourish === "mire" && (
-        <>
-          {[
-            { l: 46, t: 44, s: 8, d: 0 },
-            { l: 38, t: 50, s: 7, d: 200 },
-            { l: 54, t: 50, s: 7, d: 400 },
-            { l: 46, t: 56, s: 6, d: 600 },
-          ].map((v, i) => (
-            <span key={i} className="cwp-spreadtile absolute block rounded-full" style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 0.72}%`, background: tint(p0, 0.7), border: `1px solid ${tint(p1, 0.7)}`, animationDelay: `${delayMs + 500 + v.d}ms` }} />
-          ))}
-        </>
-      )}
       {/* wave3 Miasma — a piece sickens beside its neighbours; a third dose freezes it */}
       {flourish === "miasma" && (
         <>
@@ -1198,24 +1095,6 @@ function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: Te
           ))}
         </>
       )}
-      {/* wave3 Effigy of Dread — a caster's effigy rises and bars the ring around it */}
-      {flourish === "effigy" && (
-        <>
-          <span className="cwp-rise absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "16%", animationDelay: `${delayMs + 560}ms` }}>
-            <svg viewBox="0 0 8 16" className="block h-full w-full" aria-hidden="true">
-              <path d="M4 3.4 V14.8 M1 5.6 H7" stroke={tint(p2, 0.9)} strokeWidth="1" strokeLinecap="round" />
-              <circle cx="4" cy="2.4" r="1.4" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.4" />
-            </svg>
-          </span>
-          {[
-            { l: 38, t: 40 }, { l: 58, t: 40 }, { l: 38, t: 58 }, { l: 58, t: 58 },
-          ].map((v, i) => (
-            <span key={i} className="cwp-spreadtile absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "4.4%", animationDelay: `${delayMs + 820 + i * 90}ms` }}>
-              <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true"><path d="M7 0.6 L13.4 5 L7 9.4 L0.6 5 Z" fill={tint(p0, 0.8)} stroke={tint(p1, 0.85)} strokeWidth="0.6" {...SJ} /></svg>
-            </span>
-          ))}
-        </>
-      )}
       {/* wave3 Avalanche — after a dormant fuse the empty squares of a half are sealed */}
       {flourish === "avalanche" && (
         <>
@@ -1242,7 +1121,7 @@ function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: Te
    Template 4: ChainWeb — two spectral chains WHIP across the board (the lash
    overshoot is the signature beat) and cinch into a shackle ring holding the
    card's glyph.
-   Flourishes: twin, noreins, recoil, ransom, courtlock.
+   Flourishes: twin, noreins, ransom, courtlock.
    ========================================================================== */
 function ChainWeb({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
@@ -1308,23 +1187,6 @@ function ChainWeb({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
               <Mote color={tint(p2, 0.85)} />
             </span>
           ))}
-        </>
-      )}
-      {/* bespoke: Curse of Recoil — the bishop lunges, strikes, and is flung
-          straight back to where it started, impact glint left behind */}
-      {flourish === "recoil" && (
-        <>
-          <span className="cwp-snapback absolute block" style={{ left: "30%", top: "64%", width: "5.5%", height: "8%", "--dx": "300%", "--dy": "-6%", animationDelay: `${delayMs + 680}ms` } as CSSProperties}>
-            <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
-          </span>
-          <span className="cwp-glint absolute block" style={{ left: "48%", top: "63%", width: "3.6%", height: "3.6%", animationDelay: `${delayMs + 900}ms` }}>
-            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-              <path d="M5 0.6 L6.2 3.8 L9.4 5 L6.2 6.2 L5 9.4 L3.8 6.2 L0.6 5 L3.8 3.8 Z" fill="#ffd76a" />
-            </svg>
-          </span>
-          <span className="cwp-settle absolute block" style={{ left: "50%", top: "66%", width: "1.4%", height: "1.4%", "--dx": "40%", "--dy": "120%", "--rot": "90deg", animationDelay: `${delayMs + 1060}ms` } as CSSProperties}>
-            <Mote color={tint(p2, 0.8)} />
-          </span>
         </>
       )}
       {/* bespoke: Queen's Ransom — her majesty strides free while two pawns of
@@ -1423,22 +1285,6 @@ function ChainWeb({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           </span>
           <span className="cwp-settle absolute block" style={{ left: "64%", top: "62%", width: "5.5%", height: "8%", "--dx": "0%", "--dy": "70%", "--rot": "18deg", animationDelay: `${delayMs + 1000}ms` } as CSSProperties}>
             <Man kind="r" fill={tint(p1, 0.9)} stroke={p2} />
-          </span>
-        </>
-      )}
-      {/* wave3 Standing Guard — each king move freezes the piece nearest the king */}
-      {flourish === "kingsguard" && (
-        <>
-          <span className="cwp-tug absolute block" style={{ left: "42%", top: "58%", width: "6%", height: "9%", "--dx": "40%", "--dy": "0%", animationDelay: `${delayMs + 720}ms` } as CSSProperties}>
-            <Man kind="k" fill={tint(p1, 0.95)} stroke={p2} />
-          </span>
-          <span className="absolute block" style={{ left: "58%", top: "58%", width: "6%", height: "9%" }}>
-            <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 860}ms` }}>
-              <Man kind="b" fill={tint(p1, 0.95)} stroke={p2} />
-            </span>
-            <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1000}ms` }}>
-              <Man kind="b" fill="#9fd8ff" stroke={p0} />
-            </span>
           </span>
         </>
       )}
@@ -1572,17 +1418,6 @@ function MidasVeil({ palette, glyph, lead, role, delayMs, flourish, aim }: Templ
           </span>
         </>
       )}
-      {/* wave3 Mutiny — the first enemy knight to capture defects across the lines */}
-      {flourish === "mutiny" && (
-        <span className="absolute block" style={{ left: "36%", top: "40%", width: "6.5%", height: "10%" }}>
-          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
-            <Man kind="n" fill="#8a94a8" stroke="#2a2a30" />
-          </span>
-          <span className="cwp-tug absolute inset-0 block" style={{ "--dx": "220%", "--dy": "0%", animationDelay: `${delayMs + 900}ms` } as CSSProperties}>
-            <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
-          </span>
-        </span>
-      )}
       {/* wave3 Sleeper Cell — a marked minor waits on a fuse, then turns its coat */}
       {flourish === "sleeper" && (
         <>
@@ -1639,9 +1474,9 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
     <Stage quakeAtMs={delayMs + 700}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={41} top={22} />
-      {/* the fourth stroke falls as a column of grave-light on the doomed
+      {/* the third stroke falls as a column of grave-light on the doomed
           queen, and her ghost-preview splits in half — the knell shown true */}
-      <ImpactCell spec={{ l: 44, t: 52, s: 12, at: 1270, laser: true, man: "q", shock: true }} rgb="201 176 232" delayMs={delayMs} />
+      <ImpactCell spec={{ l: 44, t: 52, s: 12, at: 1200, laser: true, man: "q", shock: true }} rgb="201 176 232" delayMs={delayMs} />
       {/* the doomed one, shivering under the bell's shadow */}
       <span className="cwp-hold absolute block" style={{ left: "46.5%", top: "56%", width: "7%", height: "10%", animationDelay: `${delayMs + 480}ms` }}>
         <Man kind="q" fill={tint(p1, 0.9)} stroke={p0} />
@@ -1659,18 +1494,19 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
           </svg>
         </span>
       </span>
-      {/* four counted strokes: toll rings, one per remaining turn */}
-      {[0, 1, 2, 3].map((i) => (
+      {/* three counted strokes (the card's three turns): toll rings, one per
+          remaining turn */}
+      {[0, 1, 2].map((i) => (
         <span
           key={i}
           className="cwp-ring absolute block rounded-full"
-          style={{ left: "31%", top: "40%", width: "38%", height: "26%", border: `2.5px solid ${tint(p1, 0.85 - i * 0.12)}`, animationDelay: `${delayMs + 700 + i * 190}ms` }}
+          style={{ left: "31%", top: "40%", width: "38%", height: "26%", border: `2.5px solid ${tint(p1, 0.85 - i * 0.12)}`, animationDelay: `${delayMs + 700 + i * 250}ms` }}
         />
       ))}
-      {/* the numeral counts down: IV flickers, then I burns */}
+      {/* the numeral counts down: III flickers, then I burns */}
       <span className="cwp-facein absolute block" style={{ left: "63%", top: "30%", width: "9%", height: "8%", animationDelay: `${delayMs + 760}ms` }}>
         <svg viewBox="0 0 16 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M2.5 1.5 V8.5 M5.5 1.5 L7.5 8.5 L9.5 1.5" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1.2" {...SJ} />
+          <path d="M4.5 1.5 V8.5 M8 1.5 V8.5 M11.5 1.5 V8.5" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1.2" {...SJ} />
         </svg>
       </span>
       <span className="cwp-pop absolute block" style={{ left: "64.6%", top: "40%", width: "4%", height: "7%", animationDelay: `${delayMs + 1120}ms` }}>
@@ -1698,68 +1534,82 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- The Hollow Crown: a throne rises, the great crown lowers onto it and
-   hollows to a shell, and the whole court bows into mourning. -------------- */
+/* --- The Hollow Crown: the rule, drawn as a chart on their side of the
+   middle (clear of the cast banner over their back ranks). Their king steps
+   off his square and a crown comes down on him and hollows; at once a veil
+   is drawn over the court beside him and it bows in mourning (their rook,
+   bishop, queen and knight may not move on their next turn), while two
+   pawns and the king himself are shown the only steps left; one pip for
+   the one turn, and an infinity mark because it wakes after every king move
+   for the rest of the game. ---------------------------------------------- */
 const HOLLOW: Palette = ["#2b1218", "#e8b04b", "#8a94a8"];
+/** A chessman on file `f` of the caster's rank `r` (BoardFrame %). */
+function hcMan(f: number, r: number): CSSProperties {
+  return { left: `${f * 12.5 + 1.8}%`, top: `calc(${rankTop(r)} + 1%)`, width: "8.9%", height: "10.5%" };
+}
 function HollowCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = HOLLOW;
   if (role === "entrance") return <EntranceCut palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
+  const court = [
+    { k: "r" as const, f: 0, d: 0 },
+    { k: "b" as const, f: 2, d: 70 },
+    { k: "q" as const, f: 3, d: 140 },
+    { k: "n" as const, f: 6, d: 210 },
+  ];
   return (
-    // FLAGSHIP: the hall shudders the instant the crown hollows
-    <Stage quakeAtMs={delayMs + 1040}>
-      <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={42} top={30} />
-      {/* gold light hammers the empty seat; the blast rolls off the dais */}
-      <ImpactCell spec={{ l: 44, t: 26, s: 13, at: 1040, laser: true, shock: true }} rgb="232 176 75" delayMs={delayMs} />
-      {/* the throne, shouldering up mid-board */}
-      <span className="cwp-rise absolute block" style={{ left: "39%", top: "30%", width: "22%", height: "34%", animationDelay: `${delayMs + 160}ms` }}>
-        <svg viewBox="0 0 22 34" className="block h-full w-full" aria-hidden="true">
-          <path d="M4 32 V6 L7 9.5 V15 H15 V9.5 L18 6 V32 Z" fill={tint(p0, 0.9)} stroke={tint(p1, 0.85)} strokeWidth="1" {...SJ} />
-          <path d="M2 32 H20" stroke={tint(p1, 0.85)} strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M7 20 H15 M7 24 H15" stroke={tint(p2, 0.5)} strokeWidth="0.6" strokeLinecap="round" />
-        </svg>
-      </span>
-      {/* the crown lowers onto the empty seat... */}
-      <span className="cwp-drop absolute block" style={{ left: "43.5%", top: "22%", width: "13%", height: "10%", animationDelay: `${delayMs + 520}ms` }}>
-        <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill={tint(p1, 0.95)} stroke="#8a6a3a" strokeWidth="0.6" {...SJ} />
-          <circle cx="7" cy="6" r="0.9" fill="#c94a5a" />
-        </svg>
-      </span>
-      {/* ...and HOLLOWS: the solid crown gives way to a bare outline */}
-      <span className="cwp-facein absolute block" style={{ left: "43.5%", top: "31.5%", width: "13%", height: "10%", animationDelay: `${delayMs + 1040}ms` }}>
-        <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.7" strokeDasharray="1.6 1.1" {...SJ} />
-        </svg>
-      </span>
-      {/* the court bows low on either side of the throne */}
-      {[
-        { k: "q" as const, l: 29, t: 52, d: 0, flip: false },
-        { k: "b" as const, l: 35, t: 55, d: 130, flip: false },
-        { k: "n" as const, l: 62, t: 54, d: 260, flip: true },
-        { k: "r" as const, l: 68, t: 52, d: 390, flip: true },
-      ].map((v, i) => (
-        <span
-          key={i}
-          className="cwp-bow absolute block"
-          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%", animationDelay: `${delayMs + 820 + v.d}ms`, ...(v.flip ? { scale: "-1 1" } : {}) }}
-        >
-          <Man kind={v.k} fill={tint(p2, 0.85)} stroke={p0} />
+    <Stage>
+      <BoardFrame>
+        {/* tell: their king steps off his square (any king move wakes it) */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(4, 5), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -119%)", animationDelay: dm(delayMs, 0), animationDuration: "calc(1500ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="k" fill={p0} stroke={p1} />
         </span>
-      ))}
-      {/* mourning veils drift across the hall */}
-      {[
-        { t: 44, a: 0.3, d: 0, tx: "30%" },
-        { t: 50, a: 0.45, d: 220, tx: "24%" },
-      ].map((v, i) => (
-        <span
-          key={`v${i}`}
-          className="cwp-sweep absolute block"
-          style={{ left: "24%", top: `${v.t}%`, width: "50%", height: "3.5%", borderRadius: "40%", background: tint(p0, v.a), "--tx": v.tx, animationDelay: `${delayMs + 900 + v.d}ms` } as CSSProperties}
-        />
-      ))}
-      <SettlePair color={tint(p1, 0.65)} delayMs={delayMs + 1350} />
+        {/* the crown comes down on him... */}
+        <span className="cwp-drop absolute block" style={{ left: "52.5%", top: `calc(${rankTop(5)} - 3%)`, width: "7.5%", height: "5.5%", animationDelay: dm(delayMs, 340) }}>
+          <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill={p1} stroke={p0} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+        {/* ...and hollows to a bare outline */}
+        <span className="cwp-facein absolute block" style={{ left: "52.5%", top: `calc(${rankTop(5)} - 3%)`, width: "7.5%", height: "5.5%", animationDelay: dm(delayMs, 760), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill={p0} stroke={p2} strokeWidth="0.8" strokeDasharray="1.6 1" {...SJ} />
+          </svg>
+        </span>
+        {/* strike: a mourning veil is drawn along the court's rank... */}
+        <span className="cwp-beam absolute block" style={{ left: 0, width: "100%", top: rankTop(6), height: "12.5%", background: tint(p0, 0.62), animationDelay: dm(delayMs, 480), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }} />
+        {/* ...and the court bows under it: these may not move next turn */}
+        {court.map((v) => (
+          <span key={v.f} className="cwp-bow absolute block" style={{ ...hcMan(v.f, 6), animationDelay: dm(delayMs, 600 + v.d), animationDuration: "calc(1250ms * var(--fx-dur, 1))" }}>
+            <Man kind={v.k} fill={tint(p2, 0.9)} stroke={p0} />
+          </span>
+        ))}
+        {/* only the pawns and the king may go: two pawns stand ready... */}
+        {[2, 5].map((f, i) => (
+          <span key={f} className="cwp-facein absolute block" style={{ ...hcMan(f, 5), animationDelay: dm(delayMs, 760 + i * 80), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+            <Man kind="p" fill={p0} stroke={p1} />
+          </span>
+        ))}
+        {/* ...and each of them and the king is shown its step */}
+        {[2, 4, 5].map((f, i) => (
+          <span key={f} className="absolute block" style={{ left: `${f * 12.5 + 4.25}%`, width: "4%", top: `calc(${rankTop(4)} + 2%)`, height: "8.5%", scale: "1 var(--fx-side, 1)" }}>
+            <span className="cwp-rise absolute inset-0 block" style={{ animationDelay: dm(delayMs, 920 + i * 60) }}>
+              <svg viewBox="0 0 4 9" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 0.6 V7.4 M0.6 5.8 L2 8.4 L3.4 5.8" fill="none" stroke={p1} strokeWidth="0.6" {...SJ} />
+              </svg>
+            </span>
+          </span>
+        ))}
+        {/* settle: one pip (their one mourning turn) and the infinity mark:
+            it wakes after every king move for the rest of the game */}
+        <span className="cwp-pop absolute block" style={{ left: "2%", top: `calc(${rankTop(4)} + 2.5%)`, width: "14%", height: "8%", animationDelay: dm(delayMs, 1120) }}>
+          <svg viewBox="0 0 14 8" className="block h-full w-full" aria-hidden="true">
+            <circle cx="2.8" cy="4" r="1.9" fill={p1} stroke={p0} strokeWidth="0.5" />
+            <path d="M9.6 4 C8.6 2.2 6.6 2.2 6.6 4 C6.6 5.8 8.6 5.8 9.6 4 C10.6 2.2 12.6 2.2 12.6 4 C12.6 5.8 10.6 5.8 9.6 4 Z" fill="none" stroke={p1} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+        <SettlePair color={tint(p1, 0.65)} delayMs={delayMs + 1350} />
+      </BoardFrame>
     </Stage>
   );
 }
@@ -1889,65 +1739,6 @@ function CrownOfThornsScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- Pauper's Crown: the queen's crown lifts off, shatters to shards, and
-   rook battlements are stamped onto her brow in its place. ----------------- */
-const PAUPER: Palette = ["#1c1c2a", "#c94ad1", "#c9b89a"];
-function PauperCrownScene({ lead, role, delayMs }: SceneProps) {
-  const [p0, p1, p2] = PAUPER;
-  if (role === "entrance") return <EntranceCut palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
-  if (!lead) return <CurseHit palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
-  return (
-    // FLAGSHIP: the stage bucks when the battlements are stamped on
-    <Stage quakeAtMs={delayMs + 1120}>
-      <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={30} />
-      {/* the deposing bolt: magenta light blasts the crown off her brow */}
-      <ImpactCell spec={{ l: 44, t: 28, s: 12, at: 620, laser: true, shock: true }} rgb="201 74 209" delayMs={delayMs} />
-      {/* her majesty, center stage and about to be greatly humbled */}
-      <span className="cwp-facein absolute block" style={{ left: "42%", top: "36%", width: "16%", height: "24%", animationDelay: `${delayMs + 200}ms` }}>
-        <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
-      </span>
-      {/* the crown lifts away from her brow... */}
-      <span className="cwp-lift absolute block" style={{ left: "45%", top: "33%", width: "10%", height: "7%", animationDelay: `${delayMs + 560}ms` }}>
-        <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.4 6.6 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V6.6 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
-        </svg>
-      </span>
-      {/* ...and shatters into three golden shards */}
-      {[
-        { l: 47, t: 26, dx: "-220%", dy: "-120%", rot: "-160deg", d: 0 },
-        { l: 50, t: 25, dx: "40%", dy: "-220%", rot: "80deg", d: 70 },
-        { l: 53, t: 26, dx: "240%", dy: "-100%", rot: "200deg", d: 140 },
-      ].map((v, i) => (
-        <span key={i} className="cwp-spark absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.2%", height: "2.2%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 940 + v.d}ms` } as CSSProperties}>
-          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-            <path d="M2 8 L5 1 L8 8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
-          </svg>
-        </span>
-      ))}
-      {/* the battlements stamp down where the crown sat */}
-      <span className="cwp-stamp absolute block" style={{ left: "45.5%", top: "33.5%", width: "9%", height: "6%", animationDelay: `${delayMs + 1120}ms` }}>
-        <svg viewBox="0 0 12 7" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.6 6.4 V1.2 H3.4 V2.8 H4.8 V1.2 H7.2 V2.8 H8.6 V1.2 H10.4 V6.4 Z" fill={tint(p2, 0.95)} stroke="#4a4036" strokeWidth="0.5" {...SJ} />
-        </svg>
-      </span>
-      {/* patched rags: humble stitches fade onto her gown */}
-      <span className="cwp-facein absolute block" style={{ left: "45%", top: "48%", width: "10%", height: "7%", animationDelay: `${delayMs + 1220}ms` }}>
-        <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
-          <rect x="1.5" y="1.5" width="4" height="3.4" rx="0.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeDasharray="1 0.7" />
-          <rect x="6.8" y="3.4" width="3.6" height="3" rx="0.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeDasharray="1 0.7" />
-        </svg>
-      </span>
-      {/* the way back: one red glint — blood buys the crown again */}
-      <span className="cwp-glint absolute block" style={{ left: "58%", top: "42%", width: "2.8%", height: "3.2%", animationDelay: `${delayMs + 1380}ms` }}>
-        <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill="#c94a5a" />
-        </svg>
-      </span>
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1380} />
-    </Stage>
-  );
-}
 
 /* --- Beacon of Woe: the watchtower rises, the doom-flame catches, six
    count-runes ring it, and frost-light plays over the distant army. -------- */
@@ -2103,56 +1894,6 @@ function EclipseScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- Hydra Hex: the branded head is struck off and two rise in its place,
-   each seizing the nearest piece in frost. -------------------------------- */
-const HYDRA: Palette = ["#1c2a1c", "#7fae4a", "#9fd8ff"];
-function HydraScene({ lead, role, delayMs }: SceneProps) {
-  const [p0, p1, p2] = HYDRA;
-  if (role === "entrance") return <EntranceCut palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
-  if (!lead) return <CurseHit palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
-  return (
-    // FLAGSHIP: the stage kicks as the head is struck off
-    <Stage quakeAtMs={delayMs + 640}>
-      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={40} />
-      {/* the beheading stroke: a green column severs the branded head, and the
-          blast is what wakes the two heads that rise in its place */}
-      <ImpactCell spec={{ l: 45, t: 42, s: 12, at: 640, laser: true, shock: true }} rgb="127 174 74" delayMs={delayMs} />
-      {/* the leg: the head is branded down the real source -> target vector */}
-      <ChainLeg color="rgba(122,201,106,0.85)" delayMs={delayMs + 300} />
-      <span className="cwp-settle absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "10%", "--dx": "0%", "--dy": "60%", "--rot": "20deg", animationDelay: `${delayMs + 360}ms` } as CSSProperties}>
-        <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
-          <path d="M5 1 C7 2.4 7 5 5 6.4 C6.4 7 7 8 6.6 9.4 H3.4 C3 8 3.6 7 5 6.4 C3 5 3 2.4 5 1 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.5" {...SJ} />
-        </svg>
-      </span>
-      {[
-        { l: 34, t: 34, d: 0 },
-        { l: 58, t: 34, d: 160 },
-      ].map((v, i) => (
-        <span key={i} className="cwp-sprout absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "7%", height: "13%", animationDelay: `${delayMs + 640 + v.d}ms` }}>
-          <svg viewBox="0 0 8 14" className="block h-full w-full" aria-hidden="true">
-            <path d="M4 13 C2.4 10 3 7 4 4.6 C5 7 5.6 10 4 13 Z M4 4.6 C5 2.4 5 1.4 4 0.8 C3 1.4 3 2.4 4 4.6 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.5" {...SJ} />
-          </svg>
-        </span>
-      ))}
-      {[
-        { l: 30, t: 56 },
-        { l: 62, t: 56 },
-      ].map((v, i) => (
-        <span key={i} className="absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%" }}>
-          <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 900 + i * 120}ms` }}>
-            <Man kind={i ? "n" : "b"} fill={tint(p1, 0.85)} stroke={p0} />
-          </span>
-          <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1040 + i * 120}ms` }}>
-            <Man kind={i ? "n" : "b"} fill={tint(p2, 0.85)} stroke={p0} />
-          </span>
-        </span>
-      ))}
-      <span className="cwp-ring absolute block rounded-full" style={{ left: "34%", top: "36%", width: "32%", height: "24%", border: `2.5px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 980}ms` }} />
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
-    </Stage>
-  );
-}
 
 /* --- Pyrrhic Toll: every capture rings a bell and a laurel wilts as some
    bystander piece is caught cold. ----------------------------------------- */
@@ -2254,9 +1995,29 @@ function MartyrCrownScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- The Curse Engine: two iron gears grind up the winding, and every third
-   turn a cold discharge seizes the strongest piece. ----------------------- */
+/* --- The Curse Engine (slice TC-boon-curse rule scene): the machine is
+   bolted to the edge of the board at the border and a nine-notch track
+   (their nine turns) runs along the border of their half, every third
+   notch heavy. The pawl clicks one notch, two, three; on the third the frost
+   clamp shuts on their strongest piece with two pips (two of their turns)
+   while their king beside it stays clear; then the pawl snaps back to
+   zero (the count resets). ------------------------------------------------ */
 const CURSE_ENGINE: Palette = ["#2a2a32", "#8a94a8", "#9fd8ff"];
+/** Top edge of the caster's rank `r` (1 = their home rank) in BoardFrame %. */
+function rankTop(r: number): string {
+  return `calc(43.75% + var(--fx-side, 1) * ${43.75 - (r - 1) * 12.5}%)`;
+}
+/** Top edge of the band over the caster's ranks `lo`..`hi` in BoardFrame %. */
+function bandTop(lo: number, hi: number): string {
+  const c = (8 - hi + (lo - 1)) * 6.25;
+  const d = (8 - hi - (lo - 1)) * 6.25;
+  return `calc(${c}% + var(--fx-side, 1) * ${d}%)`;
+}
+/** A box `h`% tall centred on the line between the caster's ranks `r` and
+ * `r + 1` (BoardFrame %). */
+function onLine(r: number, h: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${50 - r * 12.5}% - ${h / 2}%)`;
+}
 function CurseEngineScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = CURSE_ENGINE;
   if (role === "entrance") return <EntranceCut palette={CURSE_ENGINE} glyph={GLYPH.hw3_curse_engine} delayMs={delayMs} />;
@@ -2267,33 +2028,69 @@ function CurseEngineScene({ lead, role, delayMs }: SceneProps) {
       <circle cx="10" cy="9" r="3.2" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.5" />
     </svg>
   );
+  // The track: the zero mark and nine notches (their nine turns) from 12.5%
+  // to 87.5% of the board width; notches 3, 6 and 9 are the heavy ones.
+  const step = 75 / 9;
   return (
-    // FLAGSHIP: the machine's discharge stroke slams through the stage
-    <Stage quakeAtMs={delayMs + 960}>
-      <Wash color={tint(p0, 0.34)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={36} />
-      {/* the cold discharge: an ice-blue column hammers the strongest piece
-          and the frost blast rings out around her */}
-      <ImpactCell spec={{ l: 57, t: 56, s: 12, at: 1000, laser: true, shock: true }} rgb="159 216 255" delayMs={delayMs} />
-      <span className="cwp-grind absolute block" style={{ left: "34%", top: "34%", width: "18%", height: "18%", animationDelay: `${delayMs + 300}ms` }}>{gear(tint(p1, 0.9))}</span>
-      <span className="cwp-grindrev absolute block" style={{ left: "50%", top: "44%", width: "15%", height: "15%", animationDelay: `${delayMs + 420}ms` }}>{gear(tint(p1, 0.7))}</span>
-      {[0, 1, 2].map((i) => (
-        <span key={i} className="cwp-glint absolute block" style={{ left: `${38 + i * 10}%`, top: "28%", width: "2%", height: "2%", animationDelay: `${delayMs + 620 + i * 150}ms` }}>
-          <Mote color={tint(p1, 0.9)} />
+    <Stage>
+      <BoardFrame>
+        {/* tell: their half of the board shudders as the machine takes hold */}
+        <span
+          className="cwp-hold absolute block"
+          style={{ left: 0, width: "100%", top: bandTop(5, 8), height: "50%", background: tint(p0, 0.42), animationDelay: dm(delayMs, 0), animationDuration: "calc(1800ms * var(--fx-dur, 1))" }}
+        />
+        {/* the engine itself, bolted to the edge of the board at the border */}
+        <span className="cwp-grind absolute block" style={{ left: "-5%", top: onLine(4, 18), width: "18%", height: "18%", animationDelay: dm(delayMs, 120), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>{gear(p1)}</span>
+        <span className="cwp-grindrev absolute block" style={{ left: "6%", top: `calc(${onLine(4, 11)} - var(--fx-side, 1) * 8%)`, width: "10%", height: "10%", animationDelay: dm(delayMs, 200), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>{gear(tint(p1, 0.85))}</span>
+        {/* the nine-notch track, every third notch heavy */}
+        <span className="cwp-beam absolute block" style={{ left: "11%", width: "78%", top: onLine(4, 4), height: "4%", animationDelay: dm(delayMs, 260), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 78 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.5 2 H76.5" stroke={p1} strokeWidth="0.8" strokeLinecap="round" />
+            {Array.from({ length: 10 }, (_, i) => {
+              const heavy = i > 0 && i % 3 === 0;
+              return <path key={i} d={`M${1.5 + i * step} ${heavy ? 0.2 : 1} V${heavy ? 3.8 : 3}`} stroke={heavy ? p2 : p1} strokeWidth={heavy ? 1.1 : 0.6} strokeLinecap="round" />;
+            })}
+          </svg>
         </span>
-      ))}
-      <span className="absolute block" style={{ left: "36%", top: "62%", width: "8%", height: "8%", rotate: "-90deg" }}>
-        <span className="cwp-lash absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${tint(p2, 0.95)}, transparent)`, animationDelay: `${delayMs + 900}ms` }} />
-      </span>
-      <span className="absolute block" style={{ left: "58%", top: "58%", width: "6.5%", height: "10%" }}>
-        <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 960}ms` }}>
-          <Man kind="q" fill={tint(p1, 0.9)} stroke={p0} />
+        {/* strike: the pawl clicks one notch, two, three */}
+        <span className="cwp-notch absolute block" style={{ left: "11%", width: "3%", top: `calc(${onLine(4, 3.4)} - var(--fx-side, 1) * 3.4%)`, height: "3.4%", "--step": `${(step / 3) * 100}%`, animationDelay: dm(delayMs, 420) } as CSSProperties}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.6 0.8 H5.4 L3 5.4 Z" fill={p2} stroke={p0} strokeWidth="0.4" {...SJ} />
+          </svg>
         </span>
-        <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1100}ms` }}>
-          <Man kind="q" fill={tint(p2, 0.85)} stroke={p0} />
+        {/* on the third notch the clamp shuts on their strongest piece (drawn
+            as a rule chart on their third rank, clear of the cast banner;
+            the real piece gets the target cut) */}
+        <span className="cwp-facein absolute block" style={{ left: "39.8%", top: `calc(${rankTop(6)} + 1%)`, width: "8.9%", height: "10.5%", animationDelay: dm(delayMs, 860), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <Man kind="q" fill={tint(p1, 0.95)} stroke={p0} />
         </span>
-      </span>
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1360} />
+        <span className="cwp-stamp absolute block" style={{ left: "37.5%", top: rankTop(6), width: "12.5%", height: "12.5%", animationDelay: dm(delayMs, 960) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="1" fill={tint(p2, 0.28)} stroke={p2} strokeWidth="0.7" />
+            <path d="M0.8 4 L3 2.4 M11.2 8 L9 9.6 M4 0.8 L2.4 3" stroke={p2} strokeWidth="0.5" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* two pips: frozen for two of their turns */}
+        {[0, 1].map((i) => (
+          <span key={i} className="cwp-pop absolute block rounded-full" style={{ left: `${40.3 + i * 4.2}%`, top: `calc(${rankTop(6)} + 6.25% - var(--fx-side, 1) * 9%)`, width: "3%", height: "3%", background: p2, animationDelay: dm(delayMs, 1060 + i * 90) }} />
+        ))}
+        {/* their king beside it is never seized */}
+        <span className="cwp-rise absolute block" style={{ left: "51.8%", top: `calc(${rankTop(6)} + 1%)`, width: "8.9%", height: "10.5%", animationDelay: dm(delayMs, 1120) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.k} fill={tint(p1, 0.95)} stroke={p0} strokeWidth="0.45" {...SJ} />
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+        {/* settle: frost motes drift off the clamp as the count resets */}
+        {[
+          { dx: "-60%", dy: "140%", rot: "-100deg", d: 1340 },
+          { dx: "70%", dy: "120%", rot: "110deg", d: 1420 },
+        ].map((v, i) => (
+          <span key={i} className="cwp-settle absolute block" style={{ left: `${41 + i * 6}%`, top: `calc(${rankTop(6)} + 5%)`, width: "2%", height: "2%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: dm(delayMs, v.d) } as CSSProperties}>
+            <Mote color={tint(p2, 0.85)} />
+          </span>
+        ))}
+      </BoardFrame>
     </Stage>
   );
 }
@@ -2330,42 +2127,795 @@ function BloodTitheScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- The Inverted Crown: every promoted pawn's crown flips to a tin knight's
-   helm, whatever they chose. ---------------------------------------------- */
+
+/* --- Doomed Vow (slice TC-boon-curse rule scene): the vow's cord binds the
+   condemned piece on its own square, four candles light for the four turns
+   it has left, the eight squares round it are marked as the only way out,
+   then their king comes to stand on one of them and the cord snaps (the
+   king's rescue that breaks the vow). No bell: that is Death Knell's. ------ */
+const VOW: Palette = ["#2a1030", "#c9b0e8", "#8a94a8"];
+/** One cell of the 14-cell stage, in stage %. */
+const VOW_CELL = 100 / 14;
+/** A box `w` x `h` cells whose centre sits `dx`/`dy` cells off the cast square. */
+function vowBox(dx: number, dy: number, w: number, h: number): CSSProperties {
+  return {
+    left: `${50 + dx * VOW_CELL - (w * VOW_CELL) / 2}%`,
+    top: `${50 + dy * VOW_CELL - (h * VOW_CELL) / 2}%`,
+    width: `${w * VOW_CELL}%`,
+    height: `${h * VOW_CELL}%`,
+  };
+}
+/** Top edge of a box `h` cells tall whose centre sits `dy` cells from the
+ * cast square toward the caster's edge (the board centre, for a piece on the
+ * opponent's side), right for either player through --fx-side. */
+function vowTop(dy: number, h: number): string {
+  return `calc(${50 - (h * VOW_CELL) / 2}% + var(--fx-side, 1) * ${dy * VOW_CELL}%)`;
+}
+/** Absolute start plus a --fx-dur scaled offset. */
+function dm(delayMs: number, off: number): string {
+  return `calc(${delayMs}ms + ${off}ms * var(--fx-dur, 1))`;
+}
+function DoomedVowScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = VOW;
+  if (role === "entrance") return <EntranceCut palette={VOW} glyph={GLYPH.hw3_doomed_vow} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={VOW} glyph={GLYPH.hw3_doomed_vow} delayMs={delayMs} />;
+  const flames = [
+    { x: -0.75, d: 520 },
+    { x: -0.25, d: 620 },
+    { x: 0.25, d: 720 },
+    { x: 0.75, d: 820 },
+  ];
+  return (
+    <Stage>
+      {/* tell: the eight squares round the piece, the only way the vow breaks */}
+      <span className="cwp-pop absolute block" style={{ ...vowBox(0, 0, 3, 3), animationDelay: dm(delayMs, 100), animationDuration: "calc(1750ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+          {[0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (r === 1 && c === 1 ? null : (
+            <rect key={`${r}${c}`} x={c * 10 + 0.8} y={r * 10 + 0.8} width="8.4" height="8.4" rx="0.8" fill={tint(p1, 0.08)} stroke={tint(p1, 0.7)} strokeWidth="0.5" strokeDasharray="1.6 1.2" />
+          ))))}
+        </svg>
+      </span>
+      {/* strike: the vow's cord cinches round the condemned piece */}
+      <span className="cwp-stamp absolute block" style={{ ...vowBox(0, 0, 1.2, 1.2), animationDelay: dm(delayMs, 260), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+          <ellipse cx="6" cy="6.4" rx="4.6" ry="4.4" fill="none" stroke={p1} strokeWidth="0.7" strokeDasharray="2.2 0.6" />
+          <path d="M6 2 C5 1 4.2 0.6 3.6 1.2 M6 2 C7 1 7.8 0.6 8.4 1.2" fill="none" stroke={p1} strokeWidth="0.6" {...SJ} />
+          <circle cx="6" cy="2" r="0.8" fill={p0} stroke={p1} strokeWidth="0.4" />
+        </svg>
+      </span>
+      {/* four candles stand beside it, on the board-centre side: four of
+          their turns left */}
+      <span className="cwp-rise absolute block" style={{ ...vowBox(0, 0, 2, 0.6), top: vowTop(1.05, 0.6), animationDelay: dm(delayMs, 400), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 20 6" className="block h-full w-full" aria-hidden="true">
+          {[2.5, 7.5, 12.5, 17.5].map((x) => (
+            <rect key={x} x={x - 1} y="1" width="2" height="4.6" rx="0.4" fill={tint(p1, 0.85)} stroke={p0} strokeWidth="0.35" />
+          ))}
+          <path d="M0.6 5.7 H19.4" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      {flames.map((f) => (
+        <span key={f.x} className="cwp-flame absolute block" style={{ ...vowBox(f.x, 0, 0.2, 0.3), top: `calc(${vowTop(1.05, 0.3)} - ${0.42 * VOW_CELL}%)`, animationDelay: dm(delayMs, f.d), animationDuration: "calc(1200ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 4 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 0.3 C3.4 2.2 3.6 3.6 2 5.7 C0.4 3.6 0.6 2.2 2 0.3 Z" fill={p1} stroke={p0} strokeWidth="0.3" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {/* their king walks up and stands on a square beside it */}
+      <span className="cwp-kneel absolute block" style={{ ...vowBox(1, 0, 0.8, 0.8), "--dx": "260%", "--dy": "120%", animationDelay: dm(delayMs, 900) } as CSSProperties}>
+        <Man kind="k" fill={p1} stroke={p0} />
+      </span>
+      {/* settle: the cord snaps and its ends fall away */}
+      <span className="cwp-crack absolute block" style={{ ...vowBox(0.5, 0, 0.5, 0.9), animationDelay: dm(delayMs, 1240) }}>
+        <svg viewBox="0 0 5 9" className="block h-full w-full" aria-hidden="true">
+          <path d="M2.6 0.6 L1.6 3.4 L3.2 5 L2 8.4" fill="none" stroke={p2} strokeWidth="0.6" {...SJ} />
+        </svg>
+      </span>
+      {[
+        { dx: "-40%", dy: "160%", rot: "-80deg", d: 1300 },
+        { dx: "60%", dy: "150%", rot: "90deg", d: 1360 },
+      ].map((v, i) => (
+        <span key={i} className="cwp-settle absolute block" style={{ ...vowBox(0.35, i ? 0.3 : -0.3, 0.3, 0.3), "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: dm(delayMs, v.d) } as CSSProperties}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 1 C2.6 2.4 3.4 3.6 5 5" fill="none" stroke={p1} strokeWidth="0.8" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
+    </Stage>
+  );
+}
+
+/** A whole square: file `f` of the caster's rank `r` (BoardFrame %). */
+function hcCell(f: number, r: number): CSSProperties {
+  return { left: `${f * 12.5}%`, top: rankTop(r), width: "12.5%", height: "12.5%" };
+}
+
+/* --- Powder Keg: the keg rolls up from your side onto an empty square in
+   their half and sits there with a lit fuse and four pips (four turns, in
+   full view); the eight squares round it are marked as the blast; the enemy
+   knight and pawn in it are blown off, their king in it stays; and a reroll
+   die is yours. ---------------------------------------------------------- */
+const KEG: Palette = ["#3a3a40", "#ff9d3d", "#1c1c24"];
+function PowderKegScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = KEG;
+  if (role === "entrance") return <EntranceCut palette={KEG} glyph={GLYPH.hw3_time_bomb} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={KEG} glyph={GLYPH.hw3_time_bomb} delayMs={delayMs} />;
+  const keg = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M2.4 2.4 C1.6 4 1.6 6.6 2.4 8.4 H7.6 C8.4 6.6 8.4 4 7.6 2.4 Z" fill={p0} stroke={p1} strokeWidth="0.5" {...SJ} />
+      <path d="M2 4 H8 M2 6.8 H8" stroke={p1} strokeWidth="0.45" />
+      <path d="M5 2.4 C5 1.4 6 0.8 6.8 1.2" fill="none" stroke={p1} strokeWidth="0.45" strokeLinecap="round" />
+    </svg>
+  );
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the keg rolls up from your side onto an empty square of theirs */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(3, 3), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -238%)", animationDelay: dm(delayMs, 120), animationDuration: "calc(720ms * var(--fx-dur, 1))" } as CSSProperties}>
+          {keg}
+        </span>
+        {/* strike: it sits in full view, fuse lit, four pips for four turns */}
+        <span className="cwp-facein absolute block" style={{ ...hcMan(3, 5), animationDelay: dm(delayMs, 640), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>{keg}</span>
+        <span className="cwp-flame absolute block" style={{ left: "45%", top: `calc(${rankTop(5)} + 0.4%)`, width: "3%", height: "3%", animationDelay: dm(delayMs, 700) }}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 0.4 C4.6 2 5 3.6 3 5.6 C1 3.6 1.4 2 3 0.4 Z" fill={p1} />
+          </svg>
+        </span>
+        <span className="cwp-pop absolute block" style={{ left: "26%", width: "11%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 760) }}>
+          <svg viewBox="0 0 16 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p2} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* the blast: the eight squares round it */}
+        <span className="cwp-stamp absolute block" style={{ left: "25%", width: "37.5%", top: bandTop(4, 6), height: "37.5%", animationDelay: dm(delayMs, 900) }}>
+          <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.8 0.8 H29.2 V29.2 H0.8 Z M10 10 H20 V20 H10 Z" fill={tint(p1, 0.18)} fillRule="evenodd" stroke={p1} strokeWidth="0.6" strokeDasharray="2 1.4" />
+          </svg>
+        </span>
+        {/* the enemy knight and pawn in it are blown off the board */}
+        {[
+          { k: "n" as const, f: 2, r: 6, d: 1000 },
+          { k: "p" as const, f: 4, r: 6, d: 1060 },
+        ].map((v) => (
+          <span key={v.f} className="cwp-lift absolute block" style={{ ...hcMan(v.f, v.r), animationDelay: dm(delayMs, v.d) }}>
+            <Man kind={v.k} fill={p2} stroke={p1} />
+          </span>
+        ))}
+        {/* ...and their king in it stays */}
+        <span className="cwp-facein absolute block" style={{ ...hcCell(4, 4), animationDelay: dm(delayMs, 1060), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.k} fill={p2} stroke={p1} strokeWidth="0.45" {...SJ} />
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+        {/* settle: a draft reroll is yours */}
+        <span className="cwp-pop absolute block" style={{ left: "88%", width: "8%", top: `calc(${rankTop(2)} + 2.5%)`, height: "8%", animationDelay: dm(delayMs, 1200) }}>
+          <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.6" y="0.6" width="6.8" height="6.8" rx="1.2" fill={p1} stroke={p2} strokeWidth="0.45" />
+            <circle cx="2.6" cy="2.6" r="0.7" fill={p2} />
+            <circle cx="5.4" cy="5.4" r="0.7" fill={p2} />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Effigy of Dread: the effigy rises on an empty square of their half and
+   the ring of eight squares round it is barred; an enemy knight leaping in
+   is thrown back, a pawn already inside walks out, six pips count its six
+   turns, and the effigy shudders with a crack: it can be smashed. ---------- */
+const EFFIGY: Palette = ["#1c2a1c", "#8faf4a", "#3a3a40"];
+function EffigyScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = EFFIGY;
+  if (role === "entrance") return <EntranceCut palette={EFFIGY} glyph={GLYPH.hw3_effigy_of_dread} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={EFFIGY} glyph={GLYPH.hw3_effigy_of_dread} delayMs={delayMs} />;
+  const effigy = (fill: string) => (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M5 9.8 V4.6 M2 4.8 H8" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+      <circle cx="5" cy="2.6" r="1.9" fill={fill} stroke={p0} strokeWidth="0.45" />
+      <path d="M4 2.3 L4.5 2.7 M6 2.3 L5.5 2.7 M4 3.5 C4.6 3.1 5.4 3.1 6 3.5" fill="none" stroke={p0} strokeWidth="0.4" strokeLinecap="round" />
+      <path d="M3 5 L3.8 8 H6.2 L7 5" fill={tint(fill, 0.7)} stroke={p0} strokeWidth="0.4" {...SJ} />
+    </svg>
+  );
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the effigy rises on an empty square of their half */}
+        <span className="cwp-rise absolute block" style={{ ...hcCell(4, 5), animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>{effigy(p1)}</span>
+        {/* strike: the ring of eight squares round it is barred */}
+        <span className="cwp-stamp absolute block" style={{ left: "37.5%", width: "37.5%", top: bandTop(4, 6), height: "37.5%", animationDelay: dm(delayMs, 300), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.8 0.8 H29.2 V29.2 H0.8 Z M10 10 H20 V20 H10 Z" fill={tint(p0, 0.5)} fillRule="evenodd" stroke={p1} strokeWidth="0.7" strokeDasharray="1.4 1" />
+            <path d="M2 2 L8 8 M22 2 L28 8 M2 22 L8 28 M22 22 L28 28 M12 2 L18 8 M12 22 L18 28 M2 12 L8 18 M22 12 L28 18" stroke={tint(p1, 0.55)} strokeWidth="0.5" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* an enemy knight leaping in is thrown back */}
+        <span className="cwp-snapback absolute block" style={{ ...hcMan(1, 6), "--dx": "190%", "--dy": "0%", animationDelay: dm(delayMs, 520) } as CSSProperties}>
+          <Man kind="n" fill={p2} stroke={p1} />
+        </span>
+        {/* a pawn already inside may walk out */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(5, 4), "--dx": "140%", "--dy": "0%", animationDelay: dm(delayMs, 700) } as CSSProperties}>
+          <Man kind="p" fill={p2} stroke={p1} />
+        </span>
+        {/* six pips: it stands six of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "2%", width: "22%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 900) }}>
+          <svg viewBox="0 0 24 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14, 18, 22].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* settle: the effigy shudders and cracks: it can be smashed */}
+        <span className="cwp-crack absolute block" style={{ ...hcCell(4, 5), animationDelay: dm(delayMs, 1160), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5.4 0.8 L4.6 2.4 L5.6 3.4 L4.8 4.6" fill="none" stroke={p1} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        <SettlePair color={tint(p1, 0.6)} delayMs={delayMs + 1300} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Pauper's Crown: drawn as a chart on their side of the middle (clear of
+   the cast banner over their back ranks). Their queen has her crown lifted
+   off and comes up a rook with battlements on her brow; four pips count her
+   four turns; a dashed capture line runs along her rank, the way a rook
+   takes, and the crown drops back at its end: a capture undoes it early. -- */
+const PAUPER: Palette = ["#1c1c2a", "#c94ad1", "#c9b89a"];
+function PauperCrownScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = PAUPER;
+  if (role === "entrance") return <EntranceCut palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
+  const crown = (
+    <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+      <path d="M1.4 6.6 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V6.6 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
+    </svg>
+  );
+  const brow = { left: "40.25%", width: "9%", top: `calc(${rankTop(6)} - 2.5%)`, height: "5.5%" };
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the crown lifts off her brow */}
+        <span className="cwp-lift absolute block" style={{ ...brow, animationDelay: dm(delayMs, 120) }}>{crown}</span>
+        {/* strike: the queen comes up a rook */}
+        <span className="absolute block" style={hcMan(3, 6)}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 300) }}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p0} />
+          </span>
+          <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, 300), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+            <Man kind="r" fill={tint(p2, 0.95)} stroke={p0} />
+          </span>
+        </span>
+        {/* the battlements are stamped on where the crown sat */}
+        <span className="cwp-stamp absolute block" style={{ ...brow, animationDelay: dm(delayMs, 620) }}>
+          <svg viewBox="0 0 12 7" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 6.4 V1.2 H3.4 V2.8 H4.8 V1.2 H7.2 V2.8 H8.6 V1.2 H10.4 V6.4 Z" fill={tint(p2, 0.95)} stroke="#4a4036" strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        {/* four pips: four of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "32%", width: "18%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 820) }}>
+          <svg viewBox="0 0 16 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* settle: or until she captures (as a rook takes): the crown comes back */}
+        <span className="cwp-beam absolute block" style={{ left: "50%", width: "25%", top: `calc(${rankTop(6)} + 5.8%)`, height: "1%", background: `repeating-linear-gradient(90deg, ${p2} 0 6px, transparent 6px 10px)`, animationDelay: dm(delayMs, 980) }} />
+        <span className="cwp-stamp absolute block" style={{ ...hcCell(6, 6), animationDelay: dm(delayMs, 1060) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 3 L9 9 M9 3 L3 9" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="cwp-drop absolute block" style={{ left: "77.75%", width: "9%", top: `calc(${rankTop(6)} - 2.5%)`, height: "5.5%", animationDelay: dm(delayMs, 1140) }}>{crown}</span>
+        <SettlePair color={tint(p1, 0.6)} delayMs={delayMs + 1300} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- The Inverted Crown: one of their pawns walks onto your first rank (its
+   last) to promote; the queen, rook and bishop it could choose are all struck
+   out; the crown over the square turns into a knight; six pips count the
+   curse's six turns. ------------------------------------------------------ */
 const INVERTED: Palette = ["#26262e", "#c9b89a", "#8faf4a"];
 function InvertedCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = INVERTED;
   if (role === "entrance") return <EntranceCut palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
+  const choices = [
+    { k: "q" as const, f: 2, d: 520 },
+    { k: "r" as const, f: 4, d: 590 },
+    { k: "b" as const, f: 5, d: 660 },
+  ];
   return (
-    // FLAGSHIP: the coronation goes wrong with a physical CRACK
-    <Stage quakeAtMs={delayMs + 760}>
-      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={30} />
-      {/* the queen-that-would-be shatters in half over the promotion square,
-          gold shards flying, leaving the tin knight's helm underneath */}
-      <ImpactCell spec={{ l: 44, t: 28, s: 12, at: 760, man: "q", shock: true }} rgb="232 176 75" delayMs={delayMs} />
-      <span className="cwp-beam absolute block" style={{ left: "30%", top: "58%", width: "40%", height: "1.2%", background: tint(p1, 0.85), transformOrigin: "0% 50%", animationDelay: `${delayMs + 300}ms` }} />
-      <span className="cwp-rise absolute block" style={{ left: "46%", top: "46%", width: "6.5%", height: "11%", animationDelay: `${delayMs + 440}ms` }}>
-        <Man kind="p" fill={tint(p1, 0.9)} stroke={p0} />
-      </span>
-      <span className="absolute block" style={{ left: "44.5%", top: "30%", width: "10%", height: "10%" }}>
-        <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
-          <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true"><path d="M1.4 8 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} /></svg>
+    <Stage>
+      <BoardFrame>
+        {/* tell: their pawn walks onto its last rank, your first */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(3, 1), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -119%)", animationDelay: dm(delayMs, 100), animationDuration: "calc(1000ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="p" fill={p0} stroke={p1} />
         </span>
-        <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
-          <Man kind="n" fill={tint(p2, 0.85)} stroke={p0} />
+        {/* the choices it would take are offered on the next rank... */}
+        {choices.map((v) => (
+          <span key={v.k} className="cwp-facein absolute block" style={{ ...hcCell(v.f, 2), animationDelay: dm(delayMs, v.d), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d={CHESSMAN[v.k]} fill={tint(p0, 0.8)} stroke={p1} strokeWidth="0.45" {...SJ} />
+              <path d="M1.4 8.6 L8.6 1.4" stroke={p2} strokeWidth="0.9" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* strike: ...and the crown over the square turns into a knight */}
+        <span className="absolute block" style={hcMan(3, 1)}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 760) }}>
+            <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true"><path d="M1.4 8 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} /></svg>
+          </span>
+          <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, 760), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+            <Man kind="n" fill={p0} stroke={p2} />
+          </span>
         </span>
-      </span>
-      {[
-        { l: 46, t: 30, dx: "-160%", dy: "-90%", rot: "-120deg" },
-        { l: 52, t: 30, dx: "180%", dy: "-70%", rot: "140deg" },
-      ].map((v, i) => (
-        <span key={i} className="cwp-spark absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 940 + i * 90}ms` } as CSSProperties}>
-          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true"><path d="M2 8 L5 1 L8 8 Z" fill="#e8b04b" /></svg>
+        {/* settle: six pips, six of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "72%", width: "26%", top: `calc(${rankTop(3)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 1080) }}>
+          <svg viewBox="0 0 24 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14, 18, 22].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p2} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
         </span>
+        <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Weight of Toil: the one that does the work breaks. Six pips count
+   their six turns; their knight hops three times across their half, a tally
+   stroke laid at each landing; on the third a sack of toil drops on it, it
+   buckles and comes up a walnut, which shuffles a single square, with two
+   pips for its two turns; their king, three strokes of his own, stands
+   untouched, since kings never collapse. -------------------------------- */
+const TOIL: Palette = ["#8a7a63", "#c9a84c", "#3a3026"];
+function WeightOfToilScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = TOIL;
+  if (role === "entrance") return <EntranceCut palette={TOIL} glyph={GLYPH.hw2_weight_of_toil} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={TOIL} glyph={GLYPH.hw2_weight_of_toil} delayMs={delayMs} />;
+  const hops = [
+    { f: 1, r: 8, d: 120 },
+    { f: 2, r: 6, d: 300 },
+    { f: 4, r: 5, d: 480 },
+  ];
+  const walnut = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="5" cy="6" rx="3.4" ry="3" fill="#8a6a3a" stroke={p2} strokeWidth="0.5" />
+      <path d="M5 3 V9 M3 4.6 C3.8 5.4 3.2 6.6 3.8 7.6 M7 4.6 C6.2 5.4 6.8 6.6 6.2 7.6" fill="none" stroke={p2} strokeWidth="0.4" strokeLinecap="round" />
+    </svg>
+  );
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: six pips, their six turns */}
+        <span className="cwp-pop absolute block" style={{ left: "72%", width: "26%", top: `calc(${rankTop(7)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 24 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14, 18, 22].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p2} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* their knight hops three times, a tally stroke at each landing */}
+        {hops.map((v) => (
+          <span key={v.d} className="cwp-facein absolute block" style={{ ...hcMan(v.f, v.r), animationDelay: dm(delayMs, v.d), animationDuration: "calc(560ms * var(--fx-dur, 1))" }}>
+            <Man kind="n" fill={p0} stroke={p1} />
+          </span>
+        ))}
+        {hops.map((v, i) => (
+          <span key={v.f} className="cwp-stamp absolute block" style={{ left: `${43 + i * 2.2}%`, width: "2%", top: `calc(${rankTop(6)} + 2%)`, height: "7%", animationDelay: dm(delayMs, v.d + 160), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }}>
+            <svg viewBox="0 0 2 7" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 0.6 V6.4" stroke={i === 2 ? "#c94a3a" : p1} strokeWidth="0.9" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* strike: on the third, the sack of toil drops on it... */}
+        <span className="cwp-drop absolute block" style={{ left: "52.5%", width: "9%", top: `calc(${rankTop(5)} - 3%)`, height: "6.5%", animationDelay: dm(delayMs, 660), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.4 6.8 C1 3.4 3 1 5 1 C7 1 9 3.4 8.6 6.8 C6.4 5.8 3.6 5.8 1.4 6.8 Z" fill="#8a6a3a" stroke={p2} strokeWidth="0.5" {...SJ} />
+            <path d="M3.6 3.4 H6.4" stroke={p2} strokeWidth="0.5" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* ...it buckles and comes up a walnut */}
+        <span className="cwp-wilt absolute block" style={{ ...hcMan(4, 5), animationDelay: dm(delayMs, 760), animationDuration: "calc(700ms * var(--fx-dur, 1))" }}>
+          <Man kind="n" fill={p0} stroke={p1} />
+        </span>
+        <span className="cwp-swapin absolute block" style={{ ...hcMan(4, 5), animationDelay: dm(delayMs, 640), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>{walnut}</span>
+        {/* it shuffles one square, and only one; two pips for its two turns */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(4, 5), "--dx": "-140%", "--dy": "0%", animationDelay: dm(delayMs, 1380), animationDuration: "calc(900ms * var(--fx-dur, 1))" } as CSSProperties}>{walnut}</span>
+        <span className="cwp-pop absolute block" style={{ left: "39%", width: "8.6%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 1440) }}>
+          <svg viewBox="0 0 8 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p2} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* settle: their king, three strokes of his own, never collapses */}
+        <span className="cwp-hold absolute block" style={{ ...hcCell(6, 8), animationDelay: dm(delayMs, 980), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.k} fill={p0} stroke={p1} strokeWidth="0.45" {...SJ} />
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+            <path d="M8.2 1 V3 M8.9 1 V3 M9.6 1 V3" stroke={p1} strokeWidth="0.35" strokeLinecap="round" />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Curse of Recoil: their weapons kick like cannons. Their rook on a7
+   drives down the a-file and takes your knight on a3, and the kick throws
+   it straight back to a7 (the knight stays taken, the square is not won);
+   a scorch where it fired and three pips for their three turns; and a pawn
+   of theirs promoting on your first rank keeps its crown and is not thrown
+   back, too heavy to throw. ---------------------------------------------- */
+const RECOIL: Palette = ["#4a3a2a", "#ff9d3d", "#c9cdd6"];
+function CurseOfRecoilScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = RECOIL;
+  if (role === "entrance") return <EntranceCut palette={RECOIL} glyph={GLYPH.hw2_curse_of_recoil} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={RECOIL} glyph={GLYPH.hw2_curse_of_recoil} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: three pips, their three turns */}
+        <span className="cwp-pop absolute block" style={{ left: "84%", width: "13%", top: `calc(${rankTop(7)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* your knight on a3 */}
+        <span className="cwp-hold absolute block" style={{ ...hcMan(0, 3), animationDelay: dm(delayMs, 80), animationDuration: "calc(560ms * var(--fx-dur, 1))" }}>
+          <Man kind="n" fill={p2} stroke={p0} />
+        </span>
+        {/* strike: their rook drives down the file, takes it, and is flung back to a7 */}
+        <span className="cwp-snapback absolute block" style={{ ...hcMan(0, 7), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * 476%)", animationDelay: dm(delayMs, 260), animationDuration: "calc(1250ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="r" fill={p0} stroke={p1} />
+        </span>
+        <span className="cwp-lift absolute block" style={{ ...hcMan(0, 3), animationDelay: dm(delayMs, 520) }}>
+          <Man kind="n" fill={p2} stroke={p0} />
+        </span>
+        {/* the kick: a cannon's blast where it struck */}
+        <span className="cwp-scorch absolute block" style={{ ...hcCell(0, 3), animationDelay: dm(delayMs, 600) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.8 L6 3.6 L9 2.6 L7 5 L9.2 7.4 L6 6.6 L5 9.2 L4 6.6 L0.8 7.4 L3 5 L1 2.6 L4 3.6 Z" fill={tint(p1, 0.8)} stroke={p0} strokeWidth="0.35" {...SJ} />
+          </svg>
+        </span>
+        {/* the ground it took is not won: a3 left empty */}
+        <span className="cwp-stamp absolute block" style={{ ...hcCell(0, 3), animationDelay: dm(delayMs, 980) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill="none" stroke={p1} strokeWidth="0.6" strokeDasharray="1.6 1.1" />
+          </svg>
+        </span>
+        {/* settle: a pawn crowning on your first rank is too heavy to throw */}
+        <span className="cwp-facein absolute block" style={{ ...hcCell(6, 1), animationDelay: dm(delayMs, 1100), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.p} fill={p0} stroke={p1} strokeWidth="0.45" {...SJ} />
+            <path d="M2.6 2.2 V0.6 L3.8 1.5 L5 0.3 L6.2 1.5 L7.4 0.6 V2.2 Z" fill={p1} stroke={p0} strokeWidth="0.3" {...SJ} />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Round 3 kit: a row of `n` turn pips, and the frost that freezes a
+   square (both drawn inside an animated box). ------------------------------ */
+function CPips({ n, fill, stroke }: { n: number; fill: string; stroke: string }) {
+  return (
+    <svg viewBox={`0 0 ${n * 4} 4`} className="block h-full w-full" aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => (
+        <circle key={i} cx={i * 4 + 2} cy="2" r="1.5" fill={fill} stroke={stroke} strokeWidth="0.4" />
       ))}
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
+    </svg>
+  );
+}
+function FrostSquare({ stroke }: { stroke: string }) {
+  return (
+    <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill="rgba(159,216,255,0.28)" stroke={stroke} strokeWidth="0.6" />
+      <path d="M6 2.4 V9.6 M2.9 4.2 L9.1 7.8 M9.1 4.2 L2.9 7.8" stroke={stroke} strokeWidth="0.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* --- Creeping Blight: one square of their half, e6, is blighted; their next
+   move may still cross it, so a bishop slides over it once; then it creeps,
+   one more adjacent square on each of their turns, five of them; a knight
+   stepping onto the blight is thrown back, while a pawn already standing in
+   it walks out; five pips for the five turns. ---------------------------- */
+const BLIGHT: Palette = ["#2f3a26", "#8faf4a", "#c9d69a"];
+function CreepingBlightScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = BLIGHT;
+  if (role === "entrance") return <EntranceCut palette={BLIGHT} glyph={GLYPH.hw2_creeping_blight} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={BLIGHT} glyph={GLYPH.hw2_creeping_blight} delayMs={delayMs} />;
+  const spot = (
+    <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 4 C3 1.4 7 1 9.6 2.8 C11.6 4.6 11 8.6 8.6 10 C6 11.4 2 10.6 1.4 8 C1 6.6 1.4 5.2 2 4 Z" fill={tint(p0, 0.8)} stroke={p1} strokeWidth="0.5" />
+      <circle cx="4.4" cy="5" r="0.9" fill={p1} />
+      <circle cx="7.4" cy="7.4" r="0.7" fill={p1} />
+    </svg>
+  );
+  const creep = [
+    { f: 5, r: 6, d: 560 },
+    { f: 5, r: 5, d: 640 },
+    { f: 4, r: 5, d: 720 },
+    { f: 3, r: 5, d: 800 },
+    { f: 3, r: 6, d: 880 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the first blight, on e6 */}
+        <span className="cwp-stamp absolute block" style={{ ...hcCell(4, 6), animationDelay: dm(delayMs, 0), animationDuration: "calc(1800ms * var(--fx-dur, 1))" }}>{spot}</span>
+        {/* their next move may still cross it: a bishop slides over, once */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(2, 8), "--dx": "421%", "--dy": "calc(var(--fx-side, 1) * 357%)", animationDelay: dm(delayMs, 200), animationDuration: "calc(760ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="b" fill={p2} stroke={p0} />
+        </span>
+        {/* strike: then it creeps, one more square on each of their turns */}
+        {creep.map((v) => (
+          <span key={v.d} className="cwp-spreadtile absolute block" style={{ ...hcCell(v.f, v.r), animationDelay: dm(delayMs, v.d), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>{spot}</span>
+        ))}
+        {/* a knight stepping onto the blight is thrown back... */}
+        <span className="cwp-snapback absolute block" style={{ ...hcMan(5, 8), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * 238%)", animationDelay: dm(delayMs, 960) } as CSSProperties}>
+          <Man kind="n" fill={p2} stroke={p0} />
+        </span>
+        {/* ...while a pawn already in it may walk out */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(4, 5), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * 119%)", animationDelay: dm(delayMs, 1040), animationDuration: "calc(900ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="p" fill={p2} stroke={p0} />
+        </span>
+        {/* settle: five pips, the five turns it creeps */}
+        <span className="cwp-pop absolute block" style={{ left: "76%", width: "22%", top: `calc(${rankTop(7)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 1160) }}>
+          <CPips n={5} fill={p1} stroke={p0} />
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Exile's Mark: their rook on d7 is branded; its only road runs toward
+   your side, so the forward way is lit and the sideways way struck; it
+   steps down two ranks; your half is marked, where the brand would lift;
+   five pips count the turns it has; and a ghost of it crumbles to dust, the
+   fate of an exile that does not arrive. ---------------------------------- */
+const EXILE: Palette = ["#5a6b8f", "#c9a84c", "#1c2418"];
+function ExilesMarkScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = EXILE;
+  if (role === "entrance") return <EntranceCut palette={EXILE} glyph={GLYPH.hw3_exiles_mark} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={EXILE} glyph={GLYPH.hw3_exiles_mark} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: your half, where the brand would lift */}
+        <span className="cwp-gild absolute block" style={{ left: 0, width: "100%", top: bandTop(1, 4), height: "50%", background: `repeating-linear-gradient(135deg, ${tint(p1, 0.18)} 0 8px, transparent 8px 18px)`, animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }} />
+        {/* the brand is set on their rook on d7 */}
+        <span className="cwp-stamp absolute block" style={{ ...hcCell(3, 7), animationDelay: dm(delayMs, 120) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.r} transform="translate(1 0.6)" fill={p2} stroke={p0} strokeWidth="0.45" {...SJ} />
+            <path d="M8.6 1.4 L11 3.8 M11 1.4 L8.6 3.8" stroke={p1} strokeWidth="0.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the way toward your side is the only way: sideways is struck */}
+        <span className="cwp-facein absolute block" style={{ ...hcCell(2, 7), animationDelay: dm(delayMs, 320) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M10 6 H2.4 M4.4 4 L2.4 6 L4.4 8" fill="none" stroke={p0} strokeWidth="0.7" {...SJ} />
+            <path d="M2 10 L10 2" stroke="#c94a3a" strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: it steps down two ranks toward you */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(3, 7), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * 238%)", animationDelay: dm(delayMs, 480), animationDuration: "calc(1000ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="r" fill={p2} stroke={p1} />
+        </span>
+        {/* five pips: five of their turns to set foot in your half */}
+        <span className="cwp-pop absolute block" style={{ left: "76%", width: "22%", top: `calc(${rankTop(7)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 760) }}>
+          <CPips n={5} fill={p1} stroke={p2} />
+        </span>
+        {/* settle: the exile that does not arrive crumbles to dust */}
+        <span className="cwp-wilt absolute block" style={{ ...hcMan(6, 6), animationDelay: dm(delayMs, 1000) }}>
+          <Man kind="r" fill={tint(p2, 0.7)} stroke={p0} />
+        </span>
+        <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1260} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Hydra Hex: their bishop on d6 is the hydra's head, eight pips for its
+   eight turns; your knight cuts it off; two heads grow back from where it
+   fell, reaching to the two nearest enemy pieces (the knight on c7 and the
+   pawn on e7), which freeze for two turns; their king on d8, nearer still,
+   is passed over, since kings are neither head nor spawn. ---------------- */
+const HYDRA: Palette = ["#1c2a1c", "#7fae4a", "#9fd8ff"];
+function HydraScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = HYDRA;
+  if (role === "entrance") return <EntranceCut palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
+  const spawn = [
+    { f: 2, r: 7, k: "n" as const, d: 820 },
+    { f: 4, r: 7, k: "p" as const, d: 900 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: their bishop on d6 is branded the head; eight pips */}
+        <span className="cwp-hold absolute block" style={{ ...hcMan(3, 6), animationDelay: dm(delayMs, 0), animationDuration: "calc(700ms * var(--fx-dur, 1))" }}>
+          <Man kind="b" fill={p0} stroke={p1} />
+        </span>
+        <span className="cwp-pop absolute block" style={{ left: "66%", width: "32%", top: `calc(${rankTop(6)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 120) }}>
+          <CPips n={8} fill={p1} stroke={p0} />
+        </span>
+        {/* strike: your knight cuts it off */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(3, 6), "--dx": "140%", "--dy": "calc(var(--fx-side, 1) * 238%)", animationDelay: dm(delayMs, 300), animationDuration: "calc(900ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="n" fill={p2} stroke={p0} />
+        </span>
+        <span className="cwp-lift absolute block" style={{ ...hcMan(3, 6), animationDelay: dm(delayMs, 560) }}>
+          <Man kind="b" fill={p0} stroke={p1} />
+        </span>
+        {/* two heads grow back from where it fell */}
+        {spawn.map((v, i) => (
+          <span key={v.f} className="absolute block" style={{ left: i ? "43.75%" : "38.25%", width: "5.5%", top: onLine(6, 12.5), height: "12.5%", scale: `${i ? -1 : 1} var(--fx-side, 1)` }}>
+            <span className="cwp-sprout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 680 + i * 80) }}>
+              <svg viewBox="0 0 6 12" className="block h-full w-full" aria-hidden="true">
+                <path d="M5.6 12 C5.6 8 1 7 1.4 3 L0.4 1.4 L2.6 1 L3.4 2.6 C3.4 5.6 6 7 6 12 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.4" {...SJ} />
+              </svg>
+            </span>
+          </span>
+        ))}
+        {/* ...and the two nearest enemy pieces freeze, two pips each */}
+        {spawn.map((v) => (
+          <span key={v.d} className="cwp-stamp absolute block" style={{ ...hcCell(v.f, v.r), animationDelay: dm(delayMs, v.d) }}>
+            <FrostSquare stroke={p2} />
+          </span>
+        ))}
+        {spawn.map((v) => (
+          <span key={v.k} className="cwp-facein absolute block" style={{ left: `${v.f * 12.5 + 3}%`, width: "6.5%", top: `calc(${rankTop(v.r)} + 0.6%)`, height: "3.2%", animationDelay: dm(delayMs, v.d + 140) }}>
+            <CPips n={2} fill={p2} stroke={p0} />
+          </span>
+        ))}
+        {/* settle: their king on d8 is passed over */}
+        <span className="cwp-glint absolute block" style={{ ...hcCell(3, 8), animationDelay: dm(delayMs, 1120), animationDuration: "calc(1000ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Standing Guard: each time their king moves, the nearest piece of his
+   freezes for a turn. Six pips for six turns; the king steps from e8 to f7;
+   the first piece caught, the pawn on g6, is spared and makes one move
+   instead; the king steps again, to f8, and the knight on g8 beside him
+   freezes, one pip; the king himself is never frozen. -------------------- */
+const GUARD: Palette = ["#2c3e6b", "#8a94a8", "#9fd8ff"];
+function StandingGuardScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = GUARD;
+  if (role === "entrance") return <EntranceCut palette={GUARD} glyph={GLYPH.hw3_kings_guard} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={GUARD} glyph={GLYPH.hw3_kings_guard} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: six pips, six of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "2%", width: "26%", top: `calc(${rankTop(6)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }}>
+          <CPips n={6} fill={p2} stroke={p0} />
+        </span>
+        {/* their king steps from e8 to f7... */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(4, 8), "--dx": "140%", "--dy": "calc(var(--fx-side, 1) * 119%)", animationDelay: dm(delayMs, 160), animationDuration: "calc(600ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="k" fill={p1} stroke={p0} />
+        </span>
+        {/* ...the first piece caught, the g6 pawn, is spared and moves instead */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(6, 5), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -119%)", animationDelay: dm(delayMs, 420), animationDuration: "calc(800ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="p" fill={p1} stroke={p0} />
+        </span>
+        {/* strike: the king steps again, to f8, and the knight beside him on g8 freezes */}
+        <span className="cwp-snapback absolute block" style={{ ...hcMan(5, 8), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * 119%)", animationDelay: dm(delayMs, 640), animationDuration: "calc(800ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="k" fill={p1} stroke={p0} />
+        </span>
+        <span className="cwp-stamp absolute block" style={{ ...hcCell(6, 8), animationDelay: dm(delayMs, 900) }}>
+          <FrostSquare stroke={p2} />
+        </span>
+        <span className="cwp-facein absolute block" style={{ left: "80%", width: "3.4%", top: `calc(${rankTop(8)} + 0.6%)`, height: "3.2%", animationDelay: dm(delayMs, 1040) }}>
+          <CPips n={1} fill={p2} stroke={p0} />
+        </span>
+        {/* settle: the king himself never freezes */}
+        <span className="cwp-glint absolute block" style={{ ...hcCell(5, 8), animationDelay: dm(delayMs, 1180), animationDuration: "calc(1000ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p2} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Mutiny: their knight's first capture turns its coat. It leaps from f6
+   and takes your pawn on e4; on that square it turns to your colours under
+   a torn flag, three pips for your three turns of its service; then it rides
+   back home to their side. ------------------------------------------------ */
+const MUTINY: Palette = ["#42264a", "#a07bff", "#1c1024"];
+function MutinyScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = MUTINY;
+  if (role === "entrance") return <EntranceCut palette={MUTINY} glyph={GLYPH.hw3_mutiny} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={MUTINY} glyph={GLYPH.hw3_mutiny} delayMs={delayMs} />;
+  const yours = "#e8dcc0";
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: their knight on f6 leaps and takes your pawn on e4 */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(4, 4), "--dx": "140%", "--dy": "calc(var(--fx-side, 1) * -238%)", animationDelay: dm(delayMs, 60), animationDuration: "calc(800ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="n" fill={p2} stroke={p1} />
+        </span>
+        <span className="cwp-lift absolute block" style={{ ...hcMan(4, 4), animationDelay: dm(delayMs, 300) }}>
+          <Man kind="p" fill={yours} stroke={p0} />
+        </span>
+        {/* strike: on that square it turns its coat to yours */}
+        <span className="cwp-swapout absolute block" style={{ ...hcMan(4, 4), animationDelay: dm(delayMs, 560) }}>
+          <Man kind="n" fill={p2} stroke={p1} />
+        </span>
+        <span className="cwp-swapin absolute block" style={{ ...hcMan(4, 4), animationDelay: dm(delayMs, 560), animationDuration: "calc(1250ms * var(--fx-dur, 1))" }}>
+          <Man kind="n" fill={yours} stroke={p0} />
+        </span>
+        {/* under a torn flag, three pips: three of your turns in your service */}
+        <span className="cwp-sprout absolute block" style={{ left: "59%", width: "4%", top: `calc(${rankTop(4)} - 3%)`, height: "9%", animationDelay: dm(delayMs, 760) }}>
+          <svg viewBox="0 0 5 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 9.6 V0.8" stroke={p1} strokeWidth="0.5" strokeLinecap="round" />
+            <path d="M1 1 H4.4 L3.6 1.8 L4.4 2.6 L3.4 3.8 H1 Z" fill={yours} stroke={p0} strokeWidth="0.3" {...SJ} />
+          </svg>
+        </span>
+        <span className="cwp-pop absolute block" style={{ left: "51%", width: "11%", top: `calc(${rankTop(4)} + 9.6%)`, height: "3.2%", animationDelay: dm(delayMs, 900) }}>
+          <CPips n={3} fill={yours} stroke={p0} />
+        </span>
+        {/* settle: then it rides back to their side */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(4, 4), "--dx": "140%", "--dy": "calc(var(--fx-side, 1) * -357%)", animationDelay: dm(delayMs, 1240), animationDuration: "calc(900ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="n" fill={p2} stroke={p1} />
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Sinking Mire: a pool of four squares opens in their half (d6, e6,
+   d5, e5); a knight stepping into it is thrown back; a pawn caught inside
+   climbs out; then it drains, one square on each of their turns, four in
+   all, until nothing is left. -------------------------------------------- */
+const MIRE: Palette = ["#2f3a26", "#6f8a4a", "#1c241c"];
+function SinkingMireScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = MIRE;
+  if (role === "entrance") return <EntranceCut palette={MIRE} glyph={GLYPH.hw3_sinking_mire} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={MIRE} glyph={GLYPH.hw3_sinking_mire} delayMs={delayMs} />;
+  const pool = [
+    { f: 3, r: 6, d: 880 },
+    { f: 4, r: 6, d: 960 },
+    { f: 3, r: 5, d: 1040 },
+    { f: 4, r: 5, d: 1120 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the mire opens over four squares of their half */}
+        <span className="cwp-spreadtile absolute block" style={{ left: "37.5%", width: "25%", top: bandTop(5, 6), height: "25%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1800ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="18.4" height="18.4" rx="4" fill={tint(p0, 0.82)} stroke={p1} strokeWidth="0.5" />
+            <path d="M3 7 C5 6 7 8 9 7 M11 13 C13 12 15 14 17 13 M4 15 C5.6 14.4 7 15.4 8.4 15" fill="none" stroke={p1} strokeWidth="0.45" strokeLinecap="round" />
+            <circle cx="14" cy="5" r="0.9" fill="none" stroke={p1} strokeWidth="0.4" />
+            <circle cx="6" cy="11.4" r="0.6" fill="none" stroke={p1} strokeWidth="0.4" />
+          </svg>
+        </span>
+        {/* strike: a knight stepping into it is thrown back */}
+        <span className="cwp-snapback absolute block" style={{ ...hcMan(5, 8), "--dx": "-140%", "--dy": "calc(var(--fx-side, 1) * 238%)", animationDelay: dm(delayMs, 300) } as CSSProperties}>
+          <Man kind="n" fill={p1} stroke={p2} />
+        </span>
+        {/* a pawn caught inside climbs out */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(4, 5), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * 119%)", animationDelay: dm(delayMs, 520), animationDuration: "calc(900ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="p" fill={p1} stroke={p2} />
+        </span>
+        {/* settle: it drains, one square on each of their turns */}
+        {pool.map((v) => (
+          <span key={v.d} className="cwp-lift absolute block" style={{ left: `${v.f * 12.5 + 3.5}%`, width: "5.5%", top: `calc(${rankTop(v.r)} + 3.5%)`, height: "5.5%", animationDelay: dm(delayMs, v.d) }}>
+            <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 0.4 C4.6 2.4 5.2 3.4 5.2 4 C5.2 5.2 4.2 5.8 3 5.8 C1.8 5.8 0.8 5.2 0.8 4 C0.8 3.4 1.4 2.4 3 0.4 Z" fill={p1} stroke={p2} strokeWidth="0.35" />
+            </svg>
+          </span>
+        ))}
+        <span className="cwp-pop absolute block" style={{ left: "80%", width: "17%", top: `calc(${rankTop(7)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 760) }}>
+          <CPips n={4} fill={p1} stroke={p2} />
+        </span>
+      </BoardFrame>
     </Stage>
   );
 }
@@ -2555,7 +3105,7 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M2.6 6.4 C2.6 3.2 3.6 1.6 5 1.2 C6.4 1.6 7.4 3.2 7.4 6.4 Z" fill="#2a1030" stroke="#c9b0e8" strokeWidth="0.5" {...SJ} />
       <path d="M2 6.4 H8 L7.6 7.6 H2.4 Z" fill="#c9b0e8" />
-      <path d="M3.4 8.4 V9.6 M4.6 8.4 L5.2 9.6 L5.8 8.4" fill="none" stroke="#c94a5a" strokeWidth="0.5" {...SJ} />
+      <path d="M3.8 8.4 V9.6 M5 8.4 V9.6 M6.2 8.4 V9.6" fill="none" stroke="#c94a5a" strokeWidth="0.5" {...SJ} />
       <path d="M5.4 3 L4.8 4.4 L5.6 5.6" fill="none" stroke="#8a94a8" strokeWidth="0.4" {...SJ} />
     </Gl>
   ),
@@ -3003,10 +3553,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   // its bell, ripples and glyph about the stage centre and puts nothing
   // board-scale outside <BoardFrame>, so the bell simply tolls over the cast
   // square instead of the middle of the board.
-  hw2_weight_of_toil: G(OmenBell, ["#8a7a63", "#c9a84c", "#3a3026"], GLYPH.hw2_weight_of_toil, {
+  hw2_weight_of_toil: S(WeightOfToilScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify",
     anchor: "cast",
-  }, "toil"),
+  }),
 
   /* --- BlightGarden (cursed and remembering ground) ------------------------ */
   // The ice takes the SQUARE a piece just left — a single square per trigger —
@@ -3017,10 +3567,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice",
     anchor: "cast",
   }, "footprints"),
-  hw2_creeping_blight: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw2_creeping_blight, {
+  hw2_creeping_blight: S(CreepingBlightScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
-  }, "creep"),
+  }),
   hw2_gravebloom: G(BlightGarden, ["#1c241c", "#7fae5a", "#c94a5a"], GLYPH.hw2_gravebloom, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
     anchor: "board",
@@ -3039,10 +3589,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: ["b", "r", "q"], hasLead: true, sound: "blitz",
     anchor: "board",
   }, "noreins"),
-  hw2_curse_of_recoil: G(ChainWeb, ["#4a3a2a", "#ff9d3d", "#c9cdd6"], GLYPH.hw2_curse_of_recoil, {
+  hw2_curse_of_recoil: S(CurseOfRecoilScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege",
     anchor: "board",
-  }, "recoil"),
+  }),
   hw2_queens_ransom: G(ChainWeb, ["#5b2b8f", "#ffd76a", "#1c0f18"], GLYPH.hw2_queens_ransom, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockice",
     anchor: "board",
@@ -3116,10 +3666,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
     anchor: "aim",
   }, "bloodlust"),
-  hw3_exiles_mark: G(HexBrand, ["#5a6b8f", "#c9a84c", "#1c2418"], GLYPH.hw3_exiles_mark, {
+  hw3_exiles_mark: S(ExilesMarkScene, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
     anchor: "aim",
-  }, "exile"),
+  }),
   hw3_debtors_mark: G(HexBrand, ["#4a3a22", "#c9a84c", "#2a2a30"], GLYPH.hw3_debtors_mark, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
     anchor: "cast",
@@ -3154,28 +3704,30 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", source: "frozen",
     anchor: "cast",
   }, "jammedgate"),
-  hw3_time_bomb: G(OmenBell, ["#3a3a40", "#ff9d3d", "#1c1c24"], GLYPH.hw3_time_bomb, {
+  hw3_time_bomb: S(PowderKegScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege",
     anchor: "board",
-  }, "powderkeg"),
+  }),
   hw3_collapsing_floor: G(OmenBell, ["#4a4a52", "#c9cdd6", "#1c1c24"], GLYPH.hw3_collapsing_floor, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
     anchor: "board",
   }, "collapse"),
-  hw3_doomed_vow: G(OmenBell, ["#2a1030", "#c9b0e8", "#8a94a8"], GLYPH.hw3_doomed_vow, {
-    ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "cathedral",
+  hw3_doomed_vow: S(DoomedVowScene, {
+    // Any non-king piece can be condemned, and exactly one is: the victim is
+    // the one piece on the cast square.
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
     anchor: "cast",
-  }, "doomedvow"),
+  }),
 
   /* --- BlightGarden (hazards / contagion / terrain) ----------------------- */
   hw3_wandering_sentry: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw3_wandering_sentry, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "sentry"),
-  hw3_sinking_mire: G(BlightGarden, ["#2f3a26", "#6f8a4a", "#1c241c"], GLYPH.hw3_sinking_mire, {
+  hw3_sinking_mire: S(SinkingMireScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
-  }, "mire"),
+  }),
   // The miasma is breathed in by the one piece that crowds a neighbour, and it
   // is that piece's square that rots. BlightGarden spreads its tiles from the
   // stage centre outward, so the rot now spreads from the cast square; <Wash>
@@ -3192,10 +3744,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
     anchor: "aim",
   }, "wildfire"),
-  hw3_effigy_of_dread: G(BlightGarden, ["#1c2a1c", "#8faf4a", "#3a3a40"], GLYPH.hw3_effigy_of_dread, {
+  hw3_effigy_of_dread: S(EffigyScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", source: "summon",
     anchor: "board",
-  }, "effigy"),
+  }),
   hw3_avalanche: G(BlightGarden, ["#3a3a40", "#c9cdd6", "#8a94a8"], GLYPH.hw3_avalanche, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
@@ -3214,10 +3766,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
   }, "sharedfate"),
-  hw3_kings_guard: G(ChainWeb, ["#2c3e6b", "#8a94a8", "#9fd8ff"], GLYPH.hw3_kings_guard, {
+  hw3_kings_guard: S(StandingGuardScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
     anchor: "board",
-  }, "kingsguard"),
+  }),
   hw3_no_retreat: G(ChainWeb, ["#3a3026", "#c9a84c", "#8a6a3a"], GLYPH.hw3_no_retreat, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
@@ -3236,10 +3788,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   // single square, not a board state. MidasVeil's curtain sweep, gilded rank
   // and glyph are all composed about the stage centre, and its only
   // board-scale layer, <Wash>, is inside <BoardFrame>.
-  hw3_mutiny: G(MidasVeil, ["#42264a", "#a07bff", "#1c1024"], GLYPH.hw3_mutiny, {
+  hw3_mutiny: S(MutinyScene, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades",
     anchor: "cast",
-  }, "mutiny"),
+  }),
   hw3_defectors_mark: G(MidasVeil, ["#32284a", "#8f6bff", "#160f24"], GLYPH.hw3_defectors_mark, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
     anchor: "cast",

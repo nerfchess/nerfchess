@@ -1,0 +1,16 @@
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:198:7 › /tournaments/[id] › the countdown is not a live region; only the phase is announced (48.0s)
+  ✘  2 [chromium] › e2e/polish/social-routes.spec.ts:212:7 › /tournaments/[id] › a missing event shows the shared 404 copy (1.4m)
+  ✘  3 [chromium] › e2e/polish/social-routes.spec.ts:218:7 › /tournaments/[id] › a failed load has an h1 and a Retry that loads the event (1.0m)
+  ✘  4 [chromium] › e2e/polish/social-routes.spec.ts:231:7 › /tournaments/[id] › the in-flight state is the route skeleton (1.1m)
+  ✘  5 [chromium] › e2e/polish/social-routes.spec.ts:240:7 › /tournaments/[id] › arena footnote, club chip and pairing links (24.9s)
+  ✘  6 [chromium] › e2e/polish/social-routes.spec.ts:258:7 › /tournaments/[id] signed in › the join control does not wait for /api/auth/me (7.3s)
+    Error: expect(locator).toHaveCount(expected) failed
+    Error: expect(locator).toBeVisible() failed
+      218 |   test("a failed load has an h1 and a Retry that loads the event", async ({ page }) => {
+  3) [chromium] › e2e/polish/social-routes.spec.ts:218:7 › /tournaments/[id] › a failed load has an h1 and a Retry that loads the event 
+    Error: expect(locator).toBeVisible() failed
+    Error: expect(locator).toBeVisible() failed
+    Error: expect(locator).toHaveCount(expected) failed
+    Error: expect(locator).toBeVisible() failed
+  6 failed
+    [chromium] › e2e/polish/social-routes.spec.ts:218:7 › /tournaments/[id] › a failed load has an h1 and a Retry that loads the event 

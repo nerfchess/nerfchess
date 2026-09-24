@@ -1,7 +1,9 @@
 "use client";
 
+import { FOOTER_LINKS } from "@/components/SiteFooter";
+import { TEAM_ANCHOR } from "@/lib/team";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Cpu, Sparkles, User, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -12,11 +14,11 @@ import { ModeBadge } from "@/components/ModeBadge";
 // page's client bundle just to show one card face. CardOfTheDay and
 // HeroRatings lazy-import them so the engine never ships in this chunk.
 import { TIER_ROMAN } from "@/lib/tiers";
-import { useLobbySnapshot } from "@/lib/lobbyClient";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useLobbySnapshotStatus } from "@/lib/lobbyClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
 import { UPDATES, formatUpdateDate } from "@/lib/updates";
-import { LinkButton } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 
 // The home page, laid out the way Lichess lays out its lobby: a feed on the
 // left, the board in the middle, the ways in on the right, and a timeline of
@@ -27,18 +29,15 @@ export default function HomePage() {
       <SiteHeader />
 
       <section className="mx-auto flex w-full max-w-[1300px] flex-col px-3 pt-4 sm:px-5 lg:grid lg:grid-cols-[250px_minmax(0,1fr)_320px] lg:gap-6">
-        {/* Feed: what happened lately. Last on phones, first on desktop. */}
-        <div className="order-3 mt-6 lg:order-1 lg:mt-0">
-          <HomeFeed />
-        </div>
-
-        {/* The board. */}
-        <div className="order-1 lg:order-2">
+        {/* The board. Every column is placed by line, not by order: a slow
+            load paints the HTML parsed so far, and auto placement would drop
+            the board into the feed's column until the rest arrived. */}
+        <div className="lg:col-start-2 lg:row-start-1">
           <HeroTv />
         </div>
 
         {/* The ways in. */}
-        <div className="order-2 mt-4 lg:order-3 lg:mt-0">
+        <div className="mt-4 lg:col-start-3 lg:row-start-1 lg:mt-0">
           <div className="flex items-start justify-between gap-3">
             {/* The page's H1. The sr-only tail gives search engines the "chess
                 with power-ups" target phrase without changing the visible hero. */}
@@ -76,7 +75,7 @@ export default function HomePage() {
                   <span className="font-semibold text-mode-buffGlow">Buff mode</span>
                   <span className="ml-2 text-[13px] text-parchment-300">Stack powers onto your own army.</span>
                 </span>
-                <span className="btn-ghost inline-flex min-h-[36px] shrink-0 items-center px-4 text-[13px] uppercase tracking-[0.05em]">Play</span>
+                <span className="btn-ghost inline-flex min-h-[36px] shrink-0 items-center px-4 text-[13px]">Play</span>
               </Link>
             </li>
             <li>
@@ -85,7 +84,7 @@ export default function HomePage() {
                   <span className="font-semibold text-mode-nerfGlow">Nerf mode</span>
                   <span className="ml-2 text-[13px] text-parchment-300">Secret handicaps, hexes, and boons.</span>
                 </span>
-                <span className="btn-ghost inline-flex min-h-[36px] shrink-0 items-center px-4 text-[13px] uppercase tracking-[0.05em]">Play</span>
+                <span className="btn-ghost inline-flex min-h-[36px] shrink-0 items-center px-4 text-[13px]">Play</span>
               </Link>
             </li>
           </ul>
@@ -96,6 +95,15 @@ export default function HomePage() {
             onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
             mode you start with a secret handicap and curse your opponent. Capture the king to win.
           </p>
+        </div>
+
+        {/* Feed: what happened lately. Last on phones, first on desktop. It
+            comes last in the source too: a slow first paint shows the HTML
+            parsed so far, and a feed parsed ahead of the board and the ways
+            in sat on screen until they arrived and pushed it off the fold
+            (0.04 to 0.25 CLS at 390x844, throttled). */}
+        <div className="mt-6 lg:col-start-1 lg:row-start-1 lg:mt-0">
+          <HomeFeed />
         </div>
       </section>
 
@@ -114,13 +122,21 @@ export default function HomePage() {
 }
 
 // The two-line live counter under the buttons, Lichess's "N players / N games
-// in play". Rendered only once the first lobby snapshot resolves; never a
-// fabricated number.
+// in play". Never a fabricated number: until the first lobby snapshot lands
+// the two counts are skeleton blocks, and if the game server cannot be
+// reached the same two lines say so. The block is on the page from the first
+// paint at its final height; it used to render nothing until the snapshot
+// resolved and then push the mode list and the blurb down 60px (F004).
 function LiveNowStrip() {
-  const lobby = useLobbySnapshot(10000);
-  if (!lobby) return null;
-  const online = lobby.players.length + lobby.anonymous;
-  const games = lobby.games.length;
+  const { lobby, failed } = useLobbySnapshotStatus(10000);
+  const online = lobby ? lobby.players.length + lobby.anonymous : null;
+  const games = lobby ? lobby.games.length : null;
+  const count = (n: number | null) =>
+    n === null ? (
+      <span aria-hidden className="skeleton inline-block h-[1em] w-[3ch] align-middle" />
+    ) : (
+      <span className="font-semibold tabular-nums text-parchment-50">{n.toLocaleString()}</span>
+    );
   // 42px tall, two short of the minimum, purely from line-height: it is a
   // full-width block so only the height was ever in question. `flex-col`
   // rather than a bare `flex`, because the two spans are a stacked two-line
@@ -128,16 +144,24 @@ function LiveNowStrip() {
   return (
     <Link
       href="/lobby"
+      aria-busy={!lobby && !failed}
       className="mt-5 flex min-h-[44px] flex-col justify-center text-[13px] leading-6 text-parchment-300 no-underline [@media(pointer:fine)]:min-h-0"
     >
-      <span className="block">
-        <span className="font-semibold tabular-nums text-parchment-50">{online.toLocaleString()}</span>{" "}
-        {online === 1 ? "player" : "players"}
-      </span>
-      <span className="block">
-        <span className="font-semibold tabular-nums text-parchment-50">{games.toLocaleString()}</span>{" "}
-        {games === 1 ? "game" : "games"} in play
-      </span>
+      {!lobby && failed ? (
+        <>
+          <span className="block">Live counts are unavailable right now.</span>
+          <span className="block text-gold-leaf">Open the lobby</span>
+        </>
+      ) : (
+        <>
+          <span className="block">
+            {count(online)} {online === 1 ? "player" : "players"}
+          </span>
+          <span className="block">
+            {count(games)} {games === 1 ? "game" : "games"} in play
+          </span>
+        </>
+      )}
     </Link>
   );
 }
@@ -145,39 +169,39 @@ function LiveNowStrip() {
 // A signed-in player with mode ratings sees them beside the title; guests get
 // nothing. Same reads the profile uses, no card engine.
 function HeroRatings() {
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // The name comes from the shared session (known at the first paint for a
+  // returning player), so the ratings read starts at once instead of after a
+  // /me round trip of this component's own.
+  const { display } = useSession();
+  const username = display && !display.isGuest ? display.username : null;
   const [ratings, setRatings] = useState<Partial<Record<"nerf" | "buff", number>>>({});
 
   useEffect(() => {
+    if (!username) return;
     let cancelled = false;
-    fetchMe().then((me) => {
-      if (cancelled) return;
-      setUser(me);
-      if (!me || me.isGuest) return;
-      fetch(`/api/users/${encodeURIComponent(me.username)}`)
-        .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
-        .then((data) => {
-          if (cancelled || !data?.ratings) return;
-          setRatings({
-            nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
-            buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
-          });
-        })
-        .catch(() => {});
-    });
+    fetch(`/api/users/${encodeURIComponent(username)}`)
+      .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
+      .then((data) => {
+        if (cancelled || !data?.ratings) return;
+        setRatings({
+          nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
+          buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
+        });
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [username]);
 
-  if (!user || user.isGuest) return null;
+  if (!username) return null;
   const chips: { key: "nerf" | "buff"; label: string; value: number; tone: string }[] = [];
   if (ratings.nerf != null) chips.push({ key: "nerf", label: "Nerf", value: ratings.nerf, tone: "text-mode-nerfGlow" });
   if (ratings.buff != null) chips.push({ key: "buff", label: "Buff", value: ratings.buff, tone: "text-mode-buffGlow" });
   if (chips.length === 0) return null;
   return (
     <Link
-      href={`/u/${encodeURIComponent(user.username)}`}
+      href={`/u/${encodeURIComponent(username)}`}
       title="Your profile"
       className="flex flex-wrap items-center justify-end gap-x-3 text-[13px] no-underline"
     >
@@ -194,13 +218,40 @@ function HeroRatings() {
 // If this device has a game in progress (tab closed mid-game, wandered home),
 // offer the way back in. Verified against the archive so a finished game never
 // claims to be live.
+//
+// Whether there is a game is local storage the server cannot see, so it is
+// settled before the first paint: the inline script stamps
+// html[data-active-game] while the HTML is parsed, and the slot shows only
+// under that stamp, so a returning player gets the button in the first frame
+// and nobody else gets a gap. It used to be inserted after a fetch and push
+// the live counter and the mode list down (F004). If the archive then says the
+// game is over, the same slot says so instead of disappearing, so nothing
+// below it moves; the stored game is cleared, so the next visit has no slot.
+//
+// Mirrors ACTIVE_GAME_KEY and ACTIVE_GAME_TTL_MS in src/lib/multiplayer.ts
+// (not exported there yet), which the script runs before.
+const ACTIVE_GAME_ATTR = "data-active-game";
+const ACTIVE_GAME_STAMP = `try{var g=JSON.parse(window.localStorage.getItem("nerfchess.activeGame.v1")||"null");if(g&&g.id&&typeof g.at==="number"&&Date.now()-g.at<=864e5)document.documentElement.setAttribute(${JSON.stringify(ACTIVE_GAME_ATTR)},"")}catch(e){}`;
+
+// useLayoutEffect on the client, useEffect on the server (where a layout
+// effect only warns).
+const useClientLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 function ReturnToGameBanner() {
-  const [active, setActive] = useState<ActiveGame | null>(null);
-  useEffect(() => {
+  // undefined: storage not read yet (the stamp decides the first paint);
+  // null: no game on this device.
+  const [active, setActive] = useState<ActiveGame | null | undefined>(undefined);
+  const [ended, setEnded] = useState(false);
+  useClientLayoutEffect(() => {
+    // One synchronous storage read, settled before the browser paints.
     const stored = loadActiveGame();
-    if (!stored) return;
+    setActive(stored);
+    if (!stored) document.documentElement.removeAttribute(ACTIVE_GAME_ATTR);
+  }, []);
+  useEffect(() => {
+    if (!active) return;
     let cancelled = false;
-    fetch(`/api/games/${encodeURIComponent(stored.id)}`)
+    fetch(`/api/games/${encodeURIComponent(active.id)}`)
       .then((res) =>
         res.ok
           ? (res.json() as Promise<{ game?: { winner: unknown; completed_at: unknown } } | null>)
@@ -211,23 +262,37 @@ function ReturnToGameBanner() {
         const g = data?.game;
         const finished = !!g && (g.completed_at != null || g.winner != null);
         if (finished) {
-          clearActiveGame(stored.id);
-          return;
+          clearActiveGame(active.id);
+          setEnded(true);
         }
-        setActive(stored);
       })
-      .catch(() => {
-        if (!cancelled) setActive(stored);
-      });
+      // Unverifiable (offline, server down): keep offering the rejoin.
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
-  if (!active) return null;
+  }, [active]);
+
+  if (active === null) return null;
   return (
-    <LinkButton tone="primary" href={`/game/${active.id}`} block size="lg" align="start" className="mt-2">
-      Rejoin your game
-    </LinkButton>
+    <div className={active ? "mt-2" : "mt-2 hidden [html[data-active-game]_&]:block"}>
+      <script dangerouslySetInnerHTML={{ __html: ACTIVE_GAME_STAMP }} />
+      {!active ? (
+        // Before hydration the game id is not known yet, so the slot holds the
+        // button in its final size, inert for the moment it takes to hydrate.
+        <Button tone="primary" block size="lg" align="start" disabled>
+          Rejoin your game
+        </Button>
+      ) : ended ? (
+        <LinkButton tone="default" href={`/game/${active.id}`} block size="lg" align="start">
+          See how your last game ended
+        </LinkButton>
+      ) : (
+        <LinkButton tone="primary" href={`/game/${active.id}`} block size="lg" align="start">
+          Rejoin your game
+        </LinkButton>
+      )}
+    </div>
   );
 }
 
@@ -279,7 +344,7 @@ function HomeFeed() {
   return (
     <div>
       <div className="flex items-baseline justify-between">
-        <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-400">Latest games</h2>
+        <h2 className="text-[13px] font-semibold text-parchment-200">Latest games</h2>
         <Link href="/community" className="-my-1 inline-flex min-h-[44px] items-center text-[13px] text-parchment-400 no-underline hover:text-parchment-100 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:my-0">
           Community »
         </Link>
@@ -287,14 +352,33 @@ function HomeFeed() {
       {failed ? (
         <p className="mt-3 text-[13px] text-parchment-400">
           Could not load.{" "}
-          <button type="button" onClick={loadGames} className="text-gold-leaf hover:underline">
+          <button
+            type="button"
+            onClick={loadGames}
+            className="-my-3 inline-flex min-h-[44px] min-w-[44px] items-center text-gold-leaf hover:underline [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:min-w-0"
+          >
             Retry
           </button>
         </p>
       ) : games === null ? (
-        <ul className="mt-3 space-y-3" aria-hidden>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <li key={i} className="skeleton h-9 w-full" />
+        // The feed's own rows with the words held by skeleton blocks (the
+        // name line, then the mode, stakes and age line), ten of them because
+        // the feed shows the latest ten. The old skeleton was six 31px bars
+        // in a looser list, so the column changed height when the games came.
+        <ul className="mt-2" aria-hidden>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <li key={i} className="border-b border-[color:var(--edge)] py-2 last:border-b-0">
+              <span className="block text-[13px] leading-snug">
+                <span className="skeleton inline-block h-[1em] w-4/5 align-middle" />
+              </span>
+              <span className="mt-0.5 flex items-center gap-2 text-[12px]">
+                {/* A text line, not a bare block: the real row's items are
+                    12px text on a full line-height, not 12px boxes. */}
+                <span className="w-1/2">
+                  <span className="skeleton inline-block h-[1em] w-full align-middle" />
+                </span>
+              </span>
+            </li>
           ))}
         </ul>
       ) : games.length === 0 ? (
@@ -327,7 +411,7 @@ function UpdatesTimeline() {
   return (
     <div className="plate p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-400">Latest updates</h2>
+        <h2 className="text-[13px] font-semibold text-parchment-200">Latest updates</h2>
         <Link href="/updates" className="-my-1 inline-flex min-h-[44px] items-center text-[13px] text-parchment-400 no-underline hover:text-parchment-100 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:my-0">
           All updates »
         </Link>
@@ -405,16 +489,32 @@ function CardOfTheDay() {
   return (
     <div className="plate p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
-        <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-400">Card of the day</h2>
+        <h2 className="text-[13px] font-semibold text-parchment-200">Card of the day</h2>
         <Link href="/codex" className="-my-1 inline-flex min-h-[44px] items-center text-[13px] text-parchment-400 no-underline hover:text-parchment-100 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:my-0">
           Codex »
         </Link>
       </div>
       {card === undefined ? (
-        <div className="mt-3 space-y-2" aria-hidden>
-          <div className="skeleton h-10 w-10" />
-          <div className="skeleton h-4 w-2/3" />
-          <div className="skeleton h-4 w-full" />
+        // The card's own layout with the words held by skeleton blocks: the
+        // 44px tier tile beside the name and tier lines, then the two-line
+        // description. The old skeleton was a 35px square over two bars, so
+        // the card grew when it arrived.
+        <div className="mt-3 block" aria-hidden>
+          <div className="flex items-center gap-3">
+            <span className="skeleton block h-[44px] w-[44px] shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px]">
+                <span className="skeleton inline-block h-[1em] w-2/3 align-middle" />
+              </span>
+              <span className="block text-[13px]">
+                <span className="skeleton inline-block h-[1em] w-1/3 align-middle" />
+              </span>
+            </span>
+          </div>
+          <p className="mt-3 min-h-[2.75em] text-[13px] leading-snug">
+            <span className="skeleton inline-block h-[1em] w-full align-middle" />
+            <span className="skeleton inline-block h-[1em] w-3/4 align-middle" />
+          </p>
         </div>
       ) : (
         <Link href={card.href} className="mt-3 block no-underline">
@@ -429,7 +529,10 @@ function CardOfTheDay() {
               </span>
             </span>
           </div>
-          <p className="mt-3 text-[13px] leading-snug text-parchment-300">{card.description}</p>
+          {/* Exactly two lines (clamped, with two reserved), so the box has
+              one height whatever the day's card says; the codex page the
+              card links to has the full text. */}
+          <p className="mt-3 line-clamp-2 min-h-[2.75em] text-[13px] leading-snug text-parchment-300">{card.description}</p>
         </Link>
       )}
     </div>
@@ -453,15 +556,9 @@ function timeAgo(at: number): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+// The home page keeps its own footer layout (socials and the build stamp), but
+// its links and credit come from the shared footer so they cannot drift.
 function SiteFooter() {
-  const footerLinks = [
-    { href: "/about", label: "About" },
-    { href: "/faq", label: "FAQ" },
-    { href: "/contact", label: "Contact" },
-    { href: "/guidelines", label: "Guidelines" },
-    { href: "/privacy-policy", label: "Privacy" },
-    { href: "/terms-of-service", label: "Terms" },
-  ];
 
   return (
     <footer className="mx-auto mt-12 w-full max-w-[1300px] px-3 pb-8 sm:px-5">
@@ -485,7 +582,7 @@ function SiteFooter() {
           aria-label="Footer"
           className="flex flex-wrap items-center gap-x-1 gap-y-1 [@media(pointer:fine)]:gap-x-4"
         >
-          {footerLinks.map((link) => (
+          {FOOTER_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -498,7 +595,16 @@ function SiteFooter() {
         <SocialsRow label="" className="" variant="quiet" />
       </div>
       <div className="mt-2 flex items-center justify-between text-[12px] text-parchment-500">
-        <span>Nerf Chess</span>
+        {/* The team credit, same as the shared footer (brief section 18). */}
+        <Link
+          href={`/about#${TEAM_ANCHOR}`}
+          // 19.5px tall on a finger: the same coarse-pointer 44px floor as
+          // the shared footer's credit, with the margin taking it back so
+          // the row does not grow.
+          className="-my-3 inline-flex min-h-[44px] items-center text-[13px] no-underline transition-colors hover:text-parchment-100 [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0"
+        >
+          Made by the Nerf Chess team
+        </Link>
         <BuildVersionLabel />
       </div>
     </footer>
@@ -507,17 +613,9 @@ function SiteFooter() {
 
 // The deployed build stamp: moderators and admins only.
 function BuildVersionLabel() {
-  const [isModerator, setIsModerator] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((me) => {
-      if (cancelled || !me || me.isGuest) return;
-      if (me.role === "mod" || me.role === "admin") setIsModerator(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // The full /me answer, not the display hint: the hint is for layout only.
+  const { user } = useSession();
+  const isModerator = !!user && !user.isGuest && (user.role === "mod" || user.role === "admin");
   const version = process.env.NEXT_PUBLIC_BUILD_VERSION ?? "";
   if (!isModerator || !version) return null;
   return (

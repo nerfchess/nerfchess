@@ -43,8 +43,11 @@ import { configureSoundPrefs, playMove as playMoveSample, setUiSounds, setVolume
 import { Piece } from "@/components/Pieces";
 import type { Control, SectionConfig } from "@/components/settings/config";
 import { SettingRow } from "@/components/settings/SettingRow";
+import { EmailPrefsRow } from "@/components/settings/EmailPrefsRow";
 import { GhostButton, Select, Slider, Toggle } from "@/components/settings/controls";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { logout } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 // The carved-recess control styling (toggle track, range channel) is authored
 // once in this stylesheet. It used to be imported by the panel alone, which is
 // why the controls only looked right inside the modal; it belongs with the
@@ -67,7 +70,7 @@ export function useSettingsModel(): { settings: Settings; update: (patch: Partia
 
   // Subscribe only. The initial value is read during render above, so there is
   // nothing to catch up on here, and setState happens exclusively in the event
-  // callback — which is what an effect is for (and what
+  // callback, which is what an effect is for (and what
   // react-hooks/set-state-in-effect asks for).
   useEffect(() => {
     const sync = () => setSettings(loadSettings());
@@ -408,7 +411,7 @@ function SiteThemePicker({
 }
 
 /** Custom background: upload an image (stored device-local as a data URL) or
- *  paste an http(s) URL, plus a dim slider. Both inputs are validated before
+ *  paste an https URL, plus a dim slider. Both inputs are validated before
  *  anything persists, so the page background always degrades to the theme
  *  default. An upload wins over the URL until it's removed. */
 function CustomBackgroundControl({
@@ -525,7 +528,7 @@ function CustomBackgroundControl({
         )}
       </div>
       {invalid && (
-        <p className="text-[12px] text-oxblood-glow">Use a direct http(s) image link.</p>
+        <p className="text-[12px] text-oxblood-glow">Use a direct https image link.</p>
       )}
       <div className="flex min-h-[36px] items-center justify-between gap-3">
         <span className="text-[12px] text-parchment-400">Dim</span>
@@ -579,7 +582,8 @@ function PickerDisclosure({
         </span>
         <ChevronDown
           aria-hidden
-          className={"h-4 w-4 shrink-0 text-parchment-400 transition-transform " + (expanded ? "rotate-180" : "")}
+          data-open={expanded}
+          className="m-chevron h-4 w-4 shrink-0 text-parchment-400"
         />
       </button>
       {expanded && <div className="mt-2">{children}</div>}
@@ -753,7 +757,10 @@ function PieceColorPicker({
           The {design.label} set has its own colours. Pick the Nerf Chess design above to use these.
         </p>
       )}
-      <div className={"grid grid-cols-2 gap-2 " + (inert ? "opacity-60" : "")}>
+      {/* Only the swatches dim while a Lichess set is chosen. The buttons stay
+          live and their labels are text, so they keep full contrast: at
+          opacity-60 on the grid the labels fell under AA (wave 3 contrast). */}
+      <div className="grid grid-cols-2 gap-2">
         {(Object.keys(PIECE_COLORS) as PieceColor[]).map((k) => {
           const t = PIECE_COLORS[k];
           const selected = value === k;
@@ -768,7 +775,9 @@ function PieceColorPicker({
               }
             >
               {selected && <SelectedGem />}
-              <PiecePairSwatch look={t} />
+              <span className={"flex shrink-0" + (inert ? " opacity-60" : "")}>
+                <PiecePairSwatch look={t} />
+              </span>
               <span className="font-display text-[13px] text-parchment">{t.label}</span>
             </button>
           );
@@ -781,6 +790,28 @@ function PieceColorPicker({
 /** Account section: live actions where the platform supports them today,
  *  clearly-labelled placeholders for the rest so the section is ready to grow. */
 function AccountSettings() {
+  // display is known on the first paint (the nc_who hint). null means no
+  // session yet: the header mints a guest for that visitor, so it gets the
+  // guest row too. A guest has no password, so logging out would lose the
+  // account for good; the header menu already hides Sign out for guests.
+  const { display } = useSession();
+  const isGuest = display === null || !!display?.isGuest;
+  const [leaving, setLeaving] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    setLogoutError(null);
+    try {
+      await logout();
+      window.location.assign("/");
+    } catch {
+      setLeaving(false);
+      setLogoutError("Could not log out. Check your connection and try again.");
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
@@ -789,37 +820,64 @@ function AccountSettings() {
           <p className="text-[13px] text-parchment-400">Avatar, bio, and game history</p>
         </div>
         <LinkButton tone="ghost"
-          href="/profile"
+          href="/profile/edit"
           className="shrink-0 px-3 py-1.5 text-[13px]">
           Edit profile
         </LinkButton>
       </div>
+      <div className="rounded-none border border-[color:var(--edge)] px-2.5"><EmailPrefsRow /></div>
       {[
         { label: "Change username", hint: "Not available yet" },
         { label: "Change password", hint: "Not available yet" },
-        { label: "Email preferences", hint: "Coming soon" },
         { label: "Log out of all devices", hint: "Coming soon" },
       ].map((item) => (
+        // Not controls, so no disabled styling: the badge says they are not
+        // here yet, and the text keeps full contrast (axe color-contrast at
+        // opacity-70, wave 2 account 4).
         <div
           key={item.label}
-          className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-transparent p-2.5 opacity-70"
+          className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-transparent p-2.5"
         >
           <div className="text-[13px] font-medium text-parchment-300">{item.label}</div>
           <span
             className="rune-badge shrink-0"
-            style={{ ["--badge-rgb" as string]: "152 145 127" }}
+            // The theme's primary text triple: the old 152 145 127 measured
+            // 4.26:1 on the row at 12px (axe, wave 2 account 4).
+            style={{ ["--badge-rgb" as string]: "var(--text-primary-rgb)" }}
           >
             {item.hint}
           </span>
         </div>
       ))}
-      <form action="/api/auth/logout" method="post">
-        <Button tone="danger"
-          type="submit"
-          className="w-full px-3 py-2 text-[13px] font-semibold">
-          Log out
-        </Button>
-      </form>
+      {isGuest ? (
+        <div className="flex min-h-[44px] flex-col gap-2 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="min-w-0">
+            <div className="text-[13px] font-medium text-parchment-100">Guest account</div>
+            <p className="text-[13px] text-parchment-400">
+              Create an account to keep your games and rating. A guest cannot sign back in.
+            </p>
+          </div>
+          <LinkButton tone="ghost"
+            href="/login?upgrade=1"
+            className="shrink-0 px-3 py-1.5 text-[13px]">
+            Create account
+          </LinkButton>
+        </div>
+      ) : (
+        <div>
+          <Button tone="danger"
+            type="button"
+            onClick={handleLogout}
+            disabled={leaving}
+            aria-busy={leaving || undefined}
+            className="w-full px-3 py-2 text-[13px] font-semibold">
+            {leaving ? "Logging out" : "Log out"}
+          </Button>
+          <p role="status" className={"text-[13px] text-oxblood-glow" + (logoutError ? " mt-1" : "")}>
+            {logoutError}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

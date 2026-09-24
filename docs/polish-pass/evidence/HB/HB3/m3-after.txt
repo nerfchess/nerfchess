@@ -1,0 +1,42 @@
+# m3-spectate x10, new harness, arena bundle built from this slice's arena changes
+=== run 1
+  "moves": 19,
+  "seconds": 8
+RESULT: PASS
+=== run 2
+  "moves": 22,
+  "seconds": 7
+RESULT: PASS
+=== run 3
+  "moves": 14,
+  "seconds": 6
+RESULT: PASS
+=== run 4
+  "moves": 52,
+  "seconds": 28
+RESULT: PASS
+=== run 5
+  "moves": 10,
+  "seconds": 5
+RESULT: PASS
+=== run 6
+  "moves": 24,
+  "seconds": 10
+RESULT: PASS
+=== run 7
+  "moves": 64,
+  "seconds": 17
+RESULT: PASS
+=== run 8
+  "moves": 33,
+  "seconds": 10
+RESULT: PASS
+=== run 9
+  "moves": 108,
+  "seconds": 5
+RESULT: PASS
+=== run 10
+  "moves": 26,
+  "seconds": 8
+RESULT: PASS
+TOTAL PASS 10 of 10

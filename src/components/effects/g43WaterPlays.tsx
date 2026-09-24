@@ -10,6 +10,10 @@
 // net coming up full, a paper lantern set adrift, a pair of sea boots filling
 // on the tideline.
 //
+// PER-CARD RULE SCENES (slice TC-g). Haven Law lead with a scene of
+// their own rule on the real board (see that section before the registry);
+// the old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g43WaterPlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx, only the SigPlugin/SigRole TYPES from sigPlugins.tsx.
@@ -596,26 +600,7 @@ function TheGreatFloodScene({ role, delayMs }: SceneProps) {
       <L c="g43-hit2" l={40} t={38} w={20} h={20} d={260} st={{ borderRadius: "50%", background: "rgba(255,244,214,0.8)" }} />
     </Cut>
   );
-  return (
-    <Lead
-      d={delayMs}
-      frame={<><Wash tone="rgba(111,196,222,0.32)" /><Rim tone="rgba(18,50,65,0.4)" /><Tide tone="rgba(111,196,222,0.55)" /></>}
-      run={
-        <>
-          <V c="g43-bore" l={50} t={44} w={7.2} h={8} d={280} par="none" st={{ transformOrigin: "0% 100%" }}>{crest}</V>
-          <L c="g43-run" l={50} t={50} w={30} h={1.8} d={140} st={{ background: "linear-gradient(90deg, #fff4d6, rgba(111,196,222,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
-        </>
-      }
-    >
-      <L c="g43-lean" l={42} t={54} w={16} h={2.4} d={80} st={{ borderRadius: "999px", background: "rgba(18,50,65,0.6)" }} />
-      <V c="g43-gf-crest" l={42} t={42} w={16} h={10} d={300} st={{ transformOrigin: "50% 100%" }} par="none">{crest}</V>
-      <L c="g43-gf-back" l={40} t={50} w={20} h={3} d={520} st={{ background: "linear-gradient(270deg, rgba(111,196,222,0.8), transparent)", borderRadius: "999px" }} />
-      <L c="g43-gf-slap" l={47} t={45} w={7} h={7} d={620} st={{ borderRadius: "50%", background: "rgba(255,244,214,0.7)" }} />
-      {[0, 1, 2, 3].map((i) => (
-        <L key={i} c="g43-motes" l={43 + i * 4} t={52} w={1.3} h={1.3} d={720} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 11. High Water Mark (t6) — THE FLOOD BOARD -----------------------------
@@ -645,20 +630,7 @@ function HighWaterMarkScene({ role, delayMs }: SceneProps) {
       <L c="g43-hit2" l={44} t={72} w={12} h={12} d={260} st={{ borderRadius: "50%", background: "#d8c9a6" }} />
     </Cut>
   );
-  return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(216,201,166,0.26)" /><Tide tone="rgba(53,48,42,0.45)" /></>}>
-      <L c="g43-lean" l={44} t={55} w={12} h={2} d={80} st={{ borderRadius: "999px", background: "rgba(53,48,42,0.6)" }} />
-      <V c="g43-hm-board" l={45} t={42} w={10} h={16} d={220}>{board}</V>
-      <L c="g43-hm-chalk" l={45.6} t={49} w={8.8} h={0.9} d={380} st={{ background: "#fff4d6", transformOrigin: "0% 50%" }} />
-      <V c="g43-hm-year" l={46} t={43.4} w={8} h={5} d={520}>
-        <path d="M3 7h18v10H3z" fill="none" stroke="#fff4d6" strokeWidth="2" />
-      </V>
-      <L c="g43-drift" l={41} t={51} w={18} h={4} d={600} st={{ background: "linear-gradient(180deg, rgba(216,201,166,0.7), transparent)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g43-motes" l={45 + i * 4} t={53} w={1.2} h={1.2} d={700} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 12. Tar Flood (t6) — THE TAR KETTLE ------------------------------------
@@ -997,22 +969,7 @@ function FishermanKingScene({ role, delayMs }: SceneProps) {
       <L c="g43-hitwave" l={10} t={76} w={80} h={4} d={260} st={{ borderRadius: "999px", background: "#1b3340" }} />
     </Cut>
   );
-  return (
-    <Lead
-      d={delayMs}
-      frame={<><Wash tone="rgba(185,137,90,0.24)" /><Tide tone="rgba(27,51,64,0.5)" /></>}
-      run={<L c="g43-carry" l={49} t={47.4} w={6} h={6} d={400} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.8), transparent 70%)" }} />}
-    >
-      <L c="g43-lean" l={43} t={54} w={14} h={2.2} d={80} st={{ borderRadius: "999px", background: "rgba(27,51,64,0.55)" }} />
-      <V c="g43-fk-hull" l={43} t={44} w={12} h={11} d={240}>{coracle}</V>
-      <V c="g43-fk-paddle" l={51} t={41} w={7} h={13} d={360} st={{ transformOrigin: "50% 18%" }}>{paddle}</V>
-      <L c="g43-fk-wake" l={38} t={51} w={12} h={1.6} d={520} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "100% 50%" }} />
-      <L c="g43-foam" l={45} t={52} w={9} h={3.6} d={620} st={{ borderRadius: "50%", background: "rgba(255,244,214,0.5)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g43-motes" l={44 + i * 5} t={53} w={1.2} h={1.2} d={700} st={{ borderRadius: "50%", background: "#b9895a" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 20. Checkers Law (t6) — THE GAFF ---------------------------------------
@@ -1213,23 +1170,7 @@ function HavenLawScene({ role, delayMs }: SceneProps) {
       <L c="g43-hitwave" l={10} t={76} w={80} h={4} d={260} st={{ borderRadius: "999px", background: "#16303c" }} />
     </Cut>
   );
-  return (
-    <Lead
-      d={delayMs}
-      frame={<><Wash tone="rgba(154,168,174,0.26)" /><Rim tone="rgba(22,48,60,0.45)" /><Tide tone="rgba(22,48,60,0.5)" /></>}
-      run={<L c="g43-run" l={50} t={48.6} w={30} h={2.6} d={160} st={{ background: "linear-gradient(90deg, #9aa8ae, rgba(154,168,174,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />}
-    >
-      <L c="g43-lean" l={42} t={54} w={16} h={2.2} d={80} st={{ borderRadius: "999px", background: "rgba(22,48,60,0.6)" }} />
-      {[0, 1, 2, 3].map((i) => (
-        <V key={i} c="g43-hl-block" l={43 + i * 4.6} t={46} w={5} h={4} d={240 + i * 100}>{block}</V>
-      ))}
-      <L c="g43-hl-burst" l={45} t={40} w={14} h={7} d={580} st={{ background: "radial-gradient(circle at 50% 100%, rgba(255,244,214,0.85), transparent 70%)", transformOrigin: "50% 100%" }} />
-      <L c="g43-hl-calm" l={40} t={51} w={20} h={3.4} d={660} st={{ background: "linear-gradient(180deg, rgba(154,168,174,0.6), transparent)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g43-motes" l={45 + i * 4} t={53} w={1.2} h={1.2} d={720} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 25. The King's Champion (t8) — THE FIGUREHEAD --------------------------
@@ -1606,18 +1547,7 @@ function MusterSilenceScene({ role, delayMs }: SceneProps) {
       <L c="g43-hit2" l={30} t={56} w={40} h={24} d={260} st={{ borderRadius: "50%", border: "2px solid #a8b6a0" }} />
     </Cut>
   );
-  return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(168,182,160,0.24)" /><Rim tone="rgba(18,38,44,0.46)" /><Tide tone="rgba(18,38,44,0.5)" /></>}>
-      <L c="g43-lean" l={43} t={55} w={14} h={2} d={80} st={{ borderRadius: "999px", background: "rgba(18,38,44,0.65)" }} />
-      <V c="g43-ms-bell" l={44} t={40} w={12} h={14} d={240}>{dbell}</V>
-      <L c="g43-ms-air" l={46.6} t={46} w={6.8} h={5} d={380} st={{ background: "rgba(255,244,214,0.6)", transformOrigin: "50% 0%" }} />
-      <L c="g43-ms-hush" l={43} t={45} w={14} h={14} d={520} st={{ borderRadius: "50%", border: "2px solid #a8b6a0" }} />
-      <L c="g43-drift" l={41} t={52} w={18} h={4} d={620} st={{ background: "linear-gradient(180deg, rgba(168,182,160,0.55), transparent)" }} />
-      {[0, 1, 2, 3].map((i) => (
-        <L key={i} c="g43-motes" l={43 + i * 4} t={50} w={1.3} h={1.3} d={710} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 34. Cornucopia (t8) — THE NET COMES UP ---------------------------------
@@ -1646,20 +1576,7 @@ function CornucopiaScene({ role, delayMs }: SceneProps) {
       <L c="g43-hitwave" l={10} t={80} w={80} h={4} d={260} st={{ borderRadius: "999px", background: "#1a3038" }} />
     </Cut>
   );
-  return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(203,216,221,0.26)" /><Rim tone="rgba(26,48,56,0.42)" /><Tide tone="rgba(26,48,56,0.5)" /></>}>
-      <L c="g43-lean" l={42} t={55} w={16} h={2.2} d={80} st={{ borderRadius: "999px", background: "rgba(26,48,56,0.6)" }} />
-      <V c="g43-co-net" l={43} t={38} w={14} h={17} d={240}>{net}</V>
-      {[0, 1, 2].map((i) => (
-        <V key={i} c="g43-co-catch" l={45 + i * 3.4} t={44 + (i % 2) * 3} w={5} h={3.4} d={380 + i * 90}>{fish}</V>
-      ))}
-      <V c="g43-co-spill" l={52} t={48} w={4.4} h={3} d={600}>{fish}</V>
-      <L c="g43-foam" l={44} t={52} w={12} h={4} d={660} st={{ borderRadius: "50%", background: "rgba(255,244,214,0.45)" }} />
-      {[0, 1, 2, 3].map((i) => (
-        <L key={i} c="g43-drip" l={44 + i * 4} t={52} w={1.2} h={3.4} d={720} st={{ borderRadius: "999px", background: "#cbd8dd" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 35. Wet Floor Sign (t1) — THE MOP -------------------------------------
@@ -2085,6 +2002,197 @@ function LeviathanBelowScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Haven Law no longer lead with the
+   module's prop and the shared impact hit: each lead plays its own rule on the
+   real board (the squares, pieces and turn counts it touches). The old art
+   survives only as the small target and entrance cuts. Positions are board
+   percentages from the caster's side: rank 0 is the caster's back rank, 7 the
+   opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g43-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g43-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g43-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g43-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- bn4_haven_law ----------------------------------------------------------------
+   "Beginning after your opponent's next move, nothing of yours standing in your
+   own half of the board can be captured for their next 3 turns." A breakwater
+   is built along the halfway line and the caster's four ranks behind it go
+   still as a harbour; one open pip (their next move comes first), then three
+   turn pips; an enemy capture loosed down a file into the harbour breaks on
+   the wall. */
+const C_HLR = { core: "#9aa8ae", glow: "#fff4d6", deep: "#16303c" };
+
+function HavenLawRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HavenLawScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HLR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Tint x="50%" y={rk(1.5)} w={100} h={50} color="rgba(154,168,174,0.42)" delayMs={d + 120} gd="2.2s" />
+      <span className="g43-r-draw absolute block" style={{ left: "0%", top: `calc(${rk(3.5)} - 1.3%)`, width: "100%", height: "2.6%", background: `repeating-linear-gradient(90deg, ${c.deep} 0 14px, ${c.core} 14px 16px)`, animationDelay: `${d}ms`, "--gd": "2.2s" } as CSSProperties} />
+      <span className="g43-r-draw absolute block" style={{ left: "0%", top: `calc(${rk(3.5)} - 1.9%)`, width: "100%", height: "0.6%", background: c.glow, animationDelay: `${d + 80}ms`, "--gd": "2.1s" } as CSSProperties} />
+      <Q x="8%" y={rk(3.1)} w={3} h={3} cls="g43-r-pip" delayMs={d + 420} v={{ "--gd": "1.6s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Pips n={3} r={3.1} x0={14} x1={22} color={c.glow} delayMs={d + 520} gd="1.6s" />
+      <Q x={cl(5)} y={rk(5.2)} w={2} h={28} cls="g43-r-shout" delayMs={d + 640} v={{ "--gd": "0.6s" }} style={{ background: `linear-gradient(180deg, transparent, ${c.glow})` }} />
+      <Q x={cl(5)} y={rk(3.5)} w={10} h={6} cls="g43-r-stamp" delayMs={d + 980} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 12q3-8 6-2t6-2 6 2" fill="none" stroke={c.glow} strokeWidth="2" {...SJ} />
+          <path d="M6 3l2 3M12 1v4M18 3l-2 3" stroke={c.core} strokeWidth="1.5" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={cl(5)} y={rk(2)} w={11} h={11} cls="g43-r-in" delayMs={d + 900} v={{ "--gd": "1.2s", "--s0": "1" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+    </Brd>
+  );
+}
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/* --- hx4_muster_silence ------------------------------------------------------------
+   "For your opponent's next 2 turns, any piece of theirs that is defended by
+   another of their pieces may not move. Only the unguarded stragglers may act.
+   Their king is exempt." Guard threads are drawn between their men (knight to
+   pawn, queen to pawn, bishop to pawn); every guarded man is hushed, a lips
+   seal stamped on the ones the threads found and their squares gone dark; the
+   two rooks in the corners, guarded by nobody, stay lit and ready; the king
+   is ringed and left free; two turn pips. */
+const C_MSR = { core: "#a8b6a0", glow: "#fff4d6", deep: "#12262c" };
+
+function Hush({ c }: { c: typeof C_MSR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="8.4" fill={c.deep} stroke={c.core} strokeWidth="1.4" />
+      <path d="M5 11.4q5 2.6 10 0" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+      <path d="M10 4.4v11.2" stroke={c.glow} strokeWidth="2.2" {...SJ} />
+    </svg>
+  );
+}
+
+function MusterSilenceRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <MusterSilenceScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_MSR;
+  const d = delayMs;
+  const dark = "rgba(18,38,44,0.58)";
+  return (
+    <Brd>
+      <Thread c0={6} r0={7} c1={4} r1={6} color={c.glow} delayMs={d + 90} />
+      <Thread c0={3} r0={7} c1={3} r1={6} color={c.glow} delayMs={d + 170} />
+      <Thread c0={2} r0={7} c1={1} r1={6} color={c.glow} delayMs={d + 250} />
+      <Tint x="50%" y={rk(6)} w={100} color={dark} delayMs={d + 420} gd="2s" />
+      <Tint x={fc(2)} y={rk(7)} w={37.5} color={dark} delayMs={d + 470} gd="1.95s" />
+      <Tint x={fc(5.5)} y={rk(7)} w={25} color={dark} delayMs={d + 470} gd="1.95s" />
+      {[[4, 6], [3, 6], [1, 6], [6, 7]].map(([fx, fr], i) => (
+        <Q key={i} x={fc(fx)} y={rk(fr)} w={8.4} h={8.4} cls="g43-r-stamp" delayMs={d + 560 + i * 90} v={{ "--gd": "1.5s" }}>
+          <Hush c={c} />
+        </Q>
+      ))}
+      <Q x={fc(0)} y={rk(7)} w={11.5} h={11.5} cls="g43-r-pip" delayMs={d + 900} v={{ "--gd": "1.3s" }} style={{ border: `2px solid ${c.glow}`, borderRadius: "2px" }} />
+      <Q x={fc(7)} y={rk(7)} w={11.5} h={11.5} cls="g43-r-pip" delayMs={d + 960} v={{ "--gd": "1.25s" }} style={{ border: `2px solid ${c.glow}`, borderRadius: "2px" }} />
+      <Q x={KING_X} y={rk(7)} w={11} h={11} cls="g43-r-in" delayMs={d + 760} v={{ "--gd": "1.5s" }} style={{ border: `2px dashed ${c.core}`, borderRadius: "50%" }} />
+      <Pips n={2} r={4.7} x0={47} x1={53} color={c.glow} delayMs={d + 1040} gd="1.2s" />
+      <Q x="50%" y={rk(5.4)} w={30} h={2} cls="g43-r-lean" delayMs={d + 1500} v={{ "--gd": "0.9s" }} style={{ borderRadius: "999px", background: "rgba(168,182,160,0.55)" }} />
+    </Brd>
+  );
+}
+/* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
    no removal diff, so their play is the cast lead on the square they were
@@ -2094,6 +2202,171 @@ function LeviathanBelowScene({ role, delayMs }: SceneProps) {
 /** Bind one bespoke scene to its config. */
 function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
   return { config, Render };
+}
+
+/** A crossed-out mark: a move barred. */
+function Bar({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- bn4_cornucopia ----------------------------------------------------------------
+   "The horn tips over: two pawns join your pocket, a knight or a bishop (at
+   random, even odds) joins them, and you gain 1 draft reroll." The horn of
+   plenty tips on the caster's flank; two pawns roll out into the pocket tray
+   at the caster's edge; a knight and a bishop tumble out side by side, one of
+   them fades (the coin toss) and the other drops into the pocket; a die rolls
+   out last. */
+const C_CNR = { core: "#cbd8dd", glow: "#fff4d6", deep: "#1a3038" };
+
+function CornucopiaRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <CornucopiaScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CNR;
+  const d = delayMs;
+  const pocket = [58, 66, 74, 82];
+  return (
+    <Brd>
+      <Q x="18%" y={rk(3.2)} w={18} h={12} cls="g43-r-in" delayMs={d + 20} v={{ "--gd": "2.2s", "--r0": "-40deg" }}>
+        <svg viewBox="0 0 30 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 4q4 12 16 14l10-6q-12-2-14-10z" fill="#c9a86a" stroke={c.deep} strokeWidth="1.2" {...SJ} />
+          <ellipse cx="23" cy="15" rx="3" ry="4.6" transform="rotate(-30 23 15)" fill={c.deep} />
+          <path d="M6 7q3 5 8 7M9 5q2 4 6 6" fill="none" stroke={c.glow} strokeWidth="0.8" />
+        </svg>
+      </Q>
+      <Q x="70%" y={rk(2.2)} w={36} h={9} cls="g43-r-draw" delayMs={d + 60} v={{ "--gd": "2.2s" }} style={{ background: "rgba(26,48,56,0.55)", border: `1.5px solid ${c.core}`, borderRadius: "0 0 40% 40%" }} />
+      {[0, 1].map((i) => (
+        <Q key={`p${i}`} x={`${pocket[i]}%`} y={rk(2.3)} w={8} h={8} cls="g43-r-go" delayMs={d + 280 + i * 120} v={{ "--gd": "1.9s", "--tx0": `${-400 - i * 100}%`, "--ty0": "calc(var(--fx-side, 1) * -120%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind="p" fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      <Q x="40%" y={rk(3.4)} w={9} h={9} cls="g43-r-dim" delayMs={d + 560} v={{ "--gd": "1.2s" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x="48%" y={rk(3.4)} w={9} h={9} cls="g43-r-in" delayMs={d + 560} v={{ "--gd": "0.7s" }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`${pocket[2]}%`} y={rk(2.3)} w={8} h={8} cls="g43-r-go" delayMs={d + 900} v={{ "--gd": "1.3s", "--tx0": "-290%", "--ty0": "calc(var(--fx-side, 1) * -130%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`${pocket[3]}%`} y={rk(2.3)} w={5.4} h={5.4} cls="g43-r-go" delayMs={d + 1100} v={{ "--gd": "1.1s", "--tx0": "-900%", "--ty0": "calc(var(--fx-side, 1) * -200%)", "--tx1": "0%", "--ty1": "0%", "--r0": "0deg" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <rect x="3" y="3" width="14" height="14" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.6" />
+          <circle cx="7" cy="7" r="1.5" fill={c.deep} /><circle cx="13" cy="13" r="1.5" fill={c.deep} /><circle cx="10" cy="10" r="1.5" fill={c.deep} />
+        </svg>
+      </Q>
+      <Q x="70%" y={rk(3)} w={30} h={2} cls="g43-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(203,216,221,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_fisherman_king ------------------------------------------------------------
+   "Once, your king may slip away to any empty square directly beside one of
+   your rooks. On arrival it cannot be captured for your opponent's next
+   turn." A caster rook stands on d4 and the squares beside it light; the king
+   casts a line from e1, the hook sets in e4 beside the rook, and the king is
+   reeled up the line to it; a ward ring closes round him with one pip (their
+   next turn). */
+const C_FKR = { core: "#b9895a", glow: "#fff4d6", deep: "#1b3340" };
+
+function FishermanKingRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <FishermanKingScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_FKR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(3)} y={rk(3)} w={11} h={11} cls="g43-r-in" delayMs={d + 20} v={{ "--gd": "2.2s", "--s0": "1" }}>
+        <Man kind="r" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Tint x={fc(3)} y={rk(3)} w={37.5} h={37.5} color="rgba(185,137,90,0.2)" delayMs={d + 120} gd="1.4s" />
+      <Q x={fc(4)} y={rk(1.5)} w={1} h={37.5} cls="g43-r-grow" delayMs={d + 300} v={{ "--gd": "1.3s" }} style={{ transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)", background: `repeating-linear-gradient(180deg, ${c.glow} 0 5px, transparent 5px 8px)` }} />
+      <Q x={fc(4)} y={rk(3)} w={5} h={6} cls="g43-r-stamp" delayMs={d + 520} v={{ "--gd": "1.2s" }}>
+        <svg viewBox="0 0 12 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M6 1v9a3 3 0 1 1-6 0" fill="none" stroke={c.core} strokeWidth="1.8" {...SJ} />
+          <path d="M0 10l1.6-2" stroke={c.core} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={fc(4)} y={rk(3)} w={11} h={11} cls="g43-r-go" delayMs={d + 700} v={{ "--gd": "1.3s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * 300%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={fc(4)} y={rk(3)} w={14} h={14} cls="g43-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }} style={{ border: `2.5px solid ${c.core}`, borderRadius: "50%" }} />
+      <Q x="50%" y={rk(5)} w={3} h={3} cls="g43-r-pip" delayMs={d + 1160} v={{ "--gd": "0.9s" }} style={{ background: c.glow, borderRadius: "50%" }} />
+      <Q x={fc(4)} y={rk(2)} w={12} h={2} cls="g43-r-lean" delayMs={d + 1500} v={{ "--gd": "0.7s" }} style={{ borderRadius: "999px", background: "rgba(185,137,90,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- ov_great_flood ----------------------------------------------------------------
+   "A wave washes every piece on the central four ranks (kings excluded) one
+   square toward its own back rank, where that square is empty. Blocked pieces
+   stay." A wave rolls across the four central ranks; the caster's pawn on e4
+   is washed back to e3 and their knight on c5 back to c6, each toward its own
+   side; the caster's bishop on d3, with its own pawn on d2 behind it, is
+   blocked and stays, a stop bar under it. */
+const C_GFD = { core: "#6fc4de", glow: "#fff4d6", deep: "#123241" };
+
+function GreatFloodRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TheGreatFloodScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GFD;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Tint x="50%" y="50%" w={100} h={50} color="rgba(111,196,222,0.24)" delayMs={d + 20} gd="2.2s" />
+      <Q x="50%" y="50%" w={16} h={50} cls="g43-r-go" delayMs={d + 120} v={{ "--gd": "1.1s", "--tx0": "-360%", "--ty0": "0%", "--tx1": "360%", "--ty1": "0%" }} style={{ background: "linear-gradient(90deg, rgba(111,196,222,0), rgba(111,196,222,0.55), rgba(255,244,214,0.7))" }} />
+      <Q x={fc(4)} y={rk(2)} w={11} h={11} cls="g43-r-go" delayMs={d + 520} v={{ "--gd": "1.6s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * -100%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={fc(2)} y={rk(5)} w={11} h={11} cls="g43-r-go" delayMs={d + 580} v={{ "--gd": "1.6s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * 100%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={fc(3)} y={rk(2)} w={11} h={11} cls="g43-r-in" delayMs={d + 300} v={{ "--gd": "1.8s", "--s0": "1" }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={fc(3)} y={`calc(${rk(2)} + var(--fx-side, 1) * 5.6%)`} w={9} h={1.4} cls="g43-r-stamp" delayMs={d + 760} v={{ "--gd": "1.2s" }} style={{ background: c.deep, border: `1px solid ${c.glow}` }} />
+      {[{ x: fc(4), r: 2.5, s: 1, at: 540 }, { x: fc(2), r: 4.5, s: -1, at: 600 }].map((a) => (
+        <Q key={a.at} x={a.x} y={rk(a.r)} w={3} h={4} cls="g43-r-pip" delayMs={d + a.at} v={{ "--gd": "1.2s" }} style={{ rotate: `calc(var(--fx-side, 1) * ${a.s > 0 ? 180 : 0}deg)` }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 11V2M1.6 5.4L5 2l3.4 3.4" fill="none" stroke={c.glow} strokeWidth="1.8" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      <Q x="50%" y="50%" w={80} h={2} cls="g43-r-lean" delayMs={d + 1400} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(111,196,222,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- ov_high_water_mark ------------------------------------------------------------
+   "The middle two ranks flood: for your opponent's next 3 turns their bishops,
+   rooks and queens cannot move through them, only into them." Water rises
+   over the two middle ranks and the high-water line is painted along the top
+   of it; their rook's run down the a-file is stopped in the water on a5 (a
+   bar where it would have gone on), and their bishop's diagonal from c8 wades
+   into e6..f5 and no further; three pips. */
+const C_HWR = { core: "#d8c9a6", glow: "#fff4d6", deep: "#35302a" };
+
+function HighWaterMarkRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HighWaterMarkScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HWR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y="50%" w={100} h={25} cls="g43-r-grow" delayMs={d + 20} v={{ "--gd": "2.2s" }} style={{ transformOrigin: "50% 100%", background: "rgba(96,168,196,0.38)" }} />
+      <Q x="50%" y={rk(4.5)} w={100} h={1} cls="g43-r-draw" delayMs={d + 260} v={{ "--gd": "2s" }} style={{ background: `repeating-linear-gradient(90deg, ${c.core} 0 10px, ${c.deep} 10px 14px)` }} />
+      <Thread c0={0} r0={6.4} c1={0} r1={4} color={c.glow} delayMs={d + 480} gd="1.4s" />
+      <Q x={fc(0)} y={rk(3)} w={7} h={7} cls="g43-r-stamp" delayMs={d + 760} v={{ "--gd": "1.2s" }}>
+        <Bar c={c} />
+      </Q>
+      <Thread c0={2} r0={7} c1={4.8} r1={4.2} color={c.glow} delayMs={d + 560} gd="1.4s" />
+      <Q x={fc(6)} y={rk(3)} w={7} h={7} cls="g43-r-stamp" delayMs={d + 840} v={{ "--gd": "1.1s" }}>
+        <Bar c={c} />
+      </Q>
+      <Pips n={3} r={2.3} x0={45} x1={55} color={c.core} delayMs={d + 1000} gd="1.2s" />
+      <Q x="50%" y={rk(3.2)} w={60} h={2} cls="g43-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(216,201,166,0.45)" }} />
+    </Brd>
+  );
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
@@ -2106,8 +2379,8 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_logjam: S(LogjamScene, { ordering: "line", staggerMs: 80, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   hx4_high_water: S(HighWaterScene, { ordering: "sweep", staggerMs: 70, victims: ["r", "q"], hasLead: true, sound: "colossus", anchor: "cast" }),
   hx4_river_watch: S(RiverWatchScene, { ordering: "line", staggerMs: 70, victims: ["r"], hasLead: true, sound: "siege", anchor: "board" }),
-  ov_great_flood: S(TheGreatFloodScene, { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast" }),
-  ov_high_water_mark: S(HighWaterMarkScene, { ordering: "sweep", staggerMs: 70, victims: ["b", "r", "q"], hasLead: true, sound: "vault", anchor: "cast" }),
+  ov_great_flood: S(GreatFloodRule, { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast" }),
+  ov_high_water_mark: S(HighWaterMarkRule, { ordering: "sweep", staggerMs: 70, victims: ["b", "r", "q"], hasLead: true, sound: "vault", anchor: "cast" }),
   hx4_tar_flood: S(TarFloodScene, { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "extinction", anchor: "cast" }),
   hx4_flooded_flanks: S(FloodedFlanksScene, { ordering: "file", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast" }),
   hx4_treacle_tide: S(TreacleTideScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
@@ -2115,12 +2388,12 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_thousand_ducks: S(ThousandDucksScene, { ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "gacha", anchor: "board" }),
   op_walking_pace: S(WalkingPaceScene, { ordering: "file", staggerMs: 70, victims: ["p"], hasLead: true, sound: "snooze", anchor: "board" }),
   hx4_no_easy_pickings: S(NoEasyPickingsScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }),
-  bn4_fisherman_king: S(FishermanKingScene, { ordering: "line", staggerMs: 60, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim" }),
+  bn4_fisherman_king: S(FishermanKingRule, { ordering: "line", staggerMs: 60, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim" }),
   hx4_checkers_law: S(CheckersLawScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "lightning", anchor: "aim" }),
   hx4_dockmasters_fee: S(DockmastersFeeScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "chips", anchor: "board" }),
   hx4_old_laws: S(TheOldLawsScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
   hx4_command_paralysis: S(CommandParalysisScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "clockice", anchor: "board" }),
-  bn4_haven_law: S(HavenLawScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
+  bn4_haven_law: S(HavenLawRule, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   bn4_kings_champion: S(KingsChampionScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
   bn4_kings_own_wings: S(KingsOwnWingsScene, { ordering: "line", staggerMs: 60, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim" }),
   hx4_burden_of_command: S(BurdenOfCommandScene, { ordering: "radial", staggerMs: 60, victims: ["q"], hasLead: true, sound: "colossus", anchor: "board" }),
@@ -2129,8 +2402,8 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_parade_polish: S(ParadePolishScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }),
   bn4_green_recruit: S(GreenRecruitScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", anchor: "cast" }),
   ov_milkmans_round: S(MilkmansRoundScene, { ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "dice", anchor: "cast" }),
-  hx4_muster_silence: S(MusterSilenceScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
-  bn4_cornucopia: S(CornucopiaScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "board" }),
+  hx4_muster_silence: S(MusterSilenceRule, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
+  bn4_cornucopia: S(CornucopiaRule, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "board" }),
   op_wet_floor_sign: S(WetFloorSignScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "cast" }),
   bn4_trade_secret: S(TradeSecretScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coinflip", anchor: "board" }),
   bn4_pawnbrokers_deal: S(PawnbrokersDealScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }),
@@ -2267,10 +2540,6 @@ const IMPACTS: Record<string, Imp> = {
   hx4_high_water: { at: 500, tint: "#7fc8d8", laser: true, wet: true, y: 48, s: 8.8 },
   // the watch bell hits the river: patrol splash at the crossing
   hx4_river_watch: { at: 580, tint: "#9fb0bd", laser: true, wet: true, y: 52, s: 6.4 },
-  // THE CREST LANDS: the great flood's wall comes down full-weight
-  ov_great_flood: { at: 520, tint: "#6fc4de", laser: true, wet: true, y: 52, s: 10 },
-  // the mark is painted by force: the survey slap at the high line
-  ov_high_water_mark: { at: 520, tint: "#d8c9a6", laser: true, wet: true, y: 46, s: 6.6 },
   // the tar front slaps down: a heavy, black-gold wet crash
   hx4_tar_flood: { at: 520, tint: "#d8963f", laser: true, wet: true, y: 54, s: 9 },
   // both flanks go under at once: the channel crash between them
@@ -2285,8 +2554,6 @@ const IMPACTS: Record<string, Imp> = {
   op_walking_pace: { at: 520, tint: "#cbb185", glyph: impGlyph(DROP, "#cbb185", "#1f3b46"), wet: true, y: 55 },
   // the net comes up empty and SLAMS the water flat
   hx4_no_easy_pickings: { at: 500, tint: "#c9a86a", laser: true, wet: true, y: 52, s: 7.6 },
-  // the cast lands ON the king's square: line-strike at --fx-len
-  bn4_fisherman_king: { at: 520, tint: "#b9895a", laser: true, wet: true, aim: true, len: true, s: 6 },
   // kinged by force: the double-stack SLAMS down the jump line
   hx4_checkers_law: { at: 560, tint: "#cfd8de", laser: true, wet: true, aim: true, len: true, s: 6.4 },
   // the fee chest hits the dock: coin-heavy wet boom
@@ -2295,8 +2562,6 @@ const IMPACTS: Record<string, Imp> = {
   hx4_old_laws: { at: 520, tint: "#b8b0a0", laser: true, wet: true, y: 50, s: 6.8 },
   // the order freezes mid-signal: the flag hits the water instead
   hx4_command_paralysis: { at: 520, tint: "#e6ddc6", laser: true, wet: true, y: 52, s: 6.2 },
-  // the haven chain drops across the mouth: harbor-bar crash
-  bn4_haven_law: { at: 580, tint: "#9aa8ae", laser: true, wet: true, y: 52, s: 8.2 },
   // the champion vaults the rail and lands in the surf, sword down
   bn4_kings_champion: { at: 460, tint: "#e6c46a", laser: true, wet: true, y: 54, s: 7.8 },
   // the king's wings skim and STRIKE at the escort point
@@ -2313,10 +2578,6 @@ const IMPACTS: Record<string, Imp> = {
   bn4_green_recruit: { at: 520, tint: "#96c86a", glyph: impGlyph(DROP, "#96c86a", "#24361f"), wet: true, y: 50 },
   // the milk churn tips off the cart: a white crash on the step
   ov_milkmans_round: { at: 460, tint: "#b6c6cf", laser: true, wet: true, y: 54, s: 7 },
-  // the muster is silenced: the signal drum hits the wet ground
-  hx4_muster_silence: { at: 520, tint: "#a8b6a0", laser: true, wet: true, y: 52, s: 6.6 },
-  // the cornucopia UPENDS: the horn's flood hits the table
-  bn4_cornucopia: { at: 600, tint: "#cbd8dd", laser: true, wet: true, y: 52, s: 8 },
   // the sign goes down and SO DOES SOMEONE: slapstick wet crash
   op_wet_floor_sign: { at: 500, tint: "#7fb6d0", glyph: impGlyph(DROP, "#7fb6d0", "#223244"), wet: true, y: 56 },
   // the secret changes hands mid-stream: the drop point splashes

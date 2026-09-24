@@ -2,8 +2,20 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isTournamentFormat, isTournamentMode, tournamentPhase, type TournamentPhase } from "@/lib/tournaments";
+import { censorText, findProfanity } from "@/lib/profanity";
+import { cleanText, codePointLength, TEXT_POLICIES } from "@/lib/textInput";
+import { mutedRefusal } from "@/lib/server/social";
+import { apiError, guardJsonWrite, rateLimit, tooManyRequests } from "@/lib/server/request";
+import { clockWithin, TOURNAMENT_CLOCK } from "@/lib/clockBounds";
 
 export const dynamic = "force-dynamic";
+
+// Creation limits (F060): a handful of new events per account per day, and a
+// start time that is plausibly a real schedule.
+const CREATE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const CREATE_WINDOW_MAX = 5;
+const START_PAST_SLACK_MS = 24 * 60 * 60 * 1000;
+const START_MAX_AHEAD_MS = 90 * 24 * 60 * 60 * 1000;
 
 // One row in the tournaments directory. `phase` is derived at read time from
 // starts_at + duration_min (see src/lib/tournaments.ts), so the sections stay
@@ -66,51 +78,53 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const body = await guardJsonWrite(request);
+  if (body instanceof NextResponse) return body;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
-  if (!user) return NextResponse.json({ error: "Sign in to create a tournament." }, { status: 401 });
+  if (!user) return apiError(401, "Sign in to create a tournament.");
+  // Tournaments are public listings: muted players and players whose name a
+  // moderator flagged cannot open one (F060).
+  const muted = mutedRefusal(user, "create tournaments");
+  if (muted) return muted;
+  if (user.name_flagged) return apiError(403, "Pick a new username before creating a tournament.");
 
-  let body: {
-    name?: unknown;
-    description?: unknown;
-    format?: unknown;
-    mode?: unknown;
-    rated?: unknown;
-    clockTimeSec?: unknown;
-    clockIncrementSec?: unknown;
-    durationMin?: unknown;
-    roundsTotal?: unknown;
-    startsAt?: unknown;
-    maxPlayers?: unknown;
-    clubId?: unknown;
-  };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Bad JSON." }, { status: 400 });
-  }
-
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 70) : "";
-  const description = typeof body.description === "string" ? body.description.trim().slice(0, 280) : "";
+  const name = cleanText(body.name, TEXT_POLICIES.tournamentName);
+  const description = censorText(cleanText(body.description, TEXT_POLICIES.tournamentDescription));
   const format = isTournamentFormat(body.format) ? body.format : "arena";
   const mode = isTournamentMode(body.mode) ? body.mode : "nerf";
   const rated = body.rated === true || body.rated === 1 ? 1 : 0;
-  const clockTimeSec = clampInt(body.clockTimeSec, 0, 10800, 180);
-  const clockIncrementSec = clampInt(body.clockIncrementSec, 0, 180, 0);
+  // The clock must be one the game server will run (F078): it refuses a base
+  // over 2 hours, so a 3 hour event used to create only void boards. Missing
+  // fields keep their defaults; present ones are rounded and checked.
+  const clockTimeSec = roundOr(body.clockTimeSec, 180);
+  const clockIncrementSec = roundOr(body.clockIncrementSec, 0);
+  if (!clockWithin(clockTimeSec, clockIncrementSec, TOURNAMENT_CLOCK)) {
+    return apiError(400, "Pick a time control of at most 2 hours plus 3 minutes a move.");
+  }
   const durationMin = clampInt(body.durationMin, 5, 720, 60);
   // Configured round count; 0 = as many rounds as fit the duration window
   // (the tournament engine stops pairing when the clock runs out either way).
   const roundsTotal = clampInt(body.roundsTotal, 0, 15, 0);
   const maxPlayers = clampInt(body.maxPlayers, 2, 256, 16);
-  const startsAt =
-    typeof body.startsAt === "number" && Number.isFinite(body.startsAt) ? Math.round(body.startsAt) : null;
-  const clubId = typeof body.clubId === "string" && body.clubId.trim() ? body.clubId.trim() : null;
-
-  if (name.length < 3) {
-    return NextResponse.json({ error: "Tournament name must be at least 3 characters." }, { status: 400 });
+  let startsAt: number | null = null;
+  if (body.startsAt != null) {
+    const now = Date.now();
+    const at = typeof body.startsAt === "number" && Number.isFinite(body.startsAt) ? Math.round(body.startsAt) : NaN;
+    if (!(at >= now - START_PAST_SLACK_MS && at <= now + START_MAX_AHEAD_MS)) {
+      return apiError(400, "Pick a start time within the next 90 days.");
+    }
+    startsAt = at;
   }
+  const clubId =
+    typeof body.clubId === "string" && body.clubId.trim() && body.clubId.length <= 64 ? body.clubId.trim() : null;
+
+  if (codePointLength(name) < 3) {
+    return apiError(400, "Tournament name must be at least 3 characters.");
+  }
+  if (findProfanity(name).length > 0) return apiError(400, "Pick a different tournament name.");
   if (clockTimeSec === 0 && clockIncrementSec === 0) {
-    return NextResponse.json({ error: "Pick a time control with a clock." }, { status: 400 });
+    return apiError(400, "Pick a time control with a clock.");
   }
 
   let clubName: string | null = null;
@@ -124,12 +138,15 @@ export async function POST(request: Request) {
       )
       .bind(user.id, clubId)
       .first<{ name: string; role: string | null }>();
-    if (!club) return NextResponse.json({ error: "That club does not exist." }, { status: 404 });
+    if (!club) return apiError(404, "That club does not exist.");
     if (!club.role) {
-      return NextResponse.json({ error: "Join that club before creating its tournaments." }, { status: 403 });
+      return apiError(403, "Join that club before creating its tournaments.");
     }
     clubName = club.name;
   }
+
+  const limit = await rateLimit(db, `tournament:create:${user.id}`, CREATE_WINDOW_MAX, CREATE_WINDOW_MS);
+  if (!limit.ok) return tooManyRequests("You have created a lot of tournaments today. Try again tomorrow.", limit.retryAfterSec);
 
   const id = crypto.randomUUID();
   const now = Date.now();
@@ -189,6 +206,12 @@ export async function POST(request: Request) {
     phase: tournamentPhase(startsAt, durationMin, now),
   };
   return NextResponse.json({ tournament });
+}
+
+/** A present number rounded, a missing one defaulted; anything else is NaN (refused by the caller). */
+function roundOr(value: unknown, fallback: number): number {
+  if (value === undefined || value === null) return fallback;
+  return typeof value === "number" && Number.isFinite(value) ? Math.round(value) : NaN;
 }
 
 function clampInt(value: unknown, min: number, max: number, fallback: number): number {

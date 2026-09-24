@@ -4,9 +4,9 @@
 // installed on (give it Contents: Read-only on the nerfchess repo only).
 //
 // Env (from /etc/nerfchess-engine-updater.env):
-//   GITHUB_APP_ID              — the App's numeric id
-//   GITHUB_APP_INSTALLATION_ID — the installation's numeric id
-//   GITHUB_APP_KEY_PATH        — PEM private key (default below, chmod 600)
+//   GITHUB_APP_ID: the App's numeric id
+//   GITHUB_APP_INSTALLATION_ID: the installation's numeric id
+//   GITHUB_APP_KEY_PATH: PEM private key (default below, chmod 600)
 //
 // Prints the token to stdout; everything else goes to stderr.
 import { readFileSync } from "node:fs";

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { PRIVATE_NO_STORE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,8 @@ export async function GET(request: Request) {
     db,
     sessionTokenFromCookieHeader(request.headers.get("cookie")),
   );
-  if (!user) return NextResponse.json({ authenticated: false, games: [] });
+  const headers = { "Cache-Control": PRIVATE_NO_STORE };
+  if (!user) return NextResponse.json({ authenticated: false, games: [] }, { headers });
 
   const games = await pgAll(
     `SELECT id, white_name, black_name, white_user_id, black_user_id,
@@ -31,5 +33,5 @@ export async function GET(request: Request) {
     [user.id, user.id],
   );
 
-  return NextResponse.json({ authenticated: true, userId: user.id, games });
+  return NextResponse.json({ authenticated: true, userId: user.id, games }, { headers });
 }

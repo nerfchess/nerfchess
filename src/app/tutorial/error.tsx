@@ -13,7 +13,7 @@ export default function Error(props: { error: Error & { digest?: string }; retry
     <RouteError
       {...props}
       title="The tutorial could not load"
-      detail="The lesson failed to render. Retrying restarts it at the step you were on."
+      detail="The lesson failed to render. Retrying starts it again from the first step."
       back={{ href: "/lobby", label: "Back to lobby" }}
     />
   );

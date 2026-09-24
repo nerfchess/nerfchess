@@ -1,0 +1,10 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:50:7 › suggest form errors › a non-JSON error response shows a plain message in an alert (16.1s)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:62:7 › suggest form errors › a dropped connection shows a plain message in an alert (15.8s)
+  ✘  3 [chromium] › e2e/content-states.spec.ts:73:7 › suggest form errors › a JSON error from the route is shown as sent (16.0s)
+    Error: expect(locator).toHaveText(expected) failed
+    Expected: "Could not send your suggestion. Try again in a moment."
+    Error: expect(locator).toHaveText(expected) failed
+    Expected: "Could not reach the server. Check your connection and try again."
+    Error: expect(locator).toHaveText(expected) failed
+    Expected: "Description is too short."
+  3 failed

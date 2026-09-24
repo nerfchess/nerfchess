@@ -1,0 +1,8 @@
+ok   cs_loot_box: 0 visible texts
+ok   cs_blackjack: 6 visible texts
+ok   cs_poker_bluff: 3 visible texts
+ok   cs_roulette: 1 visible texts
+ok   cs_scratch_card: 2 visible texts
+ok   cs_slot_machine: 1 visible texts
+FAIL cs_let_it_ride: 2 visible texts
+     "H" leaves the board by 111px

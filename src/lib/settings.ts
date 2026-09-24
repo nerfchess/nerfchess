@@ -47,7 +47,7 @@ export type PieceColor = "classic" | "ivory" | "steel" | "rosewood" | "forest" |
 
 /** Stored piece-set ids from before colour was split out of the design
  *  picker: each was the inline design in one colour. */
-const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
+export const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
   ivory: "ivory",
   steel: "steel",
   rosewood: "rosewood",
@@ -94,7 +94,9 @@ const BLUE_ACCENT_MIDNIGHT: AccentDef = {
   accentHi: "#6db2f5",
   rgb: "76 159 240",
   rgbHi: "109 178 245",
-  rgbDim: "51 118 186",
+  // The dark scheme's dim rung: it is the .btn-leaf fill, and 51 118 186 let
+  // the hover lift drop the white label to 4.17:1. Here: 5.25 rest, 4.63 hover.
+  rgbDim: "42 111 176",
 };
 
 // `accentHi` is the EMPHASIS step off `accent` (hover, the active label, the
@@ -114,8 +116,8 @@ const BLUE_ACCENT_LIGHT: AccentDef = {
   accentHi: "#14589f",
   rgb: "27 120 208",
   rgbHi: "20 88 159",
-  // Nothing reads --accent-dim-rgb today (it is defined and aliased and never
-  // consumed), which is why this rung has never been re-pointed for paper.
+  // --accent-dim-rgb is the primary button fill (.btn-leaf in globals.css):
+  // white on this rung measures 6.84:1.
   rgbDim: "20 92 160",
 };
 
@@ -140,7 +142,7 @@ export const SITE_THEMES: Record<
  *  without this every one of those users would trip the SITE_THEMES guard in
  *  loadSettings and be silently reset. Light-scheme ids land on "light", the
  *  rest on "dark". */
-const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
+export const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
   sepia: "light",
   frost: "light",
   porcelain: "light",
@@ -168,7 +170,7 @@ export interface Settings {
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
-  // When on, the opponent's rule is never shown to you — not even after the
+  // When on, the opponent's rule is never shown to you, not even after the
   // game ends, and mid-game reveal is disabled. Default off.
   hideOpponentReveal: boolean;
   muteChat: boolean; // hide in-game chat messages and input
@@ -357,13 +359,15 @@ function bool(v: unknown, fallback: boolean): boolean {
 export const CUSTOM_BG_URL_MAX = 400;
 
 /** Validate a user-supplied background image URL. Returns the cleaned URL, or
- *  "" when the value is missing, not http(s), too long, or contains characters
+ *  "" when the value is missing, not https, too long, or contains characters
  *  that could break out of a CSS url() (quotes, backslashes, whitespace). */
 export function sanitizeCustomBgUrl(v: unknown): string {
   if (typeof v !== "string") return "";
   const url = v.trim();
   if (!url || url.length > CUSTOM_BG_URL_MAX) return "";
-  if (!/^https?:\/\//i.test(url)) return "";
+  // https only: an http image is mixed content the page can never load, and
+  // the CSP allows only https: images.
+  if (!/^https:\/\//i.test(url)) return "";
   if (/[\s"'\\<>()]/.test(url)) return "";
   return url;
 }
@@ -678,7 +682,7 @@ export function fxDurationScale(): number {
 
 /** True when animations are off: the user turned them off in Settings
  *  (reduced motion or animation speed "off"), or the OS asked for reduced
- *  motion and "Follow system motion" (opt-in, default off) is honoring it —
+ *  motion and "Follow system motion" (opt-in, default off) is honoring it;
  *  applyUiPrefs folds both into data-anim, so this single read stays
  *  authoritative. SSR-safe (false). */
 export function motionOff(): boolean {

@@ -1,7 +1,7 @@
 "use client";
 
-// ZONE A — "Now": ONE status line about the next draft. The label always
-// answers the question the player actually has — when is my next draft — and
+// ZONE A, "Now": ONE status line about the next draft. The label always
+// answers the question the player actually has, when is my next draft, and
 // the side facts (take-both, opponent blocked) ride as trailing chips rather
 // than owning a row each. Only a blocked draft takes the label over, because
 // then there is no "when" to report.

@@ -1,0 +1,13 @@
+House-bot roster audit
+======================
+Personas:            900
+Unique pfps in use:  900 / 900
+Pfp catalog size:    1068
+Unique user ids:     900
+Unique usernames:    900
+Missing pfp files:   0
+Catalog files gaps:  0
+"OG NERFCHESS USERS":  600 members (67% of roster), owner rookonseventh
+
+FAIL: 1 problem(s):
+  - docs/house-bots.md has no house-skill-profiles table

@@ -1,0 +1,2 @@
+/tutorial/first-game status=200 h1=0 header=0 skeleton=38 main=2
+/puzzles status=200 h1=1 header=1 skeleton=40 main=2

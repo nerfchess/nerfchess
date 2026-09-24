@@ -1,0 +1,23 @@
+static: scanned 252 files under src/app
+FAIL /codex/hex/heavy_boots status=200 404marker=true h1=""
+FAIL /codex/hex/toll_gate status=200 404marker=true h1=""
+FAIL /codex/boon/extra_glance status=200 404marker=true h1=""
+FAIL /codex/boon/pawn_shield status=200 404marker=true h1=""
+ok   /codex/buff/pawn_push status=200 404marker=false h1="Pawn Push"
+ok   /codex/buff/wazir_rook status=200 404marker=false h1="Wazir Rook"
+ok   /codex/buff/bn4_gum_drop status=200 404marker=false h1="Gum Drop"
+ok   /codex/buff/bn4_paper_crown status=200 404marker=false h1="Paper Crown"
+ok   /codex/nerf/lucky status=200 404marker=false h1="Lucky"
+ok   /codex/nerf/cess status=200 404marker=false h1="Cess"
+ok   /codex/hex/not_a_real_card_id status=200 expect 404
+ok   /codex/boon/not_a_real_card_id status=200 expect 404
+
+check-codex-routes: 8 failure(s)
+  src/app/codex/boon/[id]/page.tsx:22 types params/searchParams as a plain object (Next 16 passes a Promise): export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+  src/app/codex/boon/[id]/page.tsx:38 types params/searchParams as a plain object (Next 16 passes a Promise): export default function BoonCardPage({ params }: { params: { id: string } }) {
+  src/app/codex/hex/[id]/page.tsx:22 types params/searchParams as a plain object (Next 16 passes a Promise): export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+  src/app/codex/hex/[id]/page.tsx:38 types params/searchParams as a plain object (Next 16 passes a Promise): export default function HexCardPage({ params }: { params: { id: string } }) {
+  /codex/hex/heavy_boots: expected 200 with h1 "Heavy Boots", got status 200, 404 marker true, h1 ""
+  /codex/hex/toll_gate: expected 200 with h1 "Toll Gate", got status 200, 404 marker true, h1 ""
+  /codex/boon/extra_glance: expected 200 with h1 "Extra Glance", got status 200, 404 marker true, h1 ""
+  /codex/boon/pawn_shield: expected 200 with h1 "Pawn Shield", got status 200, 404 marker true, h1 ""

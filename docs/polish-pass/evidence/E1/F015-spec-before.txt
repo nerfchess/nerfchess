@@ -1,0 +1,7 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:97:7 › content route layout stability (390x844) › /puzzles keeps the board still while the date and corpus arrive (3.4s)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:105:7 › content route layout stability (390x844) › /puzzles/[id] keeps the board still while the corpus arrives (3.7s)
+    Expected: < 0.015
+    Received:   0.043
+    Expected: < 0.015
+    Received:   0.0243
+  2 failed

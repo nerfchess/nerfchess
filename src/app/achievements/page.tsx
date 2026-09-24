@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronDown, Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { achievementIcon } from "@/lib/achievementIcons";
 import { RARITY_ASC, RARITY_THEME } from "@/lib/achievementTheme";
 import { achievementToastsDisabled, setAchievementToastsDisabled } from "@/components/AchievementToast";
@@ -54,8 +55,22 @@ function fmtDate(ts: number): string {
 
 // A thin progress bar for locked milestone cards. Track uses an edge tone; the
 // fill takes the card's rarity color.
-function ProgressBar({ value, max, color }: { value: number; max: number; color?: string }) {
-  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+// The fill is a full-width bar scaled from the left, so a progress change
+// animates transform, never width (animation brief: transform and opacity
+// only). It needs an accessible name of its own: a bare progressbar reads as
+// "progress bar, 3" with nothing to say what is progressing (F152).
+function ProgressBar({
+  value,
+  max,
+  color,
+  label,
+}: {
+  value: number;
+  max: number;
+  color?: string;
+  label: string;
+}) {
+  const frac = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
   return (
     <div
       className="h-1.5 w-full overflow-hidden rounded-none"
@@ -64,10 +79,15 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color?
       aria-valuenow={value}
       aria-valuemin={0}
       aria-valuemax={max}
+      aria-label={label}
     >
       <div
-        className="h-full rounded-none transition-[width] duration-300"
-        style={{ width: `${pct}%`, background: color ?? "var(--sun-glow)" }}
+        className="h-full w-full origin-left rounded-none"
+        style={{
+          transform: `scaleX(${frac})`,
+          transition: "transform var(--dur-3) var(--ease-out)",
+          background: color ?? "var(--sun-glow)",
+        }}
       />
     </div>
   );
@@ -91,9 +111,11 @@ function RaritySegmentedBar({ wall, total }: { wall: AchievementView[]; total: n
         const count = wall.filter((a) => a.rarity === r && a.unlocked).length;
         if (count === 0 || total === 0) return null;
         return (
+          // Segment widths are set once from the data and are not animated:
+          // a width transition is a layout animation (F191).
           <div
             key={r}
-            className="h-full transition-[width] duration-300"
+            className="h-full"
             style={{ width: `${(count / total) * 100}%`, background: RARITY_THEME[r].color }}
           />
         );
@@ -158,7 +180,8 @@ function RarityFilterRow({
               style={{ background: theme.color, opacity: on ? 1 : 0.55 }}
             />
             {RARITY_LABEL[r]}
-            <span className="font-mono tabular-nums" style={{ opacity: 0.85 }}>
+            {/* No opacity: at 0.85 the count fell under AA on paper (wave 3). */}
+            <span className="font-mono tabular-nums">
               {earned}/{total}
             </span>
           </button>
@@ -185,7 +208,6 @@ function AchievementCard({ a }: { a: AchievementView }) {
           "linear-gradient(var(--surface-panel), var(--surface-panel)) padding-box",
           `linear-gradient(150deg, rgb(${theme.rgb} / 0.55), rgb(${theme.rgb} / 0.10) 45%, rgba(255,217,126,0.45)) border-box`,
         ].join(", "),
-        boxShadow: `0 0 24px -12px ${theme.glow}, 0 12px 40px -24px rgba(0,0,0,0.7)`,
       }
     : a.unlocked
       ? { borderColor: theme.border }
@@ -209,8 +231,8 @@ function AchievementCard({ a }: { a: AchievementView }) {
 
       <div className="relative flex items-start gap-2.5">
         {/* Icon medallion: unlocked = radial rarity gradient with a colored
-            ring and soft glow; locked = dimmed embossed disc with a small
-            lock badge on the corner. */}
+            ring; locked = a dimmed disc with a small lock badge on the corner.
+            No glow and no inset shadow (design-system section 5). */}
         <div
           className="relative grid h-[44px] w-[44px] shrink-0 place-items-center rounded-full border"
           style={
@@ -218,12 +240,10 @@ function AchievementCard({ a }: { a: AchievementView }) {
               ? {
                   borderColor: theme.border,
                   background: `radial-gradient(circle at 32% 28%, rgb(${theme.rgb} / 0.32), rgb(${theme.rgb} / 0.07) 72%)`,
-                  boxShadow: `0 0 14px -3px ${theme.glow}, inset 0 1px 0 rgb(${theme.rgb} / 0.25)`,
                 }
               : {
                   borderColor: "var(--edge)",
                   background: "radial-gradient(circle at 32% 28%, rgba(255,255,255,0.05), rgba(0,0,0,0.16) 78%)",
-                  boxShadow: "inset 0 1px 2px rgba(0,0,0,0.45), inset 0 -1px 0 rgba(255,255,255,0.04)",
                 }
           }
         >
@@ -234,6 +254,7 @@ function AchievementCard({ a }: { a: AchievementView }) {
           })}
           {!a.unlocked && (
             <span
+              role="img"
               aria-label="Locked"
               title="Locked"
               className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border"
@@ -249,7 +270,7 @@ function AchievementCard({ a }: { a: AchievementView }) {
         <div className="min-w-0 flex-1">
           <div
             className="font-display text-[15px] leading-tight"
-            style={{ color: a.unlocked ? "#f0e6cf" : undefined }}
+            style={{ color: a.unlocked ? "var(--text-heading)" : undefined }}
           >
             {a.name}
           </div>
@@ -296,7 +317,12 @@ function AchievementCard({ a }: { a: AchievementView }) {
               {a.progress}/{a.goal}
             </span>
           </div>
-          <ProgressBar value={a.progress} max={a.goal} color={theme.color} />
+          <ProgressBar
+            value={a.progress}
+            max={a.goal}
+            color={theme.color}
+            label={`${a.name} progress`}
+          />
         </div>
       )}
     </div>
@@ -386,15 +412,23 @@ function lockedWall(): AchievementView[] {
   }));
 }
 
+// The shared sweep, the same block loading.tsx uses for this grid, so the
+// route skeleton and the data skeleton are one dialect (F026).
 function CardSkeleton() {
-  return <div className="plate h-[132px] animate-pulse p-3" aria-hidden />;
+  return <div className="skeleton h-[132px]" aria-hidden />;
 }
 
-function AchievementsContent() {
+function AchievementsContent({ noSession }: { noSession: boolean }) {
   const searchParams = useSearchParams();
   const requested = searchParams.get("u");
   const [data, setData] = useState<AchievementsResponse | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "signin" | "error">("loading");
+  // A visit with no session cookie is known to be signed out on the first
+  // paint, so the sign-in banner renders with the page instead of arriving
+  // above the wall after /me answers and pushing it down (wave 2 account 1).
+  // The header mints a guest for this visitor in the background; a brand new
+  // guest has nothing unlocked, so the locked wall and the banner are right.
+  const signedOutAtPaint = noSession && !requested;
+  const [state, setState] = useState<LoadState>(signedOutAtPaint ? "signin" : "loading");
   const [filter, setFilter] = useState<RarityFilter>("all");
   // Bumped by Retry to re-run the fetch effect (same recovery pattern as the
   // homepage's LiveActivity, without a full page reload).
@@ -404,9 +438,16 @@ function AchievementsContent() {
     let cancelled = false;
     (async () => {
       let username = requested;
+      if (!username && signedOutAtPaint) return;
       if (!username) {
         const me = await fetchMe();
         if (cancelled) return;
+        // undefined is "the request failed", not "signed out": offer Retry
+        // rather than telling a signed-in player to sign in.
+        if (me === undefined) {
+          setState("error");
+          return;
+        }
         if (!me) {
           setState("signin");
           return;
@@ -431,8 +472,44 @@ function AchievementsContent() {
     return () => {
       cancelled = true;
     };
-  }, [requested, reloadKey]);
+  }, [requested, reloadKey, signedOutAtPaint]);
 
+  return (
+    <AchievementsBody
+      state={state}
+      data={data}
+      requested={requested}
+      filter={filter}
+      onFilter={setFilter}
+      onRetry={() => {
+        setState("loading");
+        setData(null);
+        setReloadKey((k) => k + 1);
+      }}
+    />
+  );
+}
+
+type LoadState = "loading" | "ready" | "signin" | "error";
+
+// Everything inside the page section, as a pure function of the load state, so
+// the Suspense fallback can render the exact loading geometry the content
+// starts in.
+function AchievementsBody({
+  state,
+  data,
+  requested,
+  filter,
+  onFilter,
+  onRetry,
+}: {
+  state: LoadState;
+  data: AchievementsResponse | null;
+  requested: string | null;
+  filter: RarityFilter;
+  onFilter: (next: RarityFilter) => void;
+  onRetry: () => void;
+}) {
   // The wall always renders the whole catalog in catalog order; signed-in data
   // overlays progress and unlocks by id.
   const wall = useMemo<AchievementView[]>(() => {
@@ -463,108 +540,127 @@ function AchievementsContent() {
   const viewingOther = state === "ready" && !!requested && !!data;
 
   return (
-    <main className="min-h-screen pb-16">
-      <SiteHeader />
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        {/* Compact header with overall progress. */}
-        <header>
-          <div className="flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <div>Trophy wall</div>
-              <h1 className="mt-1 font-display text-[26px] leading-none sm:text-[32px]">
-                {viewingOther && data ? `${data.username}'s achievements` : "Achievements"}
-              </h1>
-            </div>
-            <div className="shrink-0 text-right">
-              <div className="flex items-center justify-end gap-2 font-mono text-2xl tabular-nums text-parchment-50">
-                <Trophy className="h-5 w-5 text-brag" strokeWidth={2} />
-                {state === "ready" ? earnedCount : 0}
-                <span className="text-base text-parchment-400">/{total}</span>
-              </div>
-              <div className="text-[12px] text-parchment-400">Earned</div>
-            </div>
+    <>
+    {/* Compact header with overall progress. */}
+    <header>
+      <div className="flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <div>Trophy wall</div>
+          <h1 className="mt-1 font-display text-[26px] leading-none sm:text-[32px]">
+            {viewingOther && data ? `${data.username}'s achievements` : "Achievements"}
+          </h1>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="flex items-center justify-end gap-2 font-mono text-2xl tabular-nums text-parchment-50">
+            <Trophy className="h-5 w-5 text-brag" strokeWidth={2} />
+            {state === "ready" ? earnedCount : 0}
+            <span className="text-base text-parchment-400">/{total}</span>
           </div>
-          <div className="mt-3">
-            <RaritySegmentedBar wall={state === "ready" ? wall : lockedWall()} total={total} />
-          </div>
-          <p className="mt-3 text-[13px] text-parchment-300">
-            {viewingOther
-              ? "What they have unlocked across the board."
-              : "Feats you unlock across Nerf and Buff, from first steps to the top of the ladder."}
-          </p>
-          <RarityFilterRow wall={wall} filter={filter} onChange={setFilter} />
-        </header>
+          <div className="text-[12px] text-parchment-400">Earned</div>
+        </div>
+      </div>
+      <div className="mt-3">
+        <RaritySegmentedBar wall={state === "ready" ? wall : lockedWall()} total={total} />
+      </div>
+      <p className="mt-3 text-[13px] text-parchment-300">
+        {viewingOther
+          ? "What they have unlocked across the board."
+          : "Feats you unlock across Nerf and Buff, from first steps to the top of the ladder."}
+      </p>
+      <RarityFilterRow wall={wall} filter={filter} onChange={onFilter} />
+    </header>
 
-        {/* Guest, error, and popup-toggle states. */}
-        {state === "signin" && (
-          <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[13px] text-parchment-300">
-              Wins, comebacks, king captures, rating climbs. Browse the wall, then start your own.
-            </p>
-            <div className="flex shrink-0 items-center gap-3">
-              <LinkButton tone="leaf" href="/lobby" className="whitespace-nowrap px-4 py-2 text-[13px]">
-                Find a match
-              </LinkButton>
-              <Link
-                href="/login?next=/achievements"
-                // 41.3x19.5: the one call to action on the signed-out banner.
-                className="-my-3 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[13px] text-gold-leaf hover:underline [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:min-w-0"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
-        )}
-        {state === "error" && (
-          <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[13px] text-parchment-300">
-              Your progress could not load, so the wall shows everything locked.
-            </p>
-            <Button tone="ghost"
-             
-              onClick={() => {
-                setState("loading");
-                setData(null);
-                setReloadKey((k) => k + 1);
-              }}
-              className="shrink-0 px-4 py-2 text-[13px]">
-              Retry
-            </Button>
-          </div>
-        )}
+    {/* Guest, error, and popup-toggle states. */}
+    {state === "signin" && (
+      <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[13px] text-parchment-300">
+          Wins, comebacks, king captures, rating climbs. Browse the wall, then start your own.
+        </p>
+        <div className="flex shrink-0 items-center gap-3">
+          <LinkButton tone="leaf" href="/lobby" className="whitespace-nowrap px-4 py-2 text-[13px]">
+            Find a match
+          </LinkButton>
+          <Link
+            href="/login?next=/achievements"
+            // 41.3x19.5: the one call to action on the signed-out banner.
+            className="-my-3 inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-[13px] text-gold-leaf hover:underline [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:min-w-0"
+          >
+            Sign in
+          </Link>
+        </div>
+      </div>
+    )}
+    {state === "error" && (
+      <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[13px] text-parchment-300">
+          Your progress could not load, so the wall shows everything locked.
+        </p>
+        <Button tone="ghost"
+         
+          onClick={onRetry}
+          className="shrink-0 px-4 py-2 text-[13px]">
+          Retry
+        </Button>
+      </div>
+    )}
 
-        {state === "loading" ? (
-          <div className="mt-8 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <CardSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-8 space-y-9">
-            {/* Category sections, filtered by the selected difficulty. */}
-            {CATEGORY_ORDER.map((category) => {
-              const items = wall.filter(
-                (a) => a.category === category && (filter === "all" || a.rarity === filter),
-              );
-              if (!items.length) return null;
-              return (
-                <CategorySection key={`${category}-${filter}`} category={category} items={items} />
-              );
-            })}
+    {state === "loading" ? (
+      <div className="mt-8 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 xl:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <CardSkeleton key={i} />
+        ))}
+      </div>
+    ) : (
+      <div className="mt-8 space-y-9">
+        {/* Category sections, filtered by the selected difficulty. */}
+        {CATEGORY_ORDER.map((category) => {
+          const items = wall.filter(
+            (a) => a.category === category && (filter === "all" || a.rarity === filter),
+          );
+          if (!items.length) return null;
+          return (
+            <CategorySection key={`${category}-${filter}`} category={category} items={items} />
+          );
+        })}
 
-            {!viewingOther && <UnlockPopupToggle />}
-          </div>
-        )}
-      </section>
-    </main>
+        {!viewingOther && <UnlockPopupToggle />}
+      </div>
+    )}
+    </>
   );
 }
 
+const noop = () => {};
+
 export default function AchievementsPage() {
+  // Read once: the header's guest mint changes display a moment later, and
+  // the page must keep the state it painted with.
+  const { display } = useSession();
+  const [noSession] = useState(() => display === null);
+  // The site header and the page frame sit outside the Suspense boundary that
+  // useSearchParams needs; the fallback is the body in its loading state. The
+  // old fallback was an empty <main>, so the prerendered page had no header,
+  // no title and no wall until the client bundle ran (F019 class).
   return (
-    <Suspense fallback={<main className="min-h-screen" />}>
-      <AchievementsContent />
-    </Suspense>
+    <main className="min-h-screen pb-16">
+      <SiteHeader />
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        <Suspense
+          fallback={
+            <AchievementsBody
+              state="loading"
+              data={null}
+              requested={null}
+              filter="all"
+              onFilter={noop}
+              onRetry={noop}
+            />
+          }
+        >
+          <AchievementsContent noSession={noSession} />
+        </Suspense>
+      </section>
+    </main>
   );
 }
 
@@ -597,7 +693,9 @@ function UnlockPopupToggle() {
           "min-h-[44px] rounded-none border px-3 py-1 text-[13px] transition-colors [@media(pointer:fine)]:min-h-[36px] " +
           (off
             ? "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)]"
-            : "border-verdigris-glow/50 bg-verdigris/10 text-verdigris-glow")
+            : // No green wash under the label: on paper the /10 tint took the
+              // green text to 4.50:1, on the AA line (wave 3 contrast).
+              "border-verdigris-glow/50 text-verdigris-glow")
         }
       >
         {off ? "Off, turn on" : "On, turn off"}

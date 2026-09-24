@@ -1,0 +1,46 @@
+# F202: names deleted from globals.css / tailwind.config.ts in 86a017a (from the diff), and every reference left in src/ and tailwind.config.ts (word-boundary match, globals.css excluded). A name followed by no lines has zero references.
+# clock-sep, ending-act, ending-seal and nerf-unseal show up only because their prefers-reduced-motion rules were rewritten to html[data-anim=off] in the same diff; they were not deleted and still have 3, 4, 5 and 8 rules in globals.css. The starfield and hover-lift hits are prose comments, not class names.
+## aura-breathe
+## clock-sep
+src/components/ClockPill.tsx:243:              <span className="clock-sep">:</span>
+## cta-shine
+## cta-sweep
+## ending-act
+src/components/GameOver.tsx:1266:            className={"mt-5 text-left" + (choreograph ? " ending-act" : "")}
+src/components/GameOver.tsx:1388:          className={choreograph ? "ending-act" : undefined}
+## ending-seal
+src/components/GameOver.tsx:1296:                    <span aria-hidden className="ending-seal">
+## gd-block--tall
+## gd-grid-scroll
+## gd-jump
+## gd-knight
+## hover-lift
+src/components/DraftOverlay.css:833:  /* Match the card face's hover-lift easing so the ring rises with it as one
+## knight-track
+## nerf-unseal
+src/components/GameOver.tsx:373:// .nerf-unseal in globals.css.
+src/components/GameOver.tsx:403:      className={`relative border p-3 text-left tier-bg-${nerf.tier}` + (unseal ? " nerf-unseal" : "")}
+src/components/GameOver.tsx:417:              if (e.animationName === "nerf-unseal-name") onUnsealed?.();
+## row-in
+## search-fade
+## search-grow
+## star-drift
+## star-glint
+## star-glint--lg
+## star-layer
+## star-layer--far
+## star-layer--mid
+## star-layer--near
+## star-shoot
+## star-twinkle
+## starfield
+src/components/effects/godPlays.tsx:2530:   PLANETS ALIGN: letterbox bars drop, a starfield kindles, three worlds glide
+src/components/effects/godPlays.tsx:2581:      {/* the starfield kindles */}
+src/components/DraftOverlay.css:965:   The ambient stage that used to sit behind the cards (vignette, starfield,
+## hover-lift
+src/components/DraftOverlay.css:833:  /* Match the card face's hover-lift easing so the ring rises with it as one
+## cta-shine
+## animate-rise
+## animate-seal
+## draft-in (kept on purpose, still used)
+src/components/BuffCard.tsx:105:        (enterDelayMs != null ? "draft-in " : "") +

@@ -455,25 +455,7 @@ function EyeOfAgesScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead
-      d={delayMs}
-      frame={
-        <>
-          <Wash tone="rgba(184,199,216,0.26)" />
-          <Rim tone="rgba(255,244,214,0.3)" />
-        </>
-      }
-    >
-      <V c="g15-eo-jaws" l={37} t={38} w={26} h={22} d={90}>{jaws}</V>
-      <V c="g15-bite" l={39} t={39} w={22} h={20} d={280}>{jaws}</V>
-      <V c="g15-impress" l={44} t={43} w={12} h={12} d={460}>{device}</V>
-      <L c="g15-rake" l={34} t={41} w={32} h={16} d={600} st={{ background: "linear-gradient(100deg, transparent, rgba(255,244,214,0.75), transparent)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g15-motes" l={43 + i * 6} t={48} w={1.5} h={1.5} d={740 + i * 90} st={{ borderRadius: "50%", background: "#b8c7d8" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 6. Feast of Fools (t7) — THE INDENTURE CUT, BOTH HALVES KEPT -----------
@@ -517,21 +499,7 @@ function FeastOfFoolsScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(224,122,154,0.28)" />}>
-      <V c="g15-draw" l={38} t={39} w={24} h={7} d={90} st={{ transformOrigin: "0% 50%" }} par="none" vb="0 0 60 20">
-        <text x="30" y="14" textAnchor="middle" fontSize="9" fontWeight="700" fill="#e07a9a">CHIROGRAPHUM</text>
-      </V>
-      <V c="g15-ff-shears" l={42} t={36} w={16} h={16} d={260}>{shears}</V>
-      <V c="g15-tearl" l={38} t={41} w={12} h={16} d={440}>{half(false)}</V>
-      <V c="g15-tearr" l={50} t={41} w={12} h={16} d={460}>{half(true)}</V>
-      <V c="g15-mate" l={44} t={42} w={12} h={15} d={640}>
-        <path d={FF_WAVE} fill="none" stroke="#fff4d6" strokeWidth="1.6" {...SJ} />
-      </V>
-      <L c="g15-leanshadow" l={41} t={58} w={18} h={4} d={700} st={{ borderRadius: "999px", background: "rgba(46,20,32,0.6)" }} />
-      <L c="g15-glint" l={49} t={44} w={2.4} h={2.4} d={780} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 7. Broken Supply (t7) — THE SEAL BROKEN ON THE ROAD --------------------
@@ -1696,17 +1664,305 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp):
 }
 
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g15-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g15-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g15-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g15-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+type Pal = { core: string; glow: string; deep: string };
+
+/** A draft card: face down, or face up with a tier mark. */
+function DraftCard({ c, tier }: { c: Pal; tier?: string }) {
+  return (
+    <svg viewBox="0 0 14 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="1" y="1" width="12" height="18" rx="2" fill={tier ? c.core : c.glow} stroke={c.deep} strokeWidth="1.4" />
+      {tier ? (
+        <text x="7" y="12.6" textAnchor="middle" fontSize="6" fontWeight="700" fill={c.deep}>{tier}</text>
+      ) : (
+        <path d="M4 7l3-3 3 3-3 3z" fill={c.core} />
+      )}
+    </svg>
+  );
+}
+
+/** A die: a draft reroll. */
+function Die({ c }: { c: Pal }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="3" y="3" width="14" height="14" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.6" />
+      <circle cx="7" cy="7" r="1.5" fill={c.deep} /><circle cx="13" cy="13" r="1.5" fill={c.deep} /><circle cx="10" cy="10" r="1.5" fill={c.deep} />
+    </svg>
+  );
+}
+
+/* --- bn4_eye_of_ages ---------------------------------------------------------------
+   "See both the cards and the tier of your opponent's next draft offer, gain 3
+   draft rerolls, and every enemy piece that no other enemy piece defends
+   lights up until your opponent replies." An eye opens on the opponent's
+   flank; its gaze crosses to their two next draft cards, which turn face up
+   with their tier (VI) showing; three dice drop onto the caster's rank; then
+   the eye marks every enemy man nobody guards, here the two corner rooks,
+   with a lit ring that holds until their reply. */
+const C_EAR = { core: "#b8c7d8", glow: "#fff4d6", deep: "#232c38" };
+
+function EyeOfAgesRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <EyeOfAgesScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_EAR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="12%" y={rk(4.5)} w={16} h={10} cls="g15-r-stamp" delayMs={d + 40} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 32 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 10q14-12 28 0-14 12-28 0z" fill={c.glow} stroke={c.deep} strokeWidth="1.6" {...SJ} />
+          <circle cx="16" cy="10" r="5" fill={c.core} stroke={c.deep} strokeWidth="1.2" />
+          <circle cx="16" cy="10" r="2.2" fill={c.deep} />
+        </svg>
+      </Q>
+      <Q x="60%" y={rk(4.5)} w={70} h={1.2} cls="g15-r-draw" delayMs={d + 220} v={{ "--gd": "1.2s" }} style={{ background: `linear-gradient(90deg, ${c.glow}, rgba(255,244,214,0))` }} />
+      {[0, 1].map((i) => (
+        <Q key={`b${i}`} x={`${76 + i * 11}%`} y={rk(5.2)} w={9} h={13} cls="g15-r-dim" delayMs={d + 160 + i * 60} v={{ "--gd": "0.9s" }}>
+          <DraftCard c={c} />
+        </Q>
+      ))}
+      {[0, 1].map((i) => (
+        <Q key={`f${i}`} x={`${76 + i * 11}%`} y={rk(5.2)} w={9} h={13} cls="g15-r-stamp" delayMs={d + 520 + i * 90} v={{ "--gd": "1.6s" }}>
+          <DraftCard c={c} tier="VI" />
+        </Q>
+      ))}
+      {[0, 1, 2].map((i) => (
+        <Q key={`d${i}`} x={`${40 + i * 10}%`} y={rk(1.5)} w={6} h={6} cls="g15-r-go" delayMs={d + 680 + i * 80} v={{ "--gd": "1.5s", "--tx0": `${(1 - i) * 60}%`, "--ty0": "calc(var(--fx-side, 1) * -260%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <Die c={c} />
+        </Q>
+      ))}
+      {[0, 7].map((col, i) => (
+        <Q key={`r${col}`} x={fc(col)} y={rk(7)} w={12} h={12} cls="g15-r-pip" delayMs={d + 980 + i * 90} v={{ "--gd": "1.3s" }} style={{ border: `2.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      ))}
+      {[0, 7].map((col, i) => (
+        <Tint key={`t${col}`} x={fc(col)} y={rk(7)} color="rgba(255,244,214,0.34)" delayMs={d + 1000 + i * 90} gd="1.25s" />
+      ))}
+      <Q x="12%" y={rk(4.5)} w={18} h={2} cls="g15-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(184,199,216,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_feast_of_fools ------------------------------------------------------------
+   "You keep both cards of your next draft offer, and gain 2 draft rerolls."
+   A fool's cap with its bells is set on the caster's side; the next draft
+   offer is dealt as two cards and neither is thrown back: both are swept down
+   together into the caster's hand at the edge, where each gets a keep mark;
+   two dice are tossed out of the cap onto the rank. */
+const C_FFR = { core: "#e07a9a", glow: "#fff4d6", deep: "#2e1420" };
+
+function FeastOfFoolsRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <FeastOfFoolsScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_FFR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(3.4)} w={16} h={12} cls="g15-r-up" delayMs={d + 40} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 32 24" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 20q2-10 12-12Q8 6 3 2q9 1 13 7 4-6 13-7-5 4-13 6 10 2 12 12z" fill={c.core} stroke={c.deep} strokeWidth="1.3" {...SJ} />
+          <path d="M4 20h24v3H4z" fill={c.glow} stroke={c.deep} strokeWidth="1" />
+          <circle cx="3" cy="2.4" r="1.8" fill={c.glow} stroke={c.deep} strokeWidth="0.8" />
+          <circle cx="29" cy="2.4" r="1.8" fill={c.glow} stroke={c.deep} strokeWidth="0.8" />
+          <circle cx="16" cy="8" r="1.6" fill={c.glow} stroke={c.deep} strokeWidth="0.8" />
+        </svg>
+      </Q>
+      {[0, 1].map((i) => (
+        <Q key={`c${i}`} x={`${38 + i * 24}%`} y={rk(1.6)} w={10} h={14} cls="g15-r-go" delayMs={d + 260 + i * 80} v={{ "--gd": "1.9s", "--tx0": `${(i ? 1 : -1) * -60}%`, "--ty0": "calc(var(--fx-side, 1) * -260%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <DraftCard c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(0.9)} w={40} h={5} cls="g15-r-draw" delayMs={d + 760} v={{ "--gd": "1.4s" }} style={{ background: c.deep, border: `1.5px solid ${c.core}`, borderRadius: "999px" }} />
+      {[0, 1].map((i) => (
+        <Q key={`k${i}`} x={`${38 + i * 24}%`} y={rk(2.8)} w={6} h={6} cls="g15-r-stamp" delayMs={d + 900 + i * 110} v={{ "--gd": "1.3s" }}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <circle cx="10" cy="10" r="8.4" fill={c.glow} stroke={c.deep} strokeWidth="1.4" />
+            <path d="M5.6 10.4l3 3 6-6.4" fill="none" stroke={c.deep} strokeWidth="2.2" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      {[0, 1].map((i) => (
+        <Q key={`d${i}`} x={`${46 + i * 8}%`} y={rk(2.2)} w={5.4} h={5.4} cls="g15-r-go" delayMs={d + 1040 + i * 70} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * -180%)", "--tx1": `${(i ? 1 : -1) * 40}%`, "--ty1": "0%" }}>
+          <Die c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(2.6)} w={30} h={2} cls="g15-r-lean" delayMs={d + 1560} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(224,122,154,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_ravens_court --------------------------------------------------------------
+   "See both the cards and the tier of your opponent's next draft offer, and
+   gain 2 draft rerolls." Their next draft offer sits face down at their
+   edge; two ravens fly off it, each with
+   one of their next draft cards in its beak, and drop them face up by the
+   caster's side with the tier (VI) showing; a third raven brings two dice,
+   the rerolls, and lets them fall onto the caster's rank. */
+const C_RCR = { core: "#8f7fb0", glow: "#fff2de", deep: "#1a1524" };
+
+function Raven({ c }: { c: Pal }) {
+  return (
+    <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 8c4-5 8-6 11-4l3-3c1 3 0 5-2 6l6 1-6 2c-3 2-8 2-12-2z" fill={c.deep} stroke={c.core} strokeWidth="0.8" {...SJ} />
+      <path d="M19 8l4 .4-4 1z" fill={c.glow} />
+    </svg>
+  );
+}
+
+function RavensCourtRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <RavensCourtScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_RCR;
+  const d = delayMs;
+  return (
+    <Brd>
+      {[0, 1, 2].map((i) => (
+        <Q key={`r${i}`} x={`${32 + i * 18}%`} y={rk(3)} w={10} h={6} cls="g15-r-go" delayMs={d + 40 + i * 120} v={{ "--gd": "1.1s", "--tx0": `${(1 - i) * 40}%`, "--ty0": `calc(var(--fx-side, 1) * ${-Math.round(4.4 * fileIn(6))}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Raven c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(7.2)} w={8} h={12} cls="g15-r-dim" delayMs={d + 20} v={{ "--gd": "0.9s" }}>
+        <DraftCard c={c} />
+      </Q>
+      <Q x="34%" y={rk(2.2)} w={8} h={12} cls="g15-r-stamp" delayMs={d + 560} v={{ "--gd": "1.7s" }}>
+        <DraftCard c={c} tier="VI" />
+      </Q>
+      <Q x="52%" y={rk(2.2)} w={8} h={12} cls="g15-r-stamp" delayMs={d + 650} v={{ "--gd": "1.6s" }}>
+        <DraftCard c={c} tier="VI" />
+      </Q>
+      {[0, 1].map((i) => (
+        <Q key={`d${i}`} x={`${66 + i * 8}%`} y={rk(1.6)} w={5.4} h={5.4} cls="g15-r-go" delayMs={d + 760 + i * 90} v={{ "--gd": "1.4s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * -180%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <Die c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(3.4)} w={1.4} h={3} cls="g15-r-lean" delayMs={d + 1260} v={{ "--gd": "0.8s" }} style={{ background: c.deep, borderRadius: "50%", rotate: "-20deg" }} />
+      {[0, 1, 2].map((i) => (
+        <Q key={`f${i}`} x={`${36 + i * 16}%`} y={rk(3.4)} w={1.4} h={3} cls="g15-r-lean" delayMs={d + 1300 + i * 60} v={{ "--gd": "0.8s" }} style={{ background: c.deep, borderRadius: "50%", rotate: "30deg" }} />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_deck_of_kings: S(DeckOfKingsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }, { rgb: "232 196 106", at: 780, laser: true, glyph: impSeal("#e8c46a", "#2a1e0b"), shock: true, box: [41, 33, 16, 18] }),
   bn4_triumphal_arch: S(TriumphalArchScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }, { rgb: "203 184 148", at: 720, laser: true, shock: true, box: [42, 32, 15, 20] }),
   ov_cartographers_vault: S(CartographersVaultScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "159 176 192", at: 740, laser: true, glyph: impSeal("#9fb0c0", "#1c2530"), shock: true, box: [42, 35, 15, 16], rot: 8 }),
   ov_the_menu: S(TheMenuScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "224 162 78", at: 700, laser: true, shock: true, box: [43, 36, 14, 16] }),
-  bn4_eye_of_ages: S(EyeOfAgesScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, { rgb: "184 199 216", at: 680, laser: true, box: [43, 33, 13, 19] }),
-  bn4_feast_of_fools: S(FeastOfFoolsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }, { rgb: "224 122 154", at: 640, glyph: impSeal("#e07a9a", "#2e1420"), shock: true, box: [42, 37, 15, 14] }),
+  bn4_eye_of_ages: S(EyeOfAgesRule, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
+  bn4_feast_of_fools: S(FeastOfFoolsRule, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
   hx4_broken_supply: S(BrokenSupplyScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "192 90 60", at: 660, laser: true, shock: true, box: [42, 36, 14, 16], rot: -10 }),
   ov_patch_notes: S(PatchNotesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "127 194 168", at: 600, laser: true, box: [44, 35, 12, 17] }),
   bn4_all_seeing_spire: S(AllSeeingSpireScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "158 200 216", at: 640, laser: true, box: [43, 32, 13, 20] }),
-  bn4_ravens_court: S(RavensCourtScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "143 127 176", at: 620, laser: true, glyph: impSeal("#8f7fb0", "#1a1524"), box: [42, 36, 14, 15] }),
+  bn4_ravens_court: S(RavensCourtRule, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   hx4_wax_seal: S(WaxSealScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "210 69 47", at: 680, glyph: impSeal("#d2452f", "#2c0f0a"), shock: true, box: [43, 37, 14, 14] }),
   ov_grand_illusionist: S(GrandIllusionistScene, { ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "cast" }, { rgb: "180 143 216", at: 560, laser: true, box: [44, 36, 12, 16] }),
   ov_season_pass: S(SeasonPassScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "111 216 192", at: 540, shock: true, box: [44, 39, 12, 12] }),

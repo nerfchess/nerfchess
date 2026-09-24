@@ -112,11 +112,11 @@ export function DraftNotice({
         return (
           <div
             key={n.key}
-            className={
-              "glass-chip max-w-[min(20rem,calc(100vw-1.5rem))] border border-gold/40 px-4 py-2 " +
-              "transition-opacity duration-300 " +
-              (n.leaving ? "opacity-0" : "opacity-100")
-            }
+            // The shared toast motion (globals.css .m-toast): rises in on
+            // --dur-2, and data-leaving plays the mirrored --dur-1 exit before
+            // the removal timer drops it.
+            data-leaving={n.leaving ? "" : undefined}
+            className="m-toast glass-chip max-w-[min(20rem,calc(100vw-1.5rem))] border border-gold/40 px-4 py-2"
           >
             <div className="flex items-center gap-2 font-display text-xs font-semibold text-parchment">
               {Icon ? (

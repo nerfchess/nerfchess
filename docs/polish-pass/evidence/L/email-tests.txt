@@ -1,0 +1,44 @@
+ok   guest has no registered_at
+ok   guest upgrade stamps registered_at now, not the guest created_at
+ok   direct registration gets registered_at = created_at
+ok   missing RESEND_API_KEY: no request made
+ok   missing RESEND_API_KEY: nothing claimed, so a later run still welcomes
+ok   missing RESEND_API_KEY: job reports why
+ok   sendEmail without a key returns skipped
+ok   sendEmail without EMAIL_FROM returns skipped
+ok   run 1 welcomes exactly the new sign-ups (new and upgraded guest)
+ok   run 1 sends one founders' report to both founders
+ok   run 2 (retry, same day) sends no welcome again
+ok   run 2 (same UTC day) does not resend the report
+ok   two concurrent runs welcome a new account once
+ok   welcome carries an idempotency key per account
+ok   welcome carries RFC 8058 one-click headers
+ok   report lists the new sign-ups by name
+ok   report goes to both founders
+ok   next day sends a new report
+ok   token verifies for its own account
+ok   token does not verify for another account
+ok   token does not verify under another secret
+ok   tampered token refused
+ok   signed link unsubscribes
+ok   no secret configured: link reports unavailable
+ok   settings toggle stores the opt-out, email masked
+ok   opted-out accounts get no welcome (link and toggle)
+ok   turning email back on inside the window welcomes once
+ok   no mailing address: no welcome (CASL), report still sent
+ok   no unsubscribe secret: no welcome
+ok   provider 503: released and sent on the next run
+ok   provider 422 (bad address): tried once, never retried
+ok   welcome html has tutorial, first game, Nerf and Buff mode and unsubscribe links
+ok   welcome text part has the same links
+ok   username is escaped in html
+ok   html and text carry the mailing address and contact (CASL)
+ok   dark and light: color-scheme meta and a dark media block
+ok   no images required
+ok   no text below 13px
+ok   radii are 3px (button) and 7px (box) only
+ok   no shadows
+ok   report renders html and text, skips empty sections
+ok   no em dashes in any email
+
+42 passed, 0 failed

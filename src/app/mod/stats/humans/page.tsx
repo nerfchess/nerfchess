@@ -49,7 +49,7 @@ function HumanStats() {
     <>
       <div className="plate mt-5 grid grid-cols-2 divide-x divide-y divide-[color:var(--edge)] sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
         <StatCard label="Games" value={h.games.total} />
-        <StatCard label="Games today" value={h.games.today} />
+        <StatCard label="Games, last 24 hours" value={h.games.today} />
         <StatCard label="Rated games" value={h.games.rated} />
         <StatCard label="Avg. game length" value={h.games.averageMoves} suffix=" moves" />
         <StatCard label="Players with a game" value={h.players.withGames} />

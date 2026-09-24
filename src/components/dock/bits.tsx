@@ -39,8 +39,8 @@ export const pliesTitle = (left: string): string | undefined => {
 };
 
 // Each dock section carries its own colour identity so the eye sorts them
-// without reading: your arsenal (your buffs) is BLUE — the semantic power/boon
-// colour — the opponent's is coral (theirs, a distinct non-reserved hue), and
+// without reading: your arsenal (your buffs) is BLUE, the semantic power/boon
+// colour, the opponent's is coral (theirs, a distinct non-reserved hue), and
 // the "against you" constraints stay in the Nerf-red alert family. Class
 // strings are literal (not built from variables) so Tailwind's JIT keeps them.
 export type SectionAccent = "mine" | "opponent" | "against";
@@ -79,7 +79,8 @@ export function DockSectionHeader({
           aria-hidden
           size={12}
           strokeWidth={2.4}
-          className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+          data-open={open}
+          className="m-chevron m-chevron--quarter shrink-0 text-parchment-400"
         />
       )}
       <span
@@ -193,7 +194,7 @@ export function DraftProgressRing({ fraction, blocked }: { fraction: number; blo
           strokeLinecap="round"
           strokeDasharray={CIRC}
           strokeDashoffset={CIRC * (1 - Math.max(0, Math.min(1, fraction)))}
-          style={{ transition: "stroke-dashoffset 300ms ease, stroke 300ms ease" }}
+          style={{ transition: "stroke-dashoffset var(--dur-3) var(--ease-io), stroke var(--dur-3) var(--ease-io)" }}
         />
       </svg>
     </span>

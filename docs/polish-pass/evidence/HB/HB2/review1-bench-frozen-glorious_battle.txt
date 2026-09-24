@@ -1,0 +1,10 @@
+bench-house-search: 20 random positions, engines baseline vs f2d20b4 vs current (baseline = bbe4271), node v22.22.2, load 1.26 1.03 1.07, 42s
+
+[random]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms   max | f2d20b4    depth(min-max)  nodes     n/ms   ms   max | current    depth(min-max)  nodes     n/ms   ms   max
+medium     25ms             3.00 (3-3)        4114    224    18    51 |             3.00 (3-3)        9985    262    38   162 |             3.00 (3-3)       10663    332    32   154
+medium     80ms             3.00 (3-3)        4114    236    18    49 |             3.00 (3-3)        9985    263    38   156 |             3.00 (3-3)       10663    335    32   153
+hard       25ms             4.35 (3-6)       50001    223   225   408 |             6.40 (3-12)       41464    277   150   214 |             7.40 (3-12)       30928    287   108   207
+hard       80ms             5.15 (4-7)      160001    251   638   880 |             7.45 (4-12)      125050    278   449   653 |             8.10 (4-12)       96928    289   335   614
+
+wrote docs/polish-pass/evidence/HB/HB2/review1-bench-frozen-glorious_battle.json

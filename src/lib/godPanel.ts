@@ -48,3 +48,22 @@ export const RATING_EDITOR_USERNAME = "ilovenewjeans";
 export function isRatingEditor(username: string | null | undefined): boolean {
   return !!username && username.toLowerCase() === RATING_EDITOR_USERNAME;
 }
+
+// Every username that unlocks an owner tool above. These powers are keyed on
+// the name, so a name that is freed (renamed away, flagged) could be
+// registered by someone else and inherit them (F045). The moderator panel
+// refuses to flag these names; registration and rename must refuse them too
+// (slice F / A request in docs/polish-pass/slices/G.md).
+export const POWER_USERNAMES: readonly string[] = [
+  ...new Set<string>([...GOD_PANEL_USERNAMES, HOUSE_EDITOR_USERNAME, RATING_EDITOR_USERNAME]),
+];
+export function isPowerUsername(username: string | null | undefined): boolean {
+  return !!username && POWER_USERNAMES.includes(username.toLowerCase());
+}
+/** True when taking `name` would claim a power name the account does not
+ *  already hold (`heldName` is its current name, or none for a new account).
+ *  Register, guest upgrade, rename and fresh Google accounts refuse these. */
+export function claimsPowerUsername(name: string, heldName?: string | null): boolean {
+  const lower = name.trim().toLowerCase();
+  return isPowerUsername(lower) && lower !== (heldName ?? "").trim().toLowerCase();
+}

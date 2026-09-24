@@ -37,3 +37,12 @@ export function reportLowTime(key: string, isUnder: boolean): void {
 export function releaseLowTime(key: string): void {
   reportLowTime(key, false);
 }
+
+/** Forget every clock at once. The game ending is what ends the hold, and the
+ * result screen calls this before its first paint so the ending choreographs
+ * at the player's own tempo instead of inheriting the scramble's "off". */
+export function releaseAllLowTime(): void {
+  const before = lowTimeMotionHeld();
+  under.clear();
+  if (before) reapply?.();
+}

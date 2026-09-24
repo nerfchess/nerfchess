@@ -1,0 +1,560 @@
+
+Running 14 tests using 1 worker
+
+[1/14] [chromium] › e2e/polish/account-routes.spec.ts:27:7 › profile edit › the picture upload is a keyboard stop that opens the file picker
+  1) [chromium] › e2e/polish/account-routes.spec.ts:27:7 › profile edit › the picture upload is a keyboard stop that opens the file picker 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: /upload your own picture/i })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByRole('button', { name: /upload your own picture/i })
+
+
+      28 |     await page.goto("/profile/edit");
+      29 |     const upload = page.getByRole("button", { name: /upload your own picture/i });
+    > 30 |     await expect(upload).toBeVisible();
+         |                          ^
+      31 |     // Tab from the page title until the upload control has focus.
+      32 |     await page.locator("h1").first().click();
+      33 |     let reached = false;
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:30:26
+
+    Error Context: test-results/polish-account-routes-prof-774cc--that-opens-the-file-picker-chromium/error-context.md
+
+
+[2/14] [chromium] › e2e/polish/account-routes.spec.ts:45:7 › profile edit › the bio field shows a focus ring
+[3/14] [chromium] › e2e/polish/account-routes.spec.ts:59:7 › profile edit › the privacy switch moves its knob with transform only
+  2) [chromium] › e2e/polish/account-routes.spec.ts:59:7 › profile edit › the privacy switch moves its knob with transform only 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "none"
+    Received: "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px"
+
+      68 |     });
+      69 |     expect(knob).not.toBeNull();
+    > 70 |     expect(knob!.shadow).toBe("none");
+         |                          ^
+      71 |     expect(knob!.transition).not.toMatch(/\ball\b|\bleft\b/);
+      72 |   });
+      73 |
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:70:26
+
+    Error Context: test-results/polish-account-routes-prof-c673b-ts-knob-with-transform-only-chromium/error-context.md
+
+
+[4/14] [chromium] › e2e/polish/account-routes.spec.ts:75:7 › profile edit › the title does not move when the account arrives
+  3) [chromium] › e2e/polish/account-routes.spec.ts:75:7 › profile edit › the title does not move when the account arrives 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 2
+    + Received  + 2
+
+      Object {
+        "h": 27,
+        "w": 116,
+    -   "x": 405,
+    -   "y": 88,
+    +   "x": 460,
+    +   "y": 97,
+      }
+
+      87 |     await expect(page.getByRole("textbox", { name: /bio/i })).toBeVisible();
+      88 |     const after = await box(page, "main h1");
+    > 89 |     expect(after).toEqual(before);
+         |                   ^
+      90 |   });
+      91 |
+      92 |   // F144: "Saved" is spoken, from a live region that exists before it fills.
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:89:19
+
+    Error Context: test-results/polish-account-routes-prof-7b3f3-ve-when-the-account-arrives-chromium/error-context.md
+
+
+[5/14] [chromium] › e2e/polish/account-routes.spec.ts:93:7 › profile edit › save feedback lands in a live region
+  4) [chromium] › e2e/polish/account-routes.spec.ts:93:7 › profile edit › save feedback lands in a live region 
+
+    Error: expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 3
+    Received:    0
+
+       96 |     await expect(bio).toBeVisible();
+       97 |     const statusCount = await page.locator('main [role="status"]').count();
+    >  98 |     expect(statusCount).toBeGreaterThanOrEqual(3);
+          |                         ^
+       99 |   });
+      100 | });
+      101 |
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:98:25
+
+    Error Context: test-results/polish-account-routes-prof-40694-back-lands-in-a-live-region-chromium/error-context.md
+
+
+[6/14] [chromium] › e2e/polish/account-routes.spec.ts:108:7 › public profile › stat strip and heading semantics
+  5) [chromium] › e2e/polish/account-routes.spec.ts:108:7 › public profile › stat strip and heading semantics 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+    -   "dt",
+        "dd",
+    +   "dt",
+      ]
+
+      113 |     );
+      114 |     expect(order.length).toBeGreaterThan(0);
+    > 115 |     for (let i = 0; i < order.length; i += 2) expect(order.slice(i, i + 2)).toEqual(["dt", "dd"]);
+          |                                                                             ^
+      116 |     const h1 = await page.locator("main h1").first().evaluate((h) => ({
+      117 |       links: h.querySelectorAll("a").length,
+      118 |       labelledSpans: Array.from(h.querySelectorAll("span[aria-label]")).filter((s) => !s.getAttribute("role")).length,
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:115:77
+
+    Error Context: test-results/polish-account-routes-publ-0401a-strip-and-heading-semantics-chromium/error-context.md
+
+
+[7/14] [chromium] › e2e/polish/account-routes.spec.ts:124:7 › public profile › report modal traps focus and restores it
+  6) [chromium] › e2e/polish/account-routes.spec.ts:124:7 › public profile › report modal traps focus and restores it 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('dialog')
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByRole('dialog')
+
+
+      128 |     await page.getByRole("menuitem", { name: "Report" }).click();
+      129 |     const dialog = page.getByRole("dialog");
+    > 130 |     await expect(dialog).toBeVisible();
+          |                          ^
+      131 |     await expect(dialog).toHaveAttribute("aria-modal", "true");
+      132 |     const name = await dialog.evaluate((d) => {
+      133 |       const by = d.getAttribute("aria-labelledby");
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:130:26
+
+    Error Context: test-results/polish-account-routes-publ-5003d-traps-focus-and-restores-it-chromium/error-context.md
+
+
+[8/14] [chromium] › e2e/polish/account-routes.spec.ts:148:7 › public profile › an unknown name shows the shared not-found panel
+  7) [chromium] › e2e/polish/account-routes.spec.ts:148:7 › public profile › an unknown name shows the shared not-found panel 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'No player by that name', level: 1 })
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByRole('heading', { name: 'No player by that name', level: 1 })
+
+
+      148 |   test("an unknown name shows the shared not-found panel", async ({ page }) => {
+      149 |     await page.goto("/u/no_such_player_zz9");
+    > 150 |     await expect(page.getByRole("heading", { level: 1, name: "No player by that name" })).toBeVisible();
+          |                                                                                           ^
+      151 |     await expect(page.getByRole("link", { name: "Browse players" })).toBeVisible();
+      152 |     expect(await page.locator("main").count()).toBe(1);
+      153 |   });
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:150:91
+
+    Error Context: test-results/polish-account-routes-publ-0bc3d--the-shared-not-found-panel-chromium/error-context.md
+
+
+[9/14] [chromium] › e2e/polish/account-routes.spec.ts:169:9 › profile layout, phone › the profile header does not move after the page settles in
+  8) [chromium] › e2e/polish/account-routes.spec.ts:169:9 › profile layout, phone › the profile header does not move after the page settles in 
+
+    Error: [
+     {
+      "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton",
+      "text": "",
+      "score": 0.0477,
+      "count": 3,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton > ::after",
+      "text": "",
+      "score": 0.0275,
+      "count": 2,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate",
+      "text": "polish_mod0Games0Wins0Losses0DrawsChallengeAdd fri...",
+      "score": 0.0202,
+      "count": 1,
+      "maxDy": 90,
+      "maxDx": 0,
+      "maxDh": -90,
+      "maxDw": 0
+     },
+     {
+      "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate > div.grid.border-t.border-\\[color\\:var(--edge)\\]",
+      "text": "No rated games yet.ModeratorMember since Sep 23, 2...",
+      "score": 0.0074,
+      "count": 1,
+      "maxDy": 55,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate > div.grid.grid-cols-2.border-t[role=\"tablist\"]",
+      "text": "Activity0 Games",
+      "score": 0.0074,
+      "count": 1,
+      "maxDy": 55,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div#panel-activity",
+      "text": "AchievementsSee all",
+      "score": 0.0074,
+      "count": 1,
+      "maxDy": 55,
+      "maxDx": 0,
+      "maxDh": -55,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "polish_user",
+      "score": 0.0025,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -55,
+      "maxDh": 0,
+      "maxDw": 55
+     },
+     {
+      "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+      "text": "",
+      "score": 0,
+      "count": 1,
+      "maxDy": -6,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     }
+    ]
+
+    expect(received).toBeLessThan(expected)
+
+    Expected: < 0.01
+    Received:   0.1176
+
+      172 |       await expect(page.getByRole("button", { name: "Challenge" })).toBeVisible();
+      173 |       const cls = await readCls(page);
+    > 174 |       expect(cls.cls, JSON.stringify(cls.offenders, null, 1)).toBeLessThan(0.01);
+          |                                                               ^
+      175 |     });
+      176 |
+      177 |     test("the skeleton is the shape of the page", async ({ page }) => {
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:174:63
+
+    Error Context: test-results/polish-account-routes-prof-ed076-e-after-the-page-settles-in-chromium/error-context.md
+
+
+[10/14] [chromium] › e2e/polish/account-routes.spec.ts:177:9 › profile layout, phone › the skeleton is the shape of the page
+  9) [chromium] › e2e/polish/account-routes.spec.ts:177:9 › profile layout, phone › the skeleton is the shape of the page 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[data-profile-skeleton]').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for locator('[data-profile-skeleton]').first()
+        - waiting for" http://localhost:3000/u/polish_mod" navigation to finish...
+        - navigated to "http://localhost:3000/u/polish_mod"
+
+
+      183 |       });
+      184 |       await page.goto(`/u/${OTHER}`);
+    > 185 |       await expect(page.locator("[data-profile-skeleton]").first()).toBeVisible();
+          |                                                                     ^
+      186 |       const sk = {
+      187 |         plate: await box(page, "[data-profile-skeleton] [data-part=plate]"),
+      188 |         rail: await box(page, "[data-profile-skeleton] [data-part=rail]"),
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:185:69
+
+    Error Context: test-results/polish-account-routes-prof-5eea3-on-is-the-shape-of-the-page-chromium/error-context.md
+
+
+[11/14] [chromium] › e2e/polish/account-routes.spec.ts:169:9 › profile layout, desktop › the profile header does not move after the page settles in
+  10) [chromium] › e2e/polish/account-routes.spec.ts:169:9 › profile layout, desktop › the profile header does not move after the page settles in 
+
+    Error: [
+     {
+      "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.mt-4 > div.plate",
+      "text": "Friends",
+      "score": 0.0149,
+      "count": 2,
+      "maxDy": -117,
+      "maxDx": 0,
+      "maxDh": 117,
+      "maxDw": 0
+     },
+     {
+      "selector": "div#panel-activity > div.border-t.border-\\[color\\:var(--edge)\\].px-4",
+      "text": "Achievements0/102See all",
+      "score": 0.0145,
+      "count": 1,
+      "maxDy": -117,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "polish_user",
+      "score": 0.0014,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -135,
+      "maxDh": 0,
+      "maxDw": 135
+     },
+     {
+      "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+      "text": "nerfchess",
+      "score": 0.0006,
+      "count": 1,
+      "maxDy": -3,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": -18
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+      "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+      "score": 0.0006,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -18,
+      "maxDh": 0,
+      "maxDw": -43
+     },
+     {
+      "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate > div.grid.border-t.border-\\[color\\:var(--edge)\\]",
+      "text": "No rated games yet.ModeratorMember since Sep 23, 2...",
+      "score": 0.0004,
+      "count": 1,
+      "maxDy": 4,
+      "maxDx": 0,
+      "maxDh": -1,
+      "maxDw": 0
+     },
+     {
+      "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate > div.grid.grid-cols-2.border-t[role=\"tablist\"]",
+      "text": "Activity0 Games",
+      "score": 0.0004,
+      "count": 1,
+      "maxDy": 3,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div#panel-activity",
+      "text": "AchievementsSee all",
+      "score": 0.0004,
+      "count": 1,
+      "maxDy": 3,
+      "maxDx": 0,
+      "maxDh": 1,
+      "maxDw": 0
+     }
+    ]
+
+    expect(received).toBeLessThan(expected)
+
+    Expected: < 0.01
+    Received:   0.0307
+
+      172 |       await expect(page.getByRole("button", { name: "Challenge" })).toBeVisible();
+      173 |       const cls = await readCls(page);
+    > 174 |       expect(cls.cls, JSON.stringify(cls.offenders, null, 1)).toBeLessThan(0.01);
+          |                                                               ^
+      175 |     });
+      176 |
+      177 |     test("the skeleton is the shape of the page", async ({ page }) => {
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:174:63
+
+    Error Context: test-results/polish-account-routes-prof-77fef-e-after-the-page-settles-in-chromium/error-context.md
+
+
+[12/14] [chromium] › e2e/polish/account-routes.spec.ts:177:9 › profile layout, desktop › the skeleton is the shape of the page
+  11) [chromium] › e2e/polish/account-routes.spec.ts:177:9 › profile layout, desktop › the skeleton is the shape of the page 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('[data-profile-skeleton]').first()
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for locator('[data-profile-skeleton]').first()
+
+
+      183 |       });
+      184 |       await page.goto(`/u/${OTHER}`);
+    > 185 |       await expect(page.locator("[data-profile-skeleton]").first()).toBeVisible();
+          |                                                                     ^
+      186 |       const sk = {
+      187 |         plate: await box(page, "[data-profile-skeleton] [data-part=plate]"),
+      188 |         rail: await box(page, "[data-profile-skeleton] [data-part=rail]"),
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:185:69
+
+    Error Context: test-results/polish-account-routes-prof-3869e-on-is-the-shape-of-the-page-chromium/error-context.md
+
+
+[13/14] [chromium] › e2e/polish/account-routes.spec.ts:206:7 › settings › the sign-in link returns to settings
+  12) [chromium] › e2e/polish/account-routes.spec.ts:206:7 › settings › the sign-in link returns to settings 
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /next=(%2F|\/)settings/
+    Received string:  "/login"
+
+      209 |     const signIn = page.getByRole("link", { name: "Sign in" }).last();
+      210 |     await expect(signIn).toBeVisible();
+    > 211 |     expect(await signIn.getAttribute("href")).toMatch(/next=(%2F|\/)settings/);
+          |                                               ^
+      212 |   });
+      213 |
+      214 |   test.describe("signed in", () => {
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:211:47
+
+    Error Context: test-results/polish-account-routes-sett-89801-in-link-returns-to-settings-chromium/error-context.md
+
+
+[14/14] [chromium] › e2e/polish/account-routes.spec.ts:216:9 › settings › signed in › no late notice pushes the rows
+  12 failed
+    [chromium] › e2e/polish/account-routes.spec.ts:27:7 › profile edit › the picture upload is a keyboard stop that opens the file picker 
+    [chromium] › e2e/polish/account-routes.spec.ts:59:7 › profile edit › the privacy switch moves its knob with transform only 
+    [chromium] › e2e/polish/account-routes.spec.ts:75:7 › profile edit › the title does not move when the account arrives 
+    [chromium] › e2e/polish/account-routes.spec.ts:93:7 › profile edit › save feedback lands in a live region 
+    [chromium] › e2e/polish/account-routes.spec.ts:108:7 › public profile › stat strip and heading semantics 
+    [chromium] › e2e/polish/account-routes.spec.ts:124:7 › public profile › report modal traps focus and restores it 
+    [chromium] › e2e/polish/account-routes.spec.ts:148:7 › public profile › an unknown name shows the shared not-found panel 
+    [chromium] › e2e/polish/account-routes.spec.ts:169:9 › profile layout, phone › the profile header does not move after the page settles in 
+    [chromium] › e2e/polish/account-routes.spec.ts:177:9 › profile layout, phone › the skeleton is the shape of the page 
+    [chromium] › e2e/polish/account-routes.spec.ts:169:9 › profile layout, desktop › the profile header does not move after the page settles in 
+    [chromium] › e2e/polish/account-routes.spec.ts:177:9 › profile layout, desktop › the skeleton is the shape of the page 
+    [chromium] › e2e/polish/account-routes.spec.ts:206:7 › settings › the sign-in link returns to settings 
+  2 passed (3.3m)
+done
+
+Running 1 test using 1 worker
+
+[1/1] [chromium] › e2e/polish/account-routes.spec.ts:45:7 › profile edit › the bio field shows a focus ring
+  1) [chromium] › e2e/polish/account-routes.spec.ts:45:7 › profile edit › the bio field shows a focus ring 
+
+    Error: expect(received).not.toMatch(expected)
+
+    Expected pattern: not /rgba\(0, 0, 0, 0\)|transparent/
+    Received string:      "rgba(0, 0, 0, 0)"
+
+      55 |     expect(outline.style).not.toBe("none");
+      56 |     expect(outline.width).not.toBe("0px");
+    > 57 |     expect(outline.color).not.toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+         |                               ^
+      58 |   });
+      59 |
+      60 |   // F164, F192: the privacy switch knob had a shadow, transition-all and a
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:57:31
+
+    Error Context: test-results/polish-account-routes-prof-13a11-io-field-shows-a-focus-ring-chromium/error-context.md
+
+
+  1 failed
+    [chromium] › e2e/polish/account-routes.spec.ts:45:7 › profile edit › the bio field shows a focus ring 
+
+Running 1 test using 1 worker
+
+[1/1] [chromium] › e2e/polish/account-routes.spec.ts:211:5 › history summary traps focus and restores it
+  1) [chromium] › e2e/polish/account-routes.spec.ts:211:5 › history summary traps focus and restores it 
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "rgba(0, 0, 0, 0.6)"
+    Received: "rgba(0, 0, 0, 0)"
+
+      231 |   await expect(dialog).toBeVisible();
+      232 |   const scrim = await dialog.evaluate((d) => getComputedStyle(d.parentElement as HTMLElement).backgroundColor);
+    > 233 |   expect(scrim).toBe("rgba(0, 0, 0, 0.6)");
+          |                 ^
+      234 |   const close = dialog.getByRole("button", { name: "Close" });
+      235 |   const closeBox = await close.boundingBox();
+      236 |   expect(Math.round(closeBox?.height ?? 0)).toBeGreaterThanOrEqual(36);
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:233:17
+
+    Error Context: test-results/polish-account-routes-hist-6e4e0-traps-focus-and-restores-it-chromium/error-context.md
+
+
+  1 failed
+    [chromium] › e2e/polish/account-routes.spec.ts:211:5 › history summary traps focus and restores it 
+
+Running 1 test using 1 worker
+
+[1/1] [chromium] › e2e/polish/account-routes.spec.ts:261:7 › buff drawer, landscape tablet › closed is inert, opens by transform, Escape closes
+  1) [chromium] › e2e/polish/account-routes.spec.ts:261:7 › buff drawer, landscape tablet › closed is inert, opens by transform, Escape closes 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: locator('button[aria-expanded][aria-controls]').filter({ hasText: /held|None yet/ })
+    Expected: visible
+    Timeout: 120000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" with timeout 120000ms
+      - waiting for locator('button[aria-expanded][aria-controls]').filter({ hasText: /held|None yet/ })
+
+
+      265 |     await page.goto("/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0");
+      266 |     const bar = page.locator("button[aria-expanded][aria-controls]").filter({ hasText: /held|None yet/ });
+    > 267 |     await expect(bar).toBeVisible({ timeout: 120_000 });
+          |                       ^
+      268 |     const panelId = await bar.getAttribute("aria-controls");
+      269 |     const panel = page.locator(`[id="${panelId}"]`);
+      270 |     await expect(panel).toHaveAttribute("inert", "");
+        at /home/user/nerfchess/e2e/polish/account-routes.spec.ts:267:23
+
+    Error Context: test-results/polish-account-routes-buff-0f356--by-transform-Escape-closes-chromium/error-context.md
+
+
+  1 failed
+    [chromium] › e2e/polish/account-routes.spec.ts:261:7 › buff drawer, landscape tablet › closed is inert, opens by transform, Escape closes 

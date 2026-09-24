@@ -12,7 +12,9 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerLink, isLinkablePlayerName } from "@/components/PlayerLink";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
+import { logout } from "@/lib/authClient";
+import { useSeededHasSession, useSession } from "@/lib/session/SessionProvider";
+import { useExitPresence } from "@/lib/useExitPresence";
 import { playChallenge } from "@/lib/sounds";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
@@ -142,8 +144,25 @@ export function SiteHeader({ active }: { active?: string }) {
   // Explicit `active` prop wins (existing callers); otherwise derive the
   // highlighted section from the current path so subpaths light up too.
   const activeSection = active ?? sectionForPath(pathname);
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // The session comes from the shared store, seeded on the server from the
+  // display cookie, so the account chip is drawn in its final shape on the
+  // first paint (F001). `display` decides layout; `user` (the /me answer)
+  // decides anything that needs the real account.
+  const { user, display, setUser } = useSession({ ensure: true });
+  // A session cookie with no display hint (a session from before nc_who):
+  // someone is signed in but the server could not say who. Reserve the
+  // signed-in cluster (challenges, bell, a name-and-avatar chip) rather than
+  // the small unknown placeholder, so the header barely moves when /me lands.
+  const hadSession = useSeededHasSession();
+  const reserveSignedIn = display === undefined && hadSession;
   const [menu, setMenu] = useState<Menu>(null);
+  // Each dropdown stays mounted for its mirrored exit (.m-pop[data-leaving]);
+  // switching menus lets the old one leave while the new one enters.
+  const searchPop = useExitPresence(menu === "search");
+  const challengesPop = useExitPresence(menu === "challenges");
+  const bellPop = useExitPresence(menu === "bell");
+  const profilePop = useExitPresence(menu === "profile");
+  const leavingAttr = (p: { leaving: boolean }) => (p.leaving ? "" : undefined);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -172,24 +191,17 @@ export function SiteHeader({ active }: { active?: string }) {
     } catch {}
   }, []);
 
+  // Challenges and notifications poll once the account is confirmed. (First
+  // visit: useSession's ensure mints an instant guest account so everyone can
+  // play rated games right away; registering later upgrades the same one.)
+  const signedInId = user ? user.id : null;
   useEffect(() => {
-    let cancelled = false;
-    let interval: number | null = null;
-    // First visit mints an instant guest account so everyone can play rated
-    // games right away; registering later upgrades the same account.
-    ensureAccount().then((me) => {
-      if (cancelled) return;
-      setUser(me ?? null);
-      if (me) {
-        refreshSocial();
-        interval = window.setInterval(refreshSocial, 30000);
-      }
-    });
-    return () => {
-      cancelled = true;
-      if (interval) window.clearInterval(interval);
-    };
-  }, [refreshSocial]);
+    if (!signedInId) return;
+    // Deferred so the first poll is not a synchronous setState in the effect.
+    queueMicrotask(() => void refreshSocial());
+    const interval = window.setInterval(refreshSocial, 30000);
+    return () => window.clearInterval(interval);
+  }, [signedInId, refreshSocial]);
 
   // Any click outside the right-hand cluster closes whichever menu is open.
   useEffect(() => {
@@ -200,10 +212,24 @@ export function SiteHeader({ active }: { active?: string }) {
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
+  // Escape closes the open popover and hands focus back to the control that
+  // opened it (F141), like the quick-settings menu and the mobile menu.
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const trigger = rightRef.current?.querySelector<HTMLElement>(`[data-menu-trigger="${menu}"]`);
+      setMenu(null);
+      trigger?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menu]);
+
   const toggle = (m: Exclude<Menu, null>) => {
     const opening = menu !== m;
     setMenu(opening ? m : null);
-    if ((m === "bell" || m === "challenges") && user) {
+    if ((m === "bell" || m === "challenges") && display) {
       if (m === "bell" && opening) {
         // Opening the bell clears everything automatically: refresh first so
         // the dropdown still shows what was new (rows keep their unread look
@@ -297,7 +323,7 @@ export function SiteHeader({ active }: { active?: string }) {
   // right, one hairline underneath.
   return (
     <nav className="site-nav relative z-[60] flex min-h-[48px] items-center justify-between gap-2 px-2 sm:min-h-[60px] sm:gap-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+      <div className="site-nav-brand flex min-w-0 items-center gap-1 sm:gap-2">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}
         <MobileNavMenu align="left" hideAt="md" />
@@ -307,8 +333,10 @@ export function SiteHeader({ active }: { active?: string }) {
             a finger. A min-height (not padding) lifts it to the 44px floor
             without moving the mark or changing the 48/60px bar height, and it
             steps back down once there is a real pointer. `(pointer: fine)`,
-            never `sm:`: a 1024px tablet is a touch device. */}
-        <Logo className="min-h-[44px] [@media(pointer:fine)]:min-h-0" />
+            never `sm:`: a 1024px tablet is a touch device. The min-width
+            covers a narrow bar, where the word steps out of view (af0c696)
+            and the link would otherwise be the 34px mark alone. */}
+        <Logo className="min-h-[44px] min-w-[44px] [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:min-w-0" />
         <div className="ml-2 hidden items-center font-body md:flex">
           {NAV_LINKS.map((link) =>
             link.menu ? (
@@ -322,10 +350,12 @@ export function SiteHeader({ active }: { active?: string }) {
                 >
                   {link.label}
                 </Link>
-                {/* No opacity fade: the menu pops in fully solid so the labels
-                    never read as half-transparent text mid-transition. */}
-                <div className="invisible absolute left-0 top-full z-40 w-56 group-focus-within:visible group-hover:visible">
-                  <div className="site-nav-pop py-1 shadow-xl">
+                {/* Shown by display, not visibility, so the shared popover
+                    enter (.m-pop) replays each time it opens. No exit: moving
+                    the pointer across the bar would otherwise stack a leaving
+                    menu under the next one. */}
+                <div className="absolute left-0 top-full z-40 hidden w-56 group-focus-within:block group-hover:block">
+                  <div className="m-pop m-pop--start site-nav-pop py-1">
                     {link.menu.map((item) => (
                       <Link
                         key={item.href}
@@ -363,7 +393,7 @@ export function SiteHeader({ active }: { active?: string }) {
         </div>
       </div>
 
-      <div ref={rightRef} className="relative flex items-center gap-0.5 sm:gap-1">
+      <div ref={rightRef} data-header-right className="relative flex items-center gap-0.5 sm:gap-1">
         {/* Search: lichess-style. The icon stays put and the field rolls out to
             its LEFT, floating over the nav links; results drop below the field. */}
         <div className="relative">
@@ -372,38 +402,49 @@ export function SiteHeader({ active }: { active?: string }) {
             aria-label="Search players"
             title="Search players"
             aria-expanded={menu === "search"}
+            data-menu-trigger="search"
             className={iconButton + (menu === "search" ? " bg-[color:var(--bg-raised)] text-parchment-50" : "")}
             onClick={() => toggle("search")}
           >
             <Search size={22} strokeWidth={1.6} />
           </button>
-          {menu === "search" && (
+          {searchPop.mounted && (
             // Below lg: a full-width dropdown UNDER the bar (fixed inset-x/top),
             // so the field can never roll off the left edge or cover the inline
             // nav links (which appear at md and would sit under a leftward
             // rollout at tablet widths). Wide desktop (lg+): the lichess-style
             // field that rolls out to the LEFT of the search icon.
-            <div className="header-search-panel fixed inset-x-3 top-[3.9rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[3.9rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
+            <div data-leaving={leavingAttr(searchPop)} className="header-search-panel m-pop fixed inset-x-3 top-[3.9rem] z-40 [&_input]:bg-ink-800 sm:top-[3.9rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
               <PlayerSearch autoFocus />
             </div>
           )}
         </div>
 
-        {user && (
+        {reserveSignedIn && (
+          <>
+            <span aria-hidden className="h-[44px] w-[44px] shrink-0" />
+            <span aria-hidden className="h-[44px] w-[44px] shrink-0" />
+          </>
+        )}
+        {display && (
           <>
             {/* Incoming challenges */}
             <button
               type="button"
-              aria-label="Incoming challenges"
+              aria-label={
+                challenges.length > 0 ? `Incoming challenges, ${challenges.length} pending` : "Incoming challenges"
+              }
               title="Incoming challenges"
+              aria-expanded={menu === "challenges"}
+              data-menu-trigger="challenges"
               className={iconButton}
               onClick={() => toggle("challenges")}
             >
               <Swords size={22} strokeWidth={1.6} />
               <Badge n={challenges.length} />
             </button>
-            {menu === "challenges" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
+            {challengesPop.mounted && (
+              <div data-leaving={leavingAttr(challengesPop)} className="m-pop m-pop--end absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop">
                 <div className="border-b border-[color:var(--edge)] px-4 py-2.5 text-[12px] text-parchment-400">
                   Challenges
                 </div>
@@ -444,12 +485,14 @@ export function SiteHeader({ active }: { active?: string }) {
             {/* Notifications: an account-only feed (friend requests, replies,
                 mod notices) that never populates for a throwaway guest, so it
                 is hidden entirely rather than shown as a dead bell. */}
-            {!user.isGuest && (
+            {!display.isGuest && (
               <>
             <button
               type="button"
               aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
               title="Notifications"
+              aria-expanded={menu === "bell"}
+              data-menu-trigger="bell"
               className={iconButton + (unread > 0 ? " relic-unread" : "")}
               onClick={() => toggle("bell")}
             >
@@ -457,8 +500,8 @@ export function SiteHeader({ active }: { active?: string }) {
               {unread > 0 && <span aria-hidden className="relic-orbit" />}
               <Badge n={unread} />
             </button>
-            {menu === "bell" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
+            {bellPop.mounted && (
+              <div data-leaving={leavingAttr(bellPop)} className="m-pop m-pop--end absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop">
                 <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-4 py-2.5">
                   <span className="text-[12px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
@@ -517,9 +560,20 @@ export function SiteHeader({ active }: { active?: string }) {
         <HeaderSettingsMenu onOpen={() => setMenu(null)} onOpenPreferences={() => setSettingsOpen(true)} />
 
         {/* Account */}
-        {user === undefined ? (
-          <span className="h-9 w-24" />
-        ) : !user ? (
+        {display === undefined ? (
+          reserveSignedIn ? (
+            // A session from before the display cookie: the chip's own box
+            // (the avatar-only 44px button on a phone, avatar plus a
+            // typical name from sm up). Only the name's own length is left
+            // to settle when /me answers.
+            <span aria-hidden className="ml-1 h-[44px] w-[44px] shrink-0 sm:w-32" />
+          ) : (
+            // Genuinely unknown: a first visit whose guest account is still
+            // being minted. A signed-in visitor with the cookie never sees
+            // this.
+            <span className="h-9 w-24" />
+          )
+        ) : !display ? (
           <Link
             href="/login"
             className="ml-1 inline-flex min-h-[44px] items-center px-3 text-[13px] font-semibold text-parchment-300 no-underline transition-colors hover:text-parchment-50 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:py-2"
@@ -532,35 +586,40 @@ export function SiteHeader({ active }: { active?: string }) {
               <button
                 type="button"
                 onClick={() => toggle("profile")}
-                aria-label={user.isGuest ? "Guest account menu" : "Account menu"}
-                title={user.isGuest ? "Guest account menu" : "Account menu"}
+                aria-label={display.isGuest ? "Guest account menu" : "Account menu"}
+                title={display.isGuest ? "Guest account menu" : "Account menu"}
+                data-menu-trigger="profile"
                 // min-w-[44px] stays: on a phone the name is hidden and the
                 // avatar alone is 38px wide, so the floor has to come from
                 // here. The button may shrink TO 44 but never past it, and the
                 // name inside truncates to let it.
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-hover)] hover:text-parchment-50"
-                aria-haspopup="menu"
+                // Disclosure, not an ARIA menu: the panel is a list of plain
+                // buttons in the tab order with no arrow-key roving, so
+                // aria-haspopup="menu" would promise keyboard behaviour it
+                // does not have. aria-controls names the panel it opens.
                 aria-expanded={menu === "profile"}
+                aria-controls="site-account-menu"
               >
                 {/* The name is dead weight at phone widths and can collide with
                     the wordmark; the avatar alone opens the menu there. Guests
                     show a plain "Sign in" affordance beside the name so the
                     header reads as signed-out, never as a registered account. */}
                 <span className="hidden min-w-0 items-center gap-1.5 sm:inline-flex">
-                  {user.isGuest && (
+                  {display.isGuest && (
                     <span className="shrink-0 text-[13px] text-parchment-400">Guest</span>
                   )}
-                  <span className={"truncate " + (user.isGuest ? "text-parchment-200" : "")}>
-                    {user.username}
+                  <span className={"truncate " + (display.isGuest ? "text-parchment-200" : "")}>
+                    {display.username}
                   </span>
                 </span>
-                <PlayerAvatar name={user.username} avatar={user.avatar} size={24} />
+                <PlayerAvatar name={display.username} avatar={display.avatar} size={24} />
               </button>
               {/* Guest sign-in affordance, reading "<name> · Sign in". Links to
                   the same /login flow used by the signed-out button and the
                   in-menu items. Hidden on phones (like the name) to keep the
                   compact mobile header intact; the menu still offers Sign in. */}
-              {user.isGuest && (
+              {display.isGuest && (
                 <>
                   <span aria-hidden className="hidden text-parchment-500 sm:inline">·</span>
                   <Link
@@ -572,13 +631,13 @@ export function SiteHeader({ active }: { active?: string }) {
                 </>
               )}
             </div>
-            {menu === "profile" && (
+            {profilePop.mounted && (
               // max-w alongside the fixed width for the same reason the two
               // w-80 dropdowns above carry one: html,body{overflow-x:clip}
               // means an over-wide popover is silently clipped, not scrollable,
               // so at 320px the right-anchored menu would lose its left edge.
-              <div className="absolute right-0 top-full z-40 mt-2 w-56 max-w-[calc(100vw-1.5rem)] site-nav-pop py-1 shadow-xl">
-                {user.isGuest && (
+              <div id="site-account-menu" data-leaving={leavingAttr(profilePop)} className="m-pop m-pop--end absolute right-0 top-full z-40 mt-2 w-56 max-w-[calc(100vw-1.5rem)] site-nav-pop py-1">
+                {display.isGuest && (
                   <>
                     <div className="px-4 pb-1 pt-2 text-[12px] leading-snug text-parchment-400">
                       You are playing as a guest. Register to keep this name and rating on any
@@ -608,7 +667,7 @@ export function SiteHeader({ active }: { active?: string }) {
                   label="Profile"
                   onClick={() => {
                     setMenu(null);
-                    router.push(`/u/${encodeURIComponent(user.username)}`);
+                    router.push(`/u/${encodeURIComponent(display.username)}`);
                   }}
                 />
                 <MenuItem
@@ -629,7 +688,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 />
                 {/* Private messages are account-only: a guest has no inbox
                     worth opening, so the row is hidden for them. */}
-                {!user.isGuest && (
+                {!display.isGuest && (
                   <MenuItem
                     icon={<Mail size={16} strokeWidth={1.6} />}
                     label="Inbox"
@@ -647,7 +706,9 @@ export function SiteHeader({ active }: { active?: string }) {
                     setSettingsOpen(true);
                   }}
                 />
-                {(user.role === "mod" || user.role === "admin") && (
+                {/* Role-gated rows wait for the real account: the display
+                    cookie is a layout hint and never decides access. */}
+                {(user?.role === "mod" || user?.role === "admin") && (
                   <MenuItem
                     icon={<Shield size={16} strokeWidth={1.6} />}
                     label="Moderation"
@@ -660,7 +721,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 {/* Guests get no Sign out: it only ever destroyed their
                     progress. Sign in / Create account (above) are their
                     doors; a real account signs out normally. */}
-                {!user.isGuest && (
+                {!display.isGuest && (
                   <>
                     <div className="my-1 border-t border-[color:var(--edge)]" />
                     <MenuItem icon={<LogOut size={16} strokeWidth={1.6} />} label="Sign out" onClick={handleSignOut} />

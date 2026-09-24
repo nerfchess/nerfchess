@@ -107,39 +107,32 @@ function Stage({ children }: { children: ReactNode }) {
   );
 }
 
-/** Board-crop stage for a wide lead: oversized around the lead square so the
- * skit takes over the whole visible board (the caller's crop clips it). Same
- * geometry as casinoPlays' Wide, rebuilt here (no cross-module import). */
+/** The scene canvas for a lead: 0..100 of every scene's viewBox is EXACTLY
+ * the board.
+ *
+ * These scenes were authored as if the viewBox were the board (headlines at y
+ * 16 to 24, felt rails at 70 to 86, the outcome tags at y 90 to 94), but the
+ * old Wide was a 14-cell canvas centred on the cast square and Framed
+ * reproduced that same 14-cell composition pinned to the board, so only 21.4
+ * to 78.6 of each axis was ever on screen: every headline and every one of
+ * the 58 outcome tags was clipped off the board, and table props covered whole
+ * ranks. Mapping the viewBox onto the board shows the scene that was drawn.
+ * Wide is kept as a name for the scenes that call it. */
 function Wide({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
-  return (
-    <span className="gsp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span
-        className={`absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]${quakeMs != null ? ` ${QUAKE_CLASS}` : ""}`}
-        style={quakeMs != null ? impactVars(undefined, quakeMs / 1000) : undefined}
-      >
-        {children}
-      </span>
-    </span>
-  );
+  return <Framed quakeMs={quakeMs}>{children}</Framed>;
 }
 
-/** The same 14-cell composition for a lead that declares `anchor: "cast"`,
- * pinned to the BOARD.
- *
- * Every scene in this module is one table-scale prop (a cabinet, a wheel, a
- * vault door) authored to fill the crop, so it is a board-scale layer in the
- * sense of the design brief and belongs in a `BoardFrame` rather than at a
- * fixed percentage of an anchored canvas. The canvas is 14 cells and the board
- * is the middle 8, so the art is re-expanded to 175% of the frame and offset
- * -37.5%: that reproduces the pre-anchoring composition EXACTLY while making
- * it independent of which square the card was cast on. The cast square then
- * carries the play's own local beats; see `Spot`. */
+/** The board-mapped canvas (see Wide). Every scene in this module is one
+ * table-scale prop (a cabinet, a wheel, a vault door), a board-scale layer in
+ * the sense of the design brief, so it lives in a `BoardFrame` and is
+ * independent of which square the card was cast on. The cast square carries
+ * the play's own local beats; see `Spot`. */
 function Framed({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
   // The quake rides an INNER wrapper: .fx-stage's own transform is the anchor
   // clamp, and imp-quake's keyframed transform would override it mid-jolt.
   const inner = (
     <BoardFrame>
-      <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+      <span className="absolute inset-0 block">{children}</span>
     </BoardFrame>
   );
   return (
@@ -359,11 +352,30 @@ function SadPuffs({ x, y, delayMs }: { x: number; y: number; delayMs: number }) 
 }
 
 /** Verdict tag: a small banner that pops in under the scene. */
+/* Outcome tag. Bold caps advance about 0.64em per glyph, and the longest
+ * tags (35 characters at font 5) are wider than the board, so a tag that would
+ * not fit squeezes its glyphs to the board width instead of running off it. */
+const TAG_MAX_W = 96;
+
 function Tag({ x, y, w, text, delayMs, color = GOLD }: { x: number; y: number; w: number; text: string; delayMs: number; color?: string }) {
+  const est = text.length * 5 * 0.64;
+  const fit = Math.min(est, TAG_MAX_W - 6);
+  const bw = Math.min(Math.max(w, fit + 6), TAG_MAX_W);
+  const cx = Math.min(Math.max(x, bw / 2 + 2), 100 - bw / 2 - 2);
   return (
     <g className="gsp-pop" style={d(delayMs)}>
-      <rect x={x - w / 2} y={y - 5.4} width={w} height={10} rx={2.4} fill={INK} stroke={color} strokeWidth={1} />
-      <text x={x} y={y + 2.4} fontSize={5} fontWeight={800} fill={color} textAnchor="middle">{text}</text>
+      <rect x={cx - bw / 2} y={y - 5.4} width={bw} height={10} rx={1.4} fill={INK} stroke={color} strokeWidth={1} />
+      <text
+        x={cx}
+        y={y + 2.4}
+        fontSize={5}
+        fontWeight={800}
+        fill={color}
+        textAnchor="middle"
+        {...(est > fit ? { textLength: fit, lengthAdjust: "spacingAndGlyphs" } : {})}
+      >
+        {text}
+      </text>
     </g>
   );
 }
@@ -1369,7 +1381,7 @@ function RiverCardPlay({ lead, role, delayMs }: PlayProps) {
           <path d="M8 84 Q50 58 92 84" fill="none" stroke={FELT_EDGE} strokeWidth={2.4} />
           {/* the river */}
           <path d="M10 30 q20 6 40 0 q20 -6 40 0" fill="none" stroke={BLUE} strokeWidth={1.6} opacity={0.7} />
-          <text x={50} y={22} fontSize={6} fontWeight={800} fill={CREAM} textAnchor="middle" style={{ letterSpacing: "1px" }}>THE RIVER FORGIVES NOTHING</text>
+          <text x={50} y={22} fontSize={6} fontWeight={800} fill={CREAM} textAnchor="middle" textLength={92} lengthAdjust="spacingAndGlyphs" style={{ letterSpacing: "1px" }}>THE RIVER FORGIVES NOTHING</text>
           <text x={32} y={76} fontSize={4.6} fontWeight={700} fill={CREAM} textAnchor="middle">YOU</text>
           <text x={68} y={76} fontSize={4.6} fontWeight={700} fill={CREAM} textAnchor="middle">THEM</text>
         </g>
@@ -2437,7 +2449,7 @@ function DevilsDeckPlay({ lead, role, delayMs }: PlayProps) {
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(26,4,10,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
-          <text x={50} y={18} fontSize={6} fontWeight={800} fill="#e08a9a" textAnchor="middle" style={{ letterSpacing: "1px" }}>HE SHUFFLES WITH HIS TAIL</text>
+          <text x={50} y={18} fontSize={6} fontWeight={800} fill="#e08a9a" textAnchor="middle" textLength={92} lengthAdjust="spacingAndGlyphs" style={{ letterSpacing: "1px" }}>HE SHUFFLES WITH HIS TAIL</text>
           {/* the tail, mid-shuffle */}
           <path d="M84 74 q8 -10 -2 -16 q-7 -4 -5 -10 q1.6 -5 7 -4" stroke={RED} strokeWidth={2} fill="none" strokeLinecap="round" />
           <path d="M82 42 l4 -3 -0.6 5 Z" fill={RED} />
@@ -2862,7 +2874,7 @@ function RiggedRafflePlay({ lead, role, delayMs }: PlayProps) {
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(20,22,6,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
-          <text x={50} y={20} fontSize={5.6} fontWeight={800} fill="#d6e08a" textAnchor="middle" style={{ letterSpacing: "1px" }}>EVERYONE IS A WINNER. OF GLUE.</text>
+          <text x={50} y={20} fontSize={5.6} fontWeight={800} fill="#d6e08a" textAnchor="middle" textLength={92} lengthAdjust="spacingAndGlyphs" style={{ letterSpacing: "1px" }}>EVERYONE IS A WINNER. OF GLUE.</text>
           <path d="M32 78 h36 M38 78 L42 64 M62 78 L58 64" stroke={WOOD} strokeWidth={2.2} strokeLinecap="round" />
         </g>
         {/* the drum tumbles a raffle nobody entered */}
@@ -3011,7 +3023,7 @@ function HardshipJackpotPlay({ lead, role, delayMs }: PlayProps) {
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,12,20,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
-          <text x={50} y={20} fontSize={5.6} fontWeight={800} fill="#f2a2c0" textAnchor="middle" style={{ letterSpacing: "1px" }}>THE MISERY METER PAYS OUT</text>
+          <text x={50} y={20} fontSize={5.6} fontWeight={800} fill="#f2a2c0" textAnchor="middle" textLength={92} lengthAdjust="spacingAndGlyphs" style={{ letterSpacing: "1px" }}>THE MISERY METER PAYS OUT</text>
         </g>
         {/* the piggy bank shakes hard, then the payout bursts free */}
         <g className="gsp-jiggle" style={d(delayMs)}>
@@ -3103,7 +3115,7 @@ function TheLastBetPlay({ lead, role, delayMs }: PlayProps) {
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.58)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
           <rect x={8} y={64} width={84} height={22} rx={4} fill={FELT} stroke={FELT_EDGE} strokeWidth={2} />
-          <text x={50} y={18} fontSize={5.6} fontWeight={800} fill={CREAM} textAnchor="middle" style={{ letterSpacing: "1px" }}>NOBODY AT THE TABLE BREATHED</text>
+          <text x={50} y={18} fontSize={5.6} fontWeight={800} fill={CREAM} textAnchor="middle" textLength={92} lengthAdjust="spacingAndGlyphs" style={{ letterSpacing: "1px" }}>NOBODY AT THE TABLE BREATHED</text>
           {/* her stake: herself */}
           <Chip cx={38} cy={74} r={5} fill={GOLD} edge={GOLD_EDGE} />
           <Chip cx={46} cy={76} r={5} />

@@ -47,9 +47,9 @@ function AllStats() {
       <div className="plate mt-5 grid grid-cols-2 divide-x divide-y divide-[color:var(--edge)] sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
         <StatCard label="Games played" value={stats.games.total + (stats.games.vsBots ?? 0)} />
         <StatCard label="Games vs bots" value={stats.games.vsBots ?? 0} />
-        <StatCard label="Games today" value={stats.games.today} />
+        <StatCard label="Games, last 24 hours" value={stats.games.today} />
         <StatCard label="Rated games" value={stats.games.rated} />
-        <StatCard label="Players" value={stats.players.total} />
+        <StatCard label="Accounts, bots and guests included" value={stats.players.total} />
       </div>
 
       <RulesTable rows={stats.topNerfs} />

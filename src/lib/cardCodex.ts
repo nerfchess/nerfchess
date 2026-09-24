@@ -15,6 +15,7 @@ import { isBoon, turnCost, type Buff, type TurnCost } from "@/engine/buff";
 import type { Nerf, Tier } from "@/engine/nerf";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { categoriesOf, getCategoryLabel } from "@/lib/nerfCategories";
+import { buffType, cardPath, nerfPath, type CardType } from "./cardPaths";
 
 // Info cards whose whole effect is reading the opponent's NERF: buff mode has
 // no nerfs, so draft.ts filters these out of buff drafts. Re-declared here to
@@ -23,8 +24,10 @@ const NERF_REVEAL = new Set(["extra_glance", "watchtower"]);
 
 export type CardKind = "buff" | "nerf";
 
-/** The display family a card belongs to, matching the codex's tabs. */
-export type CardType = "Buff" | "Hex" | "Boon" | "Item" | "Nerf";
+// The paths and the family label moved to cardPaths.ts (no library behind
+// them, so client chunks can use them); re-exported here for server callers.
+export type { CardType } from "./cardPaths";
+export { buffPath, nerfPath, cardPath, buffType } from "./cardPaths";
 
 // --- Lookups ----------------------------------------------------------------
 
@@ -35,35 +38,7 @@ export const NERF_BY_ID: Record<string, Nerf> = Object.fromEntries(
   ALL_NERFS.map((n) => [n.id, n]),
 );
 
-export function buffPath(id: string): string {
-  return `/codex/buff/${id}`;
-}
-export function nerfPath(id: string): string {
-  return `/codex/nerf/${id}`;
-}
-
-/** Canonical codex path for a buff-library card: hexes and boons live in
- * their own URL namespaces (/codex/hex, /codex/boon) matching the codex's
- * tabs; plain buffs and items stay at /codex/buff. The old buff path keeps
- * rendering for every id (never 404 an indexed URL) with its canonical
- * pointing here. */
-export function cardPath(b: Buff): string {
-  const type = buffType(b);
-  if (type === "Hex") return `/codex/hex/${b.id}`;
-  if (type === "Boon") return `/codex/boon/${b.id}`;
-  return buffPath(b.id);
-}
-
 // --- Classification ---------------------------------------------------------
-
-/** Which family a buff reads as, following the codex's four tabs plus items.
- * Hex and (nerf-relief / boon) win over the plain "Buff" label. */
-export function buffType(b: Buff): CardType {
-  if (b.category === "hex") return "Hex";
-  if (b.category === "item") return "Item";
-  if (isBoon(b)) return "Boon";
-  return "Buff";
-}
 
 /** Human label for the mode(s) a card can appear in. Mirrors draft.ts inMode:
  * - buff mode offers everything except nerf-relief, hexes, and the two
@@ -89,6 +64,15 @@ export function modeLabel(modes: ("buff" | "nerf")[]): string {
 
 export function tierName(tier: Tier): string {
   return `${TIER_ROMAN[tier]}. ${TIER_LABEL[tier]}`;
+}
+
+/** The tier as it reads inside a sentence, article included: "a Trivial
+ *  (tier I)", "an Easy (tier II)". tierName() is a label ("I. Trivial") and
+ *  produced "Lucky is a I. Trivial nerf" when dropped into prose (F174). */
+export function tierPhrase(tier: Tier): string {
+  const label = TIER_LABEL[tier];
+  const article = /^[aeiou]/i.test(label) ? "an" : "a";
+  return `${article} ${label} (tier ${TIER_ROMAN[tier]})`;
 }
 
 // One plain sentence per tier, so a card page can explain its own difficulty

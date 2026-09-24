@@ -8,16 +8,35 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Report } from "./types";
-import { Empty, FilterChip, Loading, ModButton, ModLinkButton, Pill, postJson, when, whenShort } from "./ui";
+import { Empty, FilterChip, LoadFailed, Loading, ModButton, ModLinkButton, Pill, postJson, when, whenShort } from "./ui";
 
-export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
+export function ReportsSection({
+  onHandled,
+  onInspectPlayer,
+}: {
+  onHandled?: () => void;
+  onInspectPlayer?: (username: string) => void;
+}) {
   const [status, setStatus] = useState<"open" | "all">("open");
   const [reports, setReports] = useState<Report[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  // One note per open report, sent with the decision and kept in the audit log.
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  // Failures used to vanish (the queue just reloaded); now each card says why.
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // A queue that never loaded says so (a list already on screen stays).
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/mod/reports?status=${status === "open" ? "open" : "all"}`);
-    if (res.ok) setReports(((await res.json()) as { reports: Report[] }).reports);
+    try {
+      const res = await fetch(`/api/mod/reports?status=${status === "open" ? "open" : "all"}`);
+      if (!res.ok) throw new Error(String(res.status));
+      setReports(((await res.json()) as { reports: Report[] }).reports);
+      setLoadFailed(false);
+    } catch {
+      setLoadFailed(true);
+    }
   }, [status]);
 
   useEffect(() => {
@@ -28,10 +47,16 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
 
   const close = async (id: string, next: "resolved" | "dismissed") => {
     setBusy(id);
-    await postJson("/api/mod/reports", { id, status: next });
+    const res = await postJson("/api/mod/reports", { id, status: next, note: (notes[id] ?? "").trim() || undefined });
+    setErrors((prev) => {
+      const rest = { ...prev };
+      if (res.ok) delete rest[id];
+      else rest[id] = res.status === 409 ? "Another moderator already closed this report." : (res.error ?? "Could not save.");
+      return rest;
+    });
     await load();
     setBusy(null);
-    onHandled?.();
+    if (res.ok) onHandled?.();
   };
 
   const openCount = reports?.filter((r) => r.status === "open").length ?? 0;
@@ -46,7 +71,7 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
           Everything
         </FilterChip>
         {reports && (
-          <span className="ml-auto text-[12px] text-parchment-400">
+          <span className="ml-auto text-[13px] text-parchment-400">
             {status === "open"
               ? `${openCount} waiting`
               : `${reports.length} report${reports.length === 1 ? "" : "s"}`}
@@ -55,7 +80,11 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
       </div>
 
       {!reports ? (
-        <Loading what="reports" />
+        loadFailed ? (
+          <LoadFailed what="the report queue" onRetry={() => void load()} />
+        ) : (
+          <Loading what="reports" />
+        )
       ) : reports.length === 0 ? (
         <Empty>{status === "open" ? "Nothing in the queue." : "No reports have ever been filed."}</Empty>
       ) : (
@@ -80,6 +109,22 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
                 )}
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-parchment-100">{r.description}</p>
+              {r.handled_note && <p className="mt-1 text-[13px] text-parchment-400">Note: {r.handled_note}</p>}
+              {r.status === "open" && (
+                <input
+                  value={notes[r.id] ?? ""}
+                  onChange={(e) => setNotes((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                  aria-label={`Note for the report on ${r.reported_name}`}
+                  maxLength={500}
+                  placeholder="Note (optional, goes in the audit log)"
+                  className="plate mt-3 w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-[color:var(--edge-strong)] sm:py-1.5"
+                />
+              )}
+              {errors[r.id] && (
+                <p role="alert" className="mt-2 text-[13px] text-oxblood-glow">
+                  {errors[r.id]}
+                </p>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 {r.status === "open" && (
                   <>
@@ -100,6 +145,11 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
                   <ModLinkButton href={`/game/${r.game_id}`} size="sm">
                     Open game
                   </ModLinkButton>
+                )}
+                {onInspectPlayer && (
+                  <ModButton size="sm" onClick={() => onInspectPlayer(r.reported_name)}>
+                    Inspect {r.reported_name}
+                  </ModButton>
                 )}
                 <ModLinkButton href={`/u/${r.reported_name}`} size="sm" tone="quiet">
                   Profile ↗

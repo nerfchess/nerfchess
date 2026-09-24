@@ -372,37 +372,7 @@ function AllTheKingsMenScene({ role, delayMs }: SceneProps) {
         </g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Hall tint="rgba(185,143,78,0.26)" delayMs={delayMs} />
-      <P x={50} y={70} w={26} h={4} cls="g32-tell" style={{ background: C_KL.deep, ...d(delayMs + 60) }} />
-      <P x={48} y={52} w={24} h={30} cls="g32-kl-slab" style={d(delayMs + 170)}>
-        <svg viewBox="0 0 100 130" className="block h-full w-full">
-          <rect x="8" y="6" width="84" height="118" fill={C_KL.deep} stroke={C_KL.core} strokeWidth="7" />
-          <path d="M8 34h84M8 62h84M8 90h84" stroke={C_KL.core} strokeWidth="4" />
-        </svg>
-      </P>
-      {KL_TOKENS.map((i) => (
-        <P
-          key={i}
-          x={48}
-          y={42 + i * 6.6}
-          w={14}
-          h={4}
-          cls="g32-kl-token"
-          style={dv(delayMs + 260 + i * 80, { "--g32-mx": `${-160 - i * 10}%` })}
-        >
-          <svg viewBox="0 0 80 22" className="block h-full w-full">
-            <rect x="2" y="2" width="76" height="18" fill={C_KL.core} stroke={C_KL.deep} strokeWidth="4" />
-          </svg>
-        </P>
-      ))}
-      <P x={64} y={52} w={4} h={30} cls="g32-kl-tube" style={{ border: `2px solid ${C_KL.core}`, ...d(delayMs + 320) }} />
-      <P x={64} y={40} w={4.4} h={4.4} cls="g32-kl-ball" style={{ background: C_KL.glow, borderRadius: "50%", ...d(delayMs + 560) }} />
-      <P x={48} y={42} w={26} h={5} cls="g32-kl-row" style={{ background: C_KL.glow, ...d(delayMs + 700) }} />
-      <Fall color={C_KL.core} delayMs={delayMs + 800} n={3} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1628,6 +1598,213 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
+
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g32-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g32-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g32-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g32-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+/* --- ov_all_the_kings_men ----------------------------------------------------------
+   "Up to four of your captured pieces return at once, strongest first, on
+   random empty squares in your half." Humpty's egg lies cracked at the
+   caster's edge; four of the fallen march out of it in order of strength,
+   queen, rook, bishop, knight, each to its own scattered empty square in the
+   caster's half, and each landing square is lit and numbered by its order. */
+const C_KMR = { core: "#b98f4e", glow: "#ffefcf", deep: "#2a2114" };
+const KM_MEN: { k: "q" | "r" | "b" | "n"; col: number; r: number }[] = [
+  { k: "q", col: 5, r: 2 },
+  { k: "r", col: 1, r: 3 },
+  { k: "b", col: 3, r: 2 },
+  { k: "n", col: 6, r: 3 },
+];
+
+function AllTheKingsMenRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <AllTheKingsMenScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_KMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(1.5)} w={12} h={12} cls="g32-r-stamp" delayMs={d + 30} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M3.4 11.6C3.4 6 6.4 2 10 2s6.6 4 6.6 9.6" fill={c.glow} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+          <path d="M3.4 11.6l2.4-1.6 2 2 2.4-2.2 2.2 2 2.2-1.8 2 1.6" fill="none" stroke={c.deep} strokeWidth="1.2" {...SJ} />
+          <path d="M3.6 13.4l2.2 1.4 2-1.8 2.4 2 2.2-2 2.2 1.8 2-1.4C16 17 13.4 19 10 19s-6-2-6.4-5.6z" fill={c.glow} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      {KM_MEN.map((m, i) => {
+        const dx = (m.col - 3.5) * 100;
+        const dy = (m.r - 1.5) * 100;
+        return (
+          <Q key={m.k} x={fc(m.col)} y={rk(m.r)} w={11} h={11} cls="g32-r-go" delayMs={d + 220 + i * 170} v={{ "--gd": "1.8s", "--tx0": `calc(var(--fx-side, 1) * ${-dx}%)`, "--ty0": `calc(var(--fx-side, 1) * ${dy}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+            <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+          </Q>
+        );
+      })}
+      {KM_MEN.map((m, i) => (
+        <Tint key={`t${m.k}`} x={fc(m.col)} y={rk(m.r)} color="rgba(185,143,78,0.34)" delayMs={d + 560 + i * 170} gd="1.4s" />
+      ))}
+      {KM_MEN.map((m, i) => (
+        <Q key={`n${m.k}`} x={`calc(${fc(m.col)} + 4.4%)`} y={`calc(${rk(m.r)} - 4.4%)`} w={4} h={4} cls="g32-r-pip" delayMs={d + 600 + i * 170} v={{ "--gd": "1.3s" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.4" fill={c.core} stroke={c.deep} strokeWidth="0.8" />
+            <text x="5" y="7.2" textAnchor="middle" fontSize="6" fontWeight="700" fill={c.deep}>{i + 1}</text>
+          </svg>
+        </Q>
+      ))}
+      <Q x="50%" y={rk(2.2)} w={40} h={2} cls="g32-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(185,143,78,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- ov_grail_quest ----------------------------------------------------------------
+   "Send one of your knights away on quest. After 5 of your turns it returns
+   to a random empty square in your half as a Grail Knight, permanently able
+   to also step one square in any direction." The chosen knight rides off the
+   board's edge from its own square; five turn pips mark the road; it comes
+   back onto an empty square in the caster's half carrying a grail, and the
+   eight squares around it light one by one: its new king's step. */
+const C_GQR = { core: "#e8c46a", glow: "#fff4dc", deep: "#2a200c" };
+
+/** Centre of the cast square (the chosen knight), in board percent. */
+const CAST_X = "calc((0.5 - var(--fx-board-dx, -3.5) - var(--fx-anchor-dx, 0)) * 12.5%)";
+const CAST_Y = "calc((0.5 - var(--fx-board-dy, -3.5) - var(--fx-anchor-dy, 0)) * 12.5%)";
+
+function GrailQuestRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GrailQuestScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GQR;
+  const d = delayMs;
+  const ring: Array<[number, number]> = [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+  return (
+    <Brd>
+      <Q x={CAST_X} y={CAST_Y} w={11} h={11} cls="g32-r-go" delayMs={d + 40} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "calc(var(--fx-side, 1) * -900%)", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Pips n={5} r={3.5} x0={42} x1={58} color={c.glow} delayMs={d + 360} gd="1.8s" />
+      <Q x={fc(5)} y={rk(2)} w={11} h={11} cls="g32-r-go" delayMs={d + 700} v={{ "--gd": "1.3s", "--tx0": "calc(var(--fx-side, 1) * 500%)", "--ty0": "0%", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${fc(5)} + 3.4%)`} y={`calc(${rk(2)} - 3.4%)`} w={5} h={5} cls="g32-r-stamp" delayMs={d + 1000} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 3h12c0 5-2.6 8-6 8S4 8 4 3zM10 11v4M6 17h8" fill={c.core} stroke={c.deep} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      {ring.map(([dx, dy], i) => (
+        <Tint key={`k${i}`} x={fc(5 + dx)} y={rk(2 + dy)} color="rgba(232,196,106,0.3)" delayMs={d + 1080 + i * 30} gd="0.9s" />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- the big machines: a raffle drum and a spinner ---
   ov_pandemonium_carnival: S(PandemoniumCarnivalScene, {
@@ -1640,7 +1817,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- allotment and tempo: the kleroterion and the fifth bell ---
-  ov_all_the_kings_men: S(AllTheKingsMenScene, {
+  ov_all_the_kings_men: S(AllTheKingsMenRule, {
     ordering: "radial", staggerMs: 70, victims: "all", hasLead: true,
     sound: "chips", anchor: "cast",
   }),
@@ -1654,7 +1831,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
     sound: "slots", anchor: "aim",
   }),
-  ov_grail_quest: S(GrailQuestScene, {
+  ov_grail_quest: S(GrailQuestRule, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true,
     sound: "vault", anchor: "cast",
   }),
@@ -1824,7 +2001,6 @@ const IMPACTS: Record<string, Imp> = {
   // the spinner arrow stops on the bent peg: verdict column + peg ring
   ov_the_fool: { at: 620, tint: C_SP.core, laser: true, shock: true, y: 48 },
   // the kleroterion releases its row: a bronze token is split for inspection
-  ov_all_the_kings_men: { at: 560, tint: C_KL.core, glyph: impGlyph(IG_ORB, C_KL.core, C_KL.deep), shock: true, y: 52 },
   // the FIFTH beat: the bell finally speaks, column + toll ring
   ov_monks_of_the_fifth_bell: { at: 660, tint: C_MT.core, laser: true, shock: true, y: 44, s: 8 },
   // the shuffler presses the halves flush: a card is crushed in the throat

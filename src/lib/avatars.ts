@@ -52,8 +52,14 @@ const DEFAULT_POOL = AVATAR_IDS.filter(
 // accounts that chose one of the retired presets still render correctly.
 export const AVATAR_PICKER_IDS = [...DEFAULT_POOL];
 
+// Own keys only: `in` also matched prototype members, so "toString" passed as
+// an avatar id and was stored (F048).
+function isCatalogId(value: string): boolean {
+  return Object.prototype.hasOwnProperty.call(AVATARS, value);
+}
+
 export function isAvatarId(value: unknown): value is string {
-  return typeof value === "string" && value in AVATARS && !AVATARS[value].star && !AVATARS[value].flower;
+  return typeof value === "string" && isCatalogId(value) && !AVATARS[value].star && !AVATARS[value].flower;
 }
 
 // Uploaded profile pictures are stored inline as small data URLs (the client
@@ -208,7 +214,7 @@ export function housePfpSrc(value: string): string {
 /** The avatar to show: the stored preset when valid, else a stable default
  *  hashed from the username so the same player always looks the same. */
 export function avatarIdFor(name: string, stored?: string | null): string {
-  if (stored && stored in AVATARS) return stored;
+  if (stored && isCatalogId(stored)) return stored;
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
   return DEFAULT_POOL[hash % DEFAULT_POOL.length];

@@ -13,7 +13,7 @@ export interface ArenaSink {
   /** replayOk = did the finished record round-trip through replayToPosition
    *  back to the in-RAM board? M2 can ignore it; M1 gates on it. */
   gameEnd(record: ArenaFinishedRecord, replayOk: boolean): void;
-  /** The game was aborted (shutdown/pause/error) — no result, nothing to
+  /** The game was aborted (shutdown/pause/error), no result, nothing to
    *  archive or rate. Still MUST reach the DO: a watched game's spectator
    *  replica only ends on an end frame, so a silent abort left TV watchers on
    *  a board frozen forever. The record here is best-effort (an abort can land
@@ -89,7 +89,7 @@ export class LogSink implements ArenaSink {
 }
 
 /** M2 sink: forwards finished games to the DO for archive + rating. Only a
- *  round-trip-valid record is reported (a failed self-check is a recording bug —
+ *  round-trip-valid record is reported (a failed self-check is a recording bug,
  *  never archive a game that won't replay). */
 export class IngestSink implements ArenaSink {
   constructor(private readonly ingest: IngestClient) {}

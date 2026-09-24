@@ -1,0 +1,23 @@
+  ok  games.ts exports countsForRating
+  ok  two accounts, rated, decided: rated
+  ok  the same account on both seats is never rated (F080)
+  ok  an anonymous seat is not rated
+  ok  a casual game is not rated
+  ok  source check: a takeback offer pins the ply it rewinds to (F086)
+  ok  source check: accepting rewinds to the pinned ply, not a recomputed one (F086)
+  ok  source check: the move's flag check uses the arrival time (F088)
+  ok  source check: the move's clock bank uses the same arrival time (F088)
+  ok  source check: a seated player cannot post spectator chat in their live game (F083)
+  ok  source check: spectator chat fan-out skips seated players (F083)
+  ok  source check: the watch start frame hides spectator chat from seated players (F083)
+  ok  source check: player chat goes through cleanText, not a UTF-16 slice (F052, F053)
+  ok  source check: spectator chat goes through cleanText (F052, F053)
+  ok  source check: no clock bound literal is left in worker.ts (F078)
+  ok  source check: all three clock checks use src/lib/clockBounds.ts (F078)
+  ok  source check: the see-opponent-buffs toggle survives a hibernation wake (F091)
+  ok  source check: the infinite-rerolls toggle survives a hibernation wake (F091)
+  ok  source check: the clock-adjust debounce survives a hibernation wake (F091)
+FAIL  source check: seating the same account on both seats drops the rated flag, so no rated badge (F080 review round 1)
+FAIL  source check: ratingPreview shows no +N / -N for a same-account game (F080 review round 1)
+
+2 failure(s)

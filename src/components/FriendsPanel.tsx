@@ -9,9 +9,11 @@ import { PresenceBadge } from "./PresenceBadge";
 import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { useSession } from "@/lib/session/SessionProvider";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
-// Challenge that deep-links into the friend-game flow (/friend?challenge=name),
+// Challenge that deep-links into the friend-game flow (/lobby?tab=friends&challenge=name),
 // which notifies the target and starts the game when they accept. Self-
 // contained: fetches /api/friends and posts actions there. Live presence is
 // read from the one shared lobby snapshot, so every row shows whether a friend
@@ -72,11 +74,22 @@ function page<T>(items: T[], expanded: boolean): { shown: T[]; hidden: number } 
 export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
   const [data, setData] = useState<FriendsData | null>(null);
   // undefined = still checking, false = signed out, true = signed in.
-  const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
+  const [loadedSignedIn, setSignedIn] = useState<boolean | undefined>(undefined);
+  // Ask the session first (wave 2): the panel used to GET /api/friends on
+  // mount, so a first visit logged a 401 console error while the header was
+  // still minting the guest, and then kept the signed-out view for a guest
+  // who can in fact add friends. It now waits for the session (the header's
+  // guest mint included), loads once per account, and a failed mint (null)
+  // is the signed-out view with no request at all.
+  const { display } = useSession({ ensure: true });
+  const account = display ? display.username : display;
+  const signedIn = account === null ? false : loadedSignedIn;
   // Distinguishes "initial load in flight" (show a skeleton) from "initial load
   // failed" (show a retry), so a 5xx / offline first fetch never hangs on a
   // blank panel or an endless skeleton.
   const [loadFailed, setLoadFailed] = useState(false);
+  // The roster skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(signedIn === undefined && !loadFailed);
   const [addName, setAddName] = useState("");
   const [filter, setFilter] = useState("");
   const [busy, setBusy] = useState(false);
@@ -153,9 +166,10 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
     // `load` only sets state after awaiting the fetch (never synchronously),
     // so this is the sanctioned fetch-on-mount pattern; the rule can't see
     // through the useCallback's await boundary.
+    if (!account) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [load]);
+  }, [account, load]);
 
   const act = async (action: string, username: string) => {
     setBusy(true);
@@ -189,7 +203,7 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
     }
   };
 
-  if (signedIn === undefined) {
+  if (signedIn === undefined || held) {
     // Initial load. A network/5xx failure gets a retry; otherwise a themed
     // skeleton that mirrors the roster rows (no blank panel, no spinner text).
     return (
@@ -211,12 +225,12 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
           <div className="mt-4 space-y-2" aria-hidden>
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
+                <div className="skeleton h-9 w-9 shrink-0 rounded-full" />
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="h-3.5 w-1/3 animate-pulse rounded bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
-                  <div className="h-2.5 w-1/4 animate-pulse rounded bg-white/[0.07] motion-reduce:animate-none" />
+                  <div className="skeleton h-3.5 w-1/3" />
+                  <div className="skeleton h-2.5 w-1/4" />
                 </div>
-                <div className="ml-auto h-8 w-16 shrink-0 animate-pulse rounded-none bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
+                <div className="skeleton ml-auto h-8 w-16 shrink-0" />
               </div>
             ))}
             <span className="sr-only">Loading friends</span>
@@ -230,7 +244,7 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
       <div className="plate p-4">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         <p className="mt-1 text-sm text-parchment-300">
-          <Link href="/login" className="text-gold-leaf hover:underline">
+          <Link href="/login" className="text-gold-leaf underline underline-offset-2">
             Sign in
           </Link>{" "}
           to add friends and challenge them in one tap.
@@ -344,7 +358,10 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
         </Button>
       </form>
       {note && (
-        <p className={"mt-2 text-[12px] " + (note.kind === "ok" ? "text-verdigris-glow" : "text-oxblood-glow")}>
+        <p
+          role={note.kind === "ok" ? "status" : "alert"}
+          className={"mt-2 text-[12px] " + (note.kind === "ok" ? "text-verdigris-glow" : "text-oxblood-glow")}
+        >
           {note.text}
         </p>
       )}
@@ -453,7 +470,7 @@ function ShowAllToggle({
 // One accepted-friend row: identity + presence, a Watch link when they are in
 // a game, a Challenge when they are reachable, and a quiet Remove that only
 // turns cursed-red on hover. Row hover warms the surface and lights an ember
-// hairline — pointer devices only, so touch never gets a sticky hover.
+// hairline, pointer devices only, so touch never gets a sticky hover.
 function FriendRow({
   f,
   presence,
@@ -494,7 +511,7 @@ function FriendRow({
         )}
         {presence.state !== "in-game" && (
           <LinkButton tone="leaf"
-            href={`/friend?challenge=${encodeURIComponent(f.username)}`}
+            href={`/lobby?tab=friends&challenge=${encodeURIComponent(f.username)}`}
             aria-label={`Challenge ${f.username}`}
             className="min-w-[44px] px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />

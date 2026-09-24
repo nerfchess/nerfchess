@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
+import { intParam, PUBLIC_SHORT_CACHE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawMode = url.searchParams.get("mode");
   const mode = rawMode === "nerf" || rawMode === "buff" ? rawMode : null;
-  const rawLimit = Number(url.searchParams.get("limit"));
-  const limit = Number.isFinite(rawLimit) ? Math.min(12, Math.max(1, Math.floor(rawLimit))) : 1;
+  const limit = intParam(url.searchParams.get("limit"), 1, 12, 1);
   const rows = await pgAll<{
     id: string;
     white_name: string;
@@ -40,7 +40,8 @@ export async function GET(request: Request) {
     mode ? [mode, limit] : [limit],
   );
 
-  if (rows.length === 0) return NextResponse.json({ game: null, games: [] });
+  const headers = { "Cache-Control": PUBLIC_SHORT_CACHE };
+  if (rows.length === 0) return NextResponse.json({ game: null, games: [] }, { headers });
 
   const ids = [
     ...new Set(
@@ -74,5 +75,5 @@ export async function GET(request: Request) {
     black_avatar: game.black_user_id ? avatars.get(game.black_user_id) ?? null : null,
   }));
 
-  return NextResponse.json({ game: games[0], games });
+  return NextResponse.json({ game: games[0], games }, { headers });
 }

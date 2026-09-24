@@ -1,0 +1,107 @@
+/*
+ * Metric-matched fallbacks for the two self-hosted faces, one per weight.
+ *
+ * With display: swap the text first paints in the fallback and is laid out
+ * again when the woff2 lands. Every difference in advance width between the
+ * two faces rewraps a line somewhere, and that is the whole of the font-swap
+ * layout shift. These faces make the fallback take up the same room as the
+ * real face, weight by weight, so the swap changes the glyphs and nothing
+ * else.
+ *
+ * Why this file and not next/font's own fallback (layout.tsx sets
+ * `adjustFontFallback: false` for both faces):
+ *
+ * 1. next/font writes one "Noto Sans Fallback" face with local(Arial) as its
+ *    only source. Linux, ChromeOS and many Android builds have no font named
+ *    Arial, so that face fails and text fell to system-ui (DejaVu Sans on a
+ *    stock Linux box, far wider). Here every face also names the
+ *    Arial-compatible Liberation Sans and Arimo (same advance widths, same
+ *    vertical metrics as Arial), so one set of numbers serves all three.
+ * 2. next/font's face has one size-adjust for every weight, taken from the
+ *    400 master. Noto Sans is a variable font that widens as it gets heavier,
+ *    while Arial has only a regular and a bold. A weight 500 line (the
+ *    wordmark, nav links, buttons) drew in regular Arial at the 400 scale and
+ *    came out about 2% narrow; 600 drew in bold Arial and came out about 4%
+ *    wide. Each weight band below has its own size-adjust.
+ * 3. JetBrains Mono fell back to Arial, a proportional face, at 134.59%. A
+ *    monospace fallback matches it exactly instead: Courier New and its
+ *    metric twins Liberation Mono and Cousine advance 0.6 em per character,
+ *    the same as JetBrains Mono, so clocks and ratings keep their width.
+ *
+ * How the numbers were taken (docs/polish-pass/slices/wave3-fonts.md):
+ * size-adjust is the width of real page copy (the terms page, 5.6k
+ * characters) set in Noto Sans at that weight over the same copy in the
+ * Liberation face the band uses, measured in Chromium. The vertical overrides
+ * are Noto Sans's own ascent 1069 and descent 293 (per 1000 units, line gap
+ * 0) divided by that size-adjust, so the line box and the baseline sit where
+ * Noto Sans puts them. JetBrains Mono: ascent 1020, descent 300, line gap 0,
+ * advance 600; Liberation Mono advances 1229 of 2048.
+ *
+ * Re-measure if a face, its subset or its weight list changes.
+ */
+
+/* Noto Sans 400 (and lighter) on regular Arial metrics. */
+@font-face {
+  font-family: "NotoSansMetricFallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo Regular");
+  font-weight: 1 449;
+  size-adjust: 105.83%;
+  ascent-override: 101.01%;
+  descent-override: 27.69%;
+  line-gap-override: 0%;
+}
+
+/* Noto Sans 500 on regular Arial metrics, scaled up to its wider advance. */
+@font-face {
+  font-family: "NotoSansMetricFallback";
+  src: local("Arial"), local("ArialMT"), local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo Regular");
+  font-weight: 450 549;
+  size-adjust: 107.84%;
+  ascent-override: 99.12%;
+  descent-override: 27.17%;
+  line-gap-override: 0%;
+}
+
+/* Noto Sans 600 on bold Arial metrics, scaled down (bold Arial is wider). */
+@font-face {
+  font-family: "NotoSansMetricFallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  font-weight: 550 649;
+  size-adjust: 102.04%;
+  ascent-override: 104.76%;
+  descent-override: 28.71%;
+  line-gap-override: 0%;
+}
+
+/* Noto Sans 700 (and heavier) on bold Arial metrics. */
+@font-face {
+  font-family: "NotoSansMetricFallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  font-weight: 650 1000;
+  size-adjust: 104.42%;
+  ascent-override: 102.38%;
+  descent-override: 28.06%;
+  line-gap-override: 0%;
+}
+
+/* JetBrains Mono 400 and 500 on a 0.6 em monospace. */
+@font-face {
+  font-family: "JetBrainsMonoMetricFallback";
+  src: local("Courier New"), local("CourierNewPSMT"), local("Liberation Mono"), local("LiberationMono"), local("Cousine"), local("Cousine Regular");
+  font-weight: 1 549;
+  size-adjust: 99.98%;
+  ascent-override: 102.02%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
+/* JetBrains Mono 600 (and heavier). Bold Courier New keeps the 0.6 em advance. */
+@font-face {
+  font-family: "JetBrainsMonoMetricFallback";
+  src: local("Courier New Bold"), local("CourierNewPS-BoldMT"), local("Liberation Mono Bold"), local("LiberationMono-Bold"), local("Cousine Bold"), local("Cousine-Bold");
+  font-weight: 550 1000;
+  size-adjust: 99.98%;
+  ascent-override: 102.02%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}

@@ -1,0 +1,66 @@
+{
+ "known": {
+  "/|signed-out": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/|user": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/codex|signed-out": [
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>"
+  ],
+  "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0|signed-out": [
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>"
+  ],
+  "/leaderboard|signed-out": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/leaderboard|user": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/lobby|signed-out": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/lobby|user": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/play|signed-out": [
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>"
+  ],
+  "/profile|signed-out": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/profile|user": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/tv|signed-out": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "console-error: Failed to load resource: the server responded with a status of <n> (Unauthorized)",
+   "http: GET /api/users/settings -> <n>",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ],
+  "/tv|user": [
+   "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+   "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED"
+  ]
+ }
+}

@@ -1,0 +1,4 @@
+F085, scripts/polish/j/check-session-sends.ts (player sends in OnlineMatch must read the session's boolean)
+Before (HEAD OnlineMatch.tsx): OnlineMatch.tsx:2225: session.resign() result discarded; exit 1
+After: [check-session-sends] OK: 30 boolean sends, none discarded
+Online /game/[id] cannot run under next dev (no DO), so the UI path is verified by the guard and by parity with onAbort/onClaimWin/onClaimDraw, which already show the same message.

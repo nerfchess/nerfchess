@@ -164,6 +164,11 @@ export type ActiveEffect =
        * the piece standing on them when it moves. */
       squares: Square[] | null;
       turns: number | null;
+      /** Set by a card that must find its own shield again later (Rampart).
+       * Cards look their effect up by this, never by object identity: a game
+       * restored from a snapshot (the game server's checkpoint) holds copies,
+       * so an identity lookup silently lost the shield there. */
+      tag?: string;
     }
   | { kind: "barred"; squares: Square[]; against: Color; turns: number | null }
   | { kind: "king_safe"; owner: Color; turns: number | null }
@@ -377,10 +382,13 @@ export interface BuffMatchState {
    */
   historyDiverged?: boolean;
   /**
-   * Transient bookkeeping (never persisted, never sent to clients: the match
-   * store keeps only moves + actions, and draftStateFor picks its fields by
-   * hand). Bumped by every direct board mutation made through the BuffApi, so
-   * apply paths can tell whether a hook observably changed the board.
+   * Board-mutation counter, bumped by every direct board mutation made through
+   * the BuffApi, so apply paths can tell whether a hook observably changed the
+   * board. Never sent to clients (draftStateFor picks its fields by hand), but
+   * it IS game state: fxRng mixes it into every random effect's seed, so
+   * serializeGame persists it (a checkpoint restored without it rolled
+   * different squares than the live game). Every replica reproduces it by
+   * replaying the same record.
    */
   mutations?: number;
   /**

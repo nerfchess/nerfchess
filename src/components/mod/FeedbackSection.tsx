@@ -12,7 +12,7 @@
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import { useEffect, useState } from "react";
-import { Empty, FilterChip, Loading, Pill, SectionHead } from "./ui";
+import { Empty, FilterChip, LoadFailed, Loading, Pill, SectionHead } from "./ui";
 
 type FeedbackTotal = { up: number; down: number; last_at: number };
 type NerfFeedbackTotal = FeedbackTotal & { nerf_id: string };
@@ -25,6 +25,8 @@ export function NerfFeedbackSection() {
   const [totals, setTotals] = useState<NerfFeedbackTotal[] | null>(null);
   const [recent, setRecent] = useState<NerfFeedbackVote[]>([]);
   const [nerfs, setNerfs] = useState<Nerf[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,22 +34,39 @@ export function NerfFeedbackSection() {
       .then((res) =>
         res.ok
           ? (res.json() as Promise<{ totals: NerfFeedbackTotal[]; recent: NerfFeedbackVote[] }>)
-          : null,
+          : Promise.reject(new Error(String(res.status))),
       )
       .then((data) => {
-        if (cancelled || !data) return;
+        if (cancelled) return;
         setTotals(data.totals);
         setRecent(data.recent);
       })
-      .catch(() => {});
-    import("@/engine/nerfs/library").then((m) => {
-      if (!cancelled) setNerfs(m.ALL_NERFS);
-    });
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    import("@/engine/nerfs/library")
+      .then((m) => {
+        if (!cancelled) setNerfs(m.ALL_NERFS);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
+  if (failed) {
+    return (
+      <LoadFailed
+        what="nerf verdicts"
+        onRetry={() => {
+          setFailed(false);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  }
   if (!totals || !nerfs) return <Loading what="nerf verdicts" />;
 
   const find = (id: string) => nerfs.find((n) => n.id === id);
@@ -78,6 +97,8 @@ export function BuffFeedbackSection() {
   const [totals, setTotals] = useState<BuffFeedbackTotal[] | null>(null);
   const [recent, setRecent] = useState<BuffFeedbackVote[]>([]);
   const [buffs, setBuffs] = useState<Record<string, Buff> | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,22 +106,39 @@ export function BuffFeedbackSection() {
       .then((res) =>
         res.ok
           ? (res.json() as Promise<{ totals: BuffFeedbackTotal[]; recent: BuffFeedbackVote[] }>)
-          : null,
+          : Promise.reject(new Error(String(res.status))),
       )
       .then((data) => {
-        if (cancelled || !data) return;
+        if (cancelled) return;
         setTotals(data.totals);
         setRecent(data.recent);
       })
-      .catch(() => {});
-    import("@/engine/buffs/library").then((m) => {
-      if (!cancelled) setBuffs(m.BUFF_BY_ID);
-    });
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    import("@/engine/buffs/library")
+      .then((m) => {
+        if (!cancelled) setBuffs(m.BUFF_BY_ID);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
+  if (failed) {
+    return (
+      <LoadFailed
+        what="buff verdicts"
+        onRetry={() => {
+          setFailed(false);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  }
   if (!totals || !buffs) return <Loading what="buff verdicts" />;
 
   return (
@@ -244,7 +282,7 @@ function FeedbackTable({
         </FilterChip>
         {tiers.length > 0 && (
           <>
-            <span className="ml-2 text-[12px] text-parchment-400">Tier</span>
+            <span className="ml-2 text-[13px] text-parchment-400">Tier</span>
             <FilterChip active={tier === "all"} onClick={() => setTier("all")}>
               Any
             </FilterChip>
@@ -260,7 +298,7 @@ function FeedbackTable({
       {/* Sorting on a phone, where there are no column headers to click. The
           four that matter; the desktop table keeps all six. */}
       <div className="flex flex-wrap items-center gap-2 sm:hidden">
-        <span className="text-[12px] text-parchment-400">Sort</span>
+        <span className="text-[13px] text-parchment-400">Sort</span>
         {(
           [
             ["score", "Score"],
@@ -296,7 +334,7 @@ function FeedbackTable({
                   {v.text}
                 </Pill>
               </div>
-              <div className="mt-1 flex items-center gap-3 font-mono text-[12px] tabular-nums">
+              <div className="mt-1 flex items-center gap-3 font-mono text-[13px] tabular-nums">
                 <span className="text-verdigris-glow">+{row.up}</span>
                 <span className="text-oxblood-glow">-{row.down}</span>
                 <span className="text-parchment-100">
@@ -319,7 +357,7 @@ function FeedbackTable({
       <div className="plate hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[12px] text-parchment-400">
+            <tr className="text-[13px] text-parchment-400">
               <Header align="left" active={sort === "name"} onClick={() => toggle("name")}>
                 {label}
                 {arrow("name")}
@@ -366,7 +404,7 @@ function FeedbackTable({
                       {v.text}
                     </Pill>
                   </td>
-                  <td className="px-4 py-2 text-right text-xs text-parchment-400">
+                  <td className="px-4 py-2 text-right text-[13px] text-parchment-400">
                     {new Date(row.last_at).toLocaleDateString()}
                   </td>
                 </tr>
@@ -385,7 +423,7 @@ function FeedbackTable({
 
       {recent.length > 0 && (
         <div>
-          <h3 className="text-xs text-parchment-400">Recent votes</h3>
+          <h3 className="text-[13px] text-parchment-400">Recent votes</h3>
           <ul className="plate mt-2 divide-y divide-[color:var(--edge)] text-sm">
             {recent.map((v, i) => (
               <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
@@ -396,7 +434,7 @@ function FeedbackTable({
                   {v.name}
                   <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
                 </span>
-                <span className="shrink-0 text-xs text-parchment-400">
+                <span className="shrink-0 text-[13px] text-parchment-400">
                   {new Date(v.created_at).toLocaleString()}
                 </span>
               </li>

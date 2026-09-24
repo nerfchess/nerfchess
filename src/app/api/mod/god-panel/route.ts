@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMod } from "@/lib/server/mod";
+import { logModEvent, readModBody, requireMod } from "@/lib/server/mod";
 import { isGodPanelUser } from "@/lib/godPanel";
 import {
   GOD_PANEL_KEY,
@@ -7,7 +7,6 @@ import {
   setAppSetting,
   settingIsOnStrict,
 } from "@/lib/server/settings";
-import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -39,20 +38,25 @@ export async function POST(request: Request) {
   if (!isOwner(guard)) {
     return NextResponse.json({ error: "Owner access required." }, { status: 403 });
   }
-  let body: { enabled?: unknown };
-  try {
-    body = (await request.json()) as { enabled?: unknown };
-  } catch {
-    return NextResponse.json({ error: "Bad request." }, { status: 400 });
-  }
+  const body = await readModBody(request);
+  if (body instanceof NextResponse) return body;
   if (typeof body.enabled !== "boolean") {
     return NextResponse.json({ error: "`enabled` must be a boolean." }, { status: 400 });
   }
+  const before = settingIsOnStrict(await getAppSetting(guard.db, GOD_PANEL_KEY));
   await setAppSetting(guard.db, GOD_PANEL_KEY, body.enabled ? "1" : "0");
-  notifyModEvent({
-    kind: "god_panel_toggled",
-    actor: guard.mod.username,
-    detail: body.enabled ? "on" : "off",
-  });
+  await logModEvent(
+    guard.db,
+    guard.mod,
+    {
+      action: "god_panel_toggled",
+      targetKind: "setting",
+      targetName: "god panel",
+      targetRef: GOD_PANEL_KEY,
+      before: { enabled: before },
+      after: { enabled: body.enabled },
+    },
+    "god_panel_toggled",
+  );
   return NextResponse.json({ enabled: body.enabled });
 }

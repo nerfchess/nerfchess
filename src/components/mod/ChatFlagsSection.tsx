@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ChatFlag } from "./types";
-import { Empty, FilterChip, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
+import { ConfirmButton, Empty, FilterChip, LoadFailed, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
 
 export function ChatFlagsSection({
   onHandled,
@@ -20,9 +20,18 @@ export function ChatFlagsSection({
   const [flags, setFlags] = useState<ChatFlag[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  // A list that never loaded says so (a list already on screen stays).
+  const [loadFailed, setLoadFailed] = useState(false);
+
   const load = useCallback(async () => {
-    const res = await fetch(`/api/mod/chat-flags${all ? "?all=1" : ""}`);
-    if (res.ok) setFlags(((await res.json()) as { flags: ChatFlag[] }).flags);
+    try {
+      const res = await fetch(`/api/mod/chat-flags${all ? "?all=1" : ""}`);
+      if (!res.ok) throw new Error(String(res.status));
+      setFlags(((await res.json()) as { flags: ChatFlag[] }).flags);
+      setLoadFailed(false);
+    } catch {
+      setLoadFailed(true);
+    }
   }, [all]);
 
   useEffect(() => {
@@ -39,9 +48,13 @@ export function ChatFlagsSection({
     onHandled?.();
   };
 
+  // Marks exactly the flags on screen (F122): the list is capped at 200, and
+  // "all" used to clear flags the moderator never saw.
   const reviewAll = async () => {
+    const ids = (flags ?? []).filter((f) => !f.reviewed).map((f) => f.id);
+    if (!ids.length) return;
     setBusy("all");
-    await postJson("/api/mod/chat-flags", { all: true });
+    await postJson("/api/mod/chat-flags", { ids });
     await load();
     setBusy(null);
     onHandled?.();
@@ -59,14 +72,24 @@ export function ChatFlagsSection({
           Everything
         </FilterChip>
         {pending > 0 && (
-          <ModButton size="sm" className="ml-auto" disabled={busy === "all"} onClick={reviewAll}>
-            Mark all {pending} reviewed
-          </ModButton>
+          <ConfirmButton
+            size="sm"
+            className="ml-auto"
+            disabled={busy === "all"}
+            confirmLabel={`Confirm: mark ${pending} reviewed`}
+            onConfirm={reviewAll}
+          >
+            Mark all {pending} shown reviewed
+          </ConfirmButton>
         )}
       </div>
 
       {!flags ? (
-        <Loading what="chat flags" />
+        loadFailed ? (
+          <LoadFailed what="chat flags" onRetry={() => void load()} />
+        ) : (
+          <Loading what="chat flags" />
+        )
       ) : flags.length === 0 ? (
         <Empty>{all ? "Nothing has ever been flagged." : "Nothing waiting to be reviewed."}</Empty>
       ) : (
@@ -79,11 +102,11 @@ export function ChatFlagsSection({
                   {whenShort(f.created_at)}
                 </span>
                 {f.reviewed ? (
-                  <span className="ml-auto text-[12px] text-parchment-400">reviewed</span>
+                  <span className="ml-auto text-[13px] text-parchment-400">reviewed</span>
                 ) : null}
               </div>
               <p className="mt-2 break-words text-sm text-parchment-100">{f.text}</p>
-              <p className="mt-1 text-xs text-oxblood-glow">matched: {f.matched_words}</p>
+              <p className="mt-1 text-[13px] text-oxblood-glow">matched: {f.matched_words}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {!f.reviewed && (
                   <ModButton

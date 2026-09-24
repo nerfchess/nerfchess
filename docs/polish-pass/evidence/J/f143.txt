@@ -1,0 +1,3 @@
+F143, e2e/polish/draft-escape.spec.ts on /dev/draft (glossary term pinned, Escape, Escape)
+Before: FAILED at line 32, the first Escape closed the definition AND hid the draft (expect(draft).toBeVisible, received hidden)
+After: 1 passed (42.2s cold compile)

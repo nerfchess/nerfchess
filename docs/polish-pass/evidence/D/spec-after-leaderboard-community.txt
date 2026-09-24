@@ -1,0 +1,16 @@
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:667:7 › /leaderboard › the skeleton has the table's geometry (17.3s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:695:7 › /leaderboard › chips are sentence case and the jump obeys data-anim (6.6s)
+  ✓  3 [chromium] › e2e/polish/social-routes.spec.ts:729:7 › /community › no live online count, and the Friends card does not wait for /me (23.7s)
+  ✘  4 [chromium] › e2e/polish/social-routes.spec.ts:744:7 › /community › opponents read View profile and replay links are 44px on touch (161ms)
+    Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:3000
+    > 752 |     const me = await (await page.request.get("/api/auth/me")).json();
+      754 |     await page.route("**/api/users/*/games?**", (route) =>
+    Error Context: test-results/polish-social-routes--comm-0cc9e-lay-links-are-44px-on-touch-chromium/error-context.md
+  1 failed
+  3 passed (49.4s)
+# test 4 rerun after (the server restarted mid-run above):
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:744:7 › /community › opponents read View profile and replay links are 44px on touch (15.9s)
+  1 passed (58.3s)
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:667:7 › /leaderboard › the skeleton has the table's geometry (34.2s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:695:7 › /leaderboard › chips are sentence case and the jump obeys data-anim (12.0s)
+  2 passed (1.0m)

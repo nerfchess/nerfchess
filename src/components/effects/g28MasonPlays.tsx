@@ -18,6 +18,10 @@
 // pressed into a wet joint, the banker brushed down, molten lead run into a
 // cramp chase.
 //
+// PER-CARD RULE SCENES (slice TC-g). Written in Stone and Gorgon Field lead
+// with a scene of their own rule on the real board (see that section near the
+// end); their mason's tools survive only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g28MasonPlays.css), transform/opacity animations only, no import from
 // BoardEffects.tsx (cycle hazard), only the SigPlugin / SigRole TYPES imported.
@@ -308,8 +312,6 @@ function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
  * choreographed onto that card's own climax - position, beat, tint and
  * primitive combo all differ per card, so no two siblings land the same hit. */
 const IMP: Record<string, ImpCue> = {
-  // Written in Stone: THE FINAL LETTER STRUCK - the last chisel blow splits the slab face
-  bn4_written_in_stone: { at: 1040, x: 50, y: 49, rgb: "216 201 168", laser: true, glyph: 0, boom: true },
   // Gorgon's Court: THE SLAB PARTS - the stone splits clean down the drilled line at its far end
   hx4_gorgons_court: { at: 1020, rgb: "185 194 204", laser: true, glyph: 0, far: true },
   // Hunter's Moon: THE CENTRE PIN - the trammel pin is driven and the template cracks free
@@ -320,8 +322,6 @@ const IMP: Record<string, ImpCue> = {
   hx4_stone_rain: { at: 980, x: 50, y: 51, rgb: "168 161 150", glyph: 0, boom: true, size: 8.6 },
   // Castle of Sand: THE KERF COMPLETES - the saw breaks through at the far end of the cut
   hx4_castle_of_sand: { at: 960, rgb: "217 191 138", laser: true, boom: true, far: true },
-  // Gorgon Field: THE BANKER THUMP - the block is spun, lands wrong, and splits
-  hx4_gorgon_field: { at: 940, x: 51, y: 50, rgb: "159 169 162", glyph: 0, boom: true },
   // Stone Garden: THE CLAW RUNS OUT - the furrow lance exits the far edge with a jolt
   hx4_stone_garden: { at: 960, rgb: "194 179 147", laser: true, boom: true, rot: -90, far: true },
   // Stone Orchard: THE WASTE KNOCKED OFF - the point jabs and the spoil splits away
@@ -423,36 +423,7 @@ function LetterCut({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.bn4_written_in_stone} d={delayMs} frame={<Wash tone="rgba(216,201,168,0.3)" d={60} />}>
-      <L c="g28-wi-rule" d={90} st={{ ...box(6.4, 0.12), background: "#fff4d6" }} />
-      <L
-        c="g28-lean"
-        d={150}
-        st={{ ...box(3.4, 0.9, 0, 1.5), borderRadius: "50%", background: "radial-gradient(ellipse, rgba(43,36,25,0.75), transparent 72%)" }}
-      />
-      <V c="g28-tap" d={230} st={box(1.9, 3.6, 0, -1.7)}>
-        <path d="M8.8 1h6.4l1.2 4.4H7.6z" fill="#d8c9a8" stroke="#2b2419" strokeWidth="1.1" />
-        <path d="M10.4 5.4h3.2l-.5 12.4-1.1 4.6-1.1-4.6z" fill="#d8c9a8" stroke="#2b2419" strokeWidth="1.1" />
-      </V>
-      {THREE.map((i) => (
-        <V key={i} c="g28-wi-cut" d={350} o={i * 80} st={box(1.5, 2.1, i * 1.7 - 1.7, 0.5)}>
-          <path d="M12 2.5l7 18H5z" fill="#2b2419" />
-          <path d="M12 6.5l4 11H8z" fill="#fff4d6" />
-        </V>
-      ))}
-      <L
-        c="g28-wi-flour"
-        d={540}
-        st={{ ...box(4.4, 1.5, 0, 1.3), borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,244,214,0.6), transparent 74%)" }}
-      />
-      <L
-        c="g28-drift"
-        d={700}
-        st={{ ...box(5.2, 2.6, 0, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(216,201,168,0.42), transparent 72%)" }}
-      />
-    </Lead>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -788,34 +759,7 @@ function BankerTurn({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.hx4_gorgon_field} d={delayMs} frame={<Wash tone="rgba(159,169,162,0.3)" d={70} />}>
-      <L c="g28-gf-table" d={100} st={{ ...box(4.4, 1.6, 0, 1.1), borderRadius: "50%", background: "radial-gradient(ellipse, #1f2622 40%, rgba(31,38,34,0))" }} />
-      <L
-        c="g28-lean"
-        d={160}
-        st={{ ...box(3.4, 1, 0, 1.4), borderRadius: "50%", background: "radial-gradient(ellipse, rgba(31,38,34,0.7), transparent 72%)" }}
-      />
-      <V c="g28-gf-block" d={260} st={box(2.8, 3, 0, -0.4)}>
-        <rect x="4" y="3" width="16" height="16" fill="#9fa9a2" stroke="#1f2622" strokeWidth="1.4" />
-        <path d="M4 7h16M4 15h16" stroke="#1f2622" strokeWidth="0.9" />
-      </V>
-      {FOUR.map((i) => (
-        <L
-          key={i}
-          c="g28-gf-face"
-          d={420}
-          o={i * 80}
-          st={{ ...box(0.9, 2.6, i * 0.9 - 1.35, -0.4), background: "linear-gradient(180deg, rgba(243,236,214,0.85), rgba(243,236,214,0))" }}
-        />
-      ))}
-      <L
-        c="g28-drift"
-        d={700}
-        st={{ ...box(5, 2.6, 0, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(243,236,214,0.36), transparent 74%)" }}
-      />
-    </Lead>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1924,6 +1868,209 @@ function LeadCramp({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Written in Stone and Gorgon Field no
+   longer lead with a mason's tool and the shared impact column: each lead
+   plays its own rule on the real board (the squares, pieces and turn counts
+   it touches). Their old art survives only as the small target and entrance
+   cuts. Positions are board percentages from the caster's side: rank 0 is
+   the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g28-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g28-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g28-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g28-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** The nerf itself: an iron cuff on the caster's side that springs open when
+ *  the card suspends it (the lid swings about its hinge on the left). */
+function NerfCuff({ x, y, c, delayMs, gd = "1.6s" }: { x: string; y: string; c: { core: string; glow: string; deep: string }; delayMs: number; gd?: string }) {
+  return (
+    <>
+      <Q x={x} y={y} w={10} h={10} cls="g28-r-in" delayMs={delayMs} v={{ "--gd": gd, "--s0": "0.8" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 11a6 6 0 0 0 12 0" fill="none" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M4 11a6 6 0 0 0 12 0" fill="none" stroke={c.core} strokeWidth="2.2" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={x} y={y} w={10} h={10} cls="g28-r-open" delayMs={delayMs} v={{ "--gd": gd, "--ra": "-70deg" }} style={{ transformOrigin: "20% 55%" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 11a6 6 0 0 1 12 0" fill="none" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M4 11a6 6 0 0 1 12 0" fill="none" stroke={c.core} strokeWidth="2.2" {...SJ} />
+          <circle cx="16" cy="11" r="1.4" fill={c.glow} />
+        </svg>
+      </Q>
+    </>
+  );
+}
+
+/* --- bn4_written_in_stone --------------------------------------------------------
+   "After your next 10 turns, the inscription takes effect: your nerf is
+   suspended for the 20 turns that follow." A stone tablet is set up at the
+   caster's edge and a chisel walks along it, cutting ten strokes (the ten
+   turns of waiting); only when the tenth is cut does the nerf cuff beside it
+   spring open, and twenty turns are ruled out across the board ahead. */
+const C_WS = { core: "#d8c9a8", glow: "#fff4d6", deep: "#2b2419" };
+
+function WrittenInStoneRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <LetterCut lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_WS;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="46%" y={rk(1.1)} w={34} h={15} cls="g28-r-up" delayMs={d} v={{ "--gd": "2.3s" }}>
+        <svg viewBox="0 0 68 30" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M3 29V7q0-5 5-5h52q5 0 5 5v22z" fill={c.core} stroke={c.deep} strokeWidth="2" {...SJ} />
+          <path d="M8 8h52" stroke={c.glow} strokeWidth="1" />
+        </svg>
+      </Q>
+      {Array.from({ length: 10 }, (_, i) => (
+        <Q key={i} x={`${33 + i * 2.9}%`} y={rk(1)} w={1.3} h={6.5} cls="g28-r-stamp" delayMs={d + 260 + i * 70} v={{ "--gd": "2s" }} style={{ background: c.deep, borderRadius: "1px" }} />
+      ))}
+      <Q x="46%" y={rk(1.75)} w={5} h={7} cls="g28-r-go" delayMs={d + 200} v={{ "--gd": "1.1s", "--tx0": "-260%", "--ty0": "0%", "--tx1": "280%", "--ty1": "0%" }}>
+        <svg viewBox="0 0 12 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 1h4v11l-2 6-2-6z" fill={c.glow} stroke={c.deep} strokeWidth="1.1" {...SJ} />
+        </svg>
+      </Q>
+      <NerfCuff x="72%" y={rk(1.1)} c={c} delayMs={d + 900} gd="1.5s" />
+      {Array.from({ length: 20 }, (_, i) => (
+        <Q key={i} x={`${12 + i * 4}%`} y={rk(2.55)} w={1.4} h={3.4} cls="g28-r-pip" delayMs={d + 1080 + i * 22} v={{ "--gd": "1.2s" }} style={{ background: c.glow, borderRadius: "1px" }} />
+      ))}
+      <Q x="72%" y={rk(1.9)} w={10} h={5} cls="g28-r-lean" delayMs={d + 1500} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true"><path d="M6 10l3-6M18 10l-3-6M12 10V3" stroke={c.glow} strokeWidth="1.4" {...SJ} /></svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- hx4_gorgon_field -----------------------------------------------------------
+   "A gorgon's gaze sweeps the middle of the board: for your opponent's next 3
+   turns, any piece of theirs that ends a move on the central 4x4 (c3 to f6)
+   becomes a walnut for 1 of their turns. Kings resist the gaze." The central
+   sixteen squares are marked out; a gorgon's eye opens over them and its gaze
+   sweeps across; an enemy knight lands on d5 inside the field and is turned
+   into a walnut where it stands, while their king at f6 shrugs the gaze off;
+   three turns are ticked. */
+const C_GF = { core: "#9fa9a2", glow: "#f3ecd6", deep: "#1f2622" };
+const WALNUT = { core: "#b0824a", glow: "#ffe9b0", deep: "#3e2f1c" };
+
+function GorgonFieldRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <BankerTurn lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GF;
+  const d = delayMs;
+  const sq = fileIn(11);
+  return (
+    <Brd>
+      <Q x="50%" y="50%" w={50} h={50} cls="g28-r-in" delayMs={d} v={{ "--gd": "2.3s", "--s0": "0.96" }} style={{ background: "rgba(159,169,162,0.3)", border: `2px dashed ${c.glow}` }} />
+      <Q x="50%" y={rk(5.5)} w={12} h={6} cls="g28-r-stamp" delayMs={d + 120} v={{ "--gd": "1.9s" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M1.5 6Q12-3 22.5 6Q12 15 1.5 6z" fill={c.deep} stroke={c.glow} strokeWidth="1.2" {...SJ} />
+          <ellipse cx="12" cy="6" rx="1.4" ry="3.6" fill={c.glow} />
+        </svg>
+      </Q>
+      <Q x="50%" y="50%" w={7} h={50} cls="g28-r-go" delayMs={d + 340} v={{ "--gd": "1s", "--tx0": "-310%", "--ty0": "0%", "--tx1": "310%", "--ty1": "0%" }} style={{ background: "linear-gradient(90deg, transparent, rgba(243,236,214,0.6), transparent)" }} />
+      <Q x={cl(3)} y={rk(4)} w={11} h={11} cls="g28-r-go" delayMs={d + 420} v={{ "--gd": "0.75s", "--tx0": `${-sq}%`, "--ty0": `calc(var(--fx-side, 1) * ${-2 * sq}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={cl(3)} y={rk(4)} w={12.5} h={12.5} cls="g28-r-in" delayMs={d + 900} v={{ "--gd": "1.4s", "--s0": "1" }} style={{ background: "rgba(176,130,74,0.45)" }} />
+      <Q x={cl(3)} y={rk(4)} w={10} h={10} cls="g28-r-stamp" delayMs={d + 940} v={{ "--gd": "1.3s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 2.5c4.6 0 7 3.6 7 7.6s-2.8 7.4-7 7.4-7-3.4-7-7.4 2.4-7.6 7-7.6z" fill={WALNUT.core} stroke={WALNUT.deep} strokeWidth="1.3" />
+          <path d="M10 3v14M6.4 7q1.6 2 0 4M13.6 7q-1.6 2 0 4" fill="none" stroke={WALNUT.deep} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={cl(5)} y={rk(5)} w={11} h={11} cls="g28-r-in" delayMs={d + 520} v={{ "--gd": "1.6s", "--s0": "1" }}>
+        <Man kind="k" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={cl(5)} y={rk(5.15)} w={12} h={9} cls="g28-r-toll" delayMs={d + 760} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 24 18" className="block h-full w-full" aria-hidden="true"><path d="M3 12Q12 0 21 12" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} /></svg>
+      </Q>
+      <Pips n={3} r={2} x0={44} x1={56} color={c.glow} delayMs={d + 1100} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* =============================================================================
    Registry — scene + config per card id.
 
    `sound` is always an existing SigSoundKey. `source` is named ONLY where the
@@ -1939,15 +2086,120 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/** Centre of file `c` counted from the caster's left (the board turns half a
+ *  circle with the side, so a scene reads the same from either seat). */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** A walnut: what a petrified piece turns into. */
+function Walnut({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M10 2c4.6 0 7 3.6 7 8s-2.4 8-7 8-7-3.6-7-8 2.4-8 7-8z" fill="#8a6440" stroke={c.deep} strokeWidth="1.4" />
+      <path d="M10 2.6v14.8M6 6.4c1.4 1 1.4 2.4 0 3.6s-1.4 2.6 0 3.6M14 6.4c-1.4 1-1.4 2.4 0 3.6s1.4 2.6 0 3.6" fill="none" stroke={c.deep} strokeWidth="1" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- hx4_gorgons_court -------------------------------------------------------------
+   "Choose 2 enemy pieces (never the king): both become walnuts for 3 of their
+   turns. The first piece chosen may make one move before it petrifies." A
+   gorgon's mask rises on the caster's flank and its gaze falls on two of
+   their pieces (a knight on c6 and a bishop on f5 here; the play's own cuts
+   land on the ones picked). The bishop, chosen second, turns to a walnut at
+   once; the knight, chosen first, makes its one move to e5 and only then
+   hardens; three turn pips. */
+const C_GCR = { core: "#9cc27a", glow: "#f6f0da", deep: "#1c2412" };
+
+function GorgonsCourtRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <PlugFeather lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GCR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(0)} y={rk(3.5)} w={12} h={12} cls="g28-r-up" delayMs={d + 30} v={{ "--gd": "2.1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 7c-2-2-1-5 1-5M7 4c-1-2 1-4 3-3M13 4c1-2 3-2 4 0M16 7c2-1 3 1 2 3" fill="none" stroke={c.core} strokeWidth="1.4" {...SJ} />
+          <path d="M10 5c3.6 0 6 2.6 6 6.4 0 3.6-2.6 6.6-6 6.6s-6-3-6-6.6C4 7.6 6.4 5 10 5z" fill={c.core} stroke={c.deep} strokeWidth="1.3" />
+          <path d="M7.4 10.6h1.8M10.8 10.6h1.8" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Thread c0={0.5} r0={3.5} c1={5} r1={4} color={c.glow} delayMs={d + 260} gd="0.9s" />
+      <Thread c0={0.5} r0={3.5} c1={2} r1={5} color={c.glow} delayMs={d + 320} gd="0.9s" />
+      <Q x={fc(5)} y={rk(4)} w={11} h={11} cls="g28-r-dim" delayMs={d + 300} v={{ "--gd": "0.8s" }}>
+        <Man kind="b" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(5)} y={rk(4)} w={9} h={9} cls="g28-r-stamp" delayMs={d + 560} v={{ "--gd": "1.6s" }}>
+        <Walnut c={c} />
+      </Q>
+      <Q x={fc(2)} y={rk(5)} w={11} h={11} cls="g28-r-go" delayMs={d + 520} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(4)} y={rk(4)} w={9} h={9} cls="g28-r-stamp" delayMs={d + 1080} v={{ "--gd": "1.1s" }}>
+        <Walnut c={c} />
+      </Q>
+      <Pips n={3} r={2.6} x0={45} x1={55} color={c.glow} delayMs={d + 1160} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_hunters_moon --------------------------------------------------------------
+   "For your opponent's next 4 turns, any piece of theirs that captures is
+   cursed by the moon and becomes a walnut for 2 of their turns. Kings are
+   beyond the curse." A hunter's moon rises on their side of the board;
+   four turn pips. Their knight on f3 takes the pawn on d2, the moonlight
+   finds it on the square it took, and it hardens into a walnut there for
+   two turns. */
+const C_HMR = { core: "#e8a45a", glow: "#fff2dc", deep: "#2a1a0c" };
+
+function HuntersMoonRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TrammelArc lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="88%" y={rk(5)} w={11} h={11} cls="g28-r-up" delayMs={d + 30} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="10" r="8" fill={c.core} stroke={c.deep} strokeWidth="1.2" />
+          <circle cx="7" cy="8" r="1.6" fill="rgba(42,26,12,0.3)" />
+          <circle cx="12.4" cy="12.4" r="2.2" fill="rgba(42,26,12,0.3)" />
+        </svg>
+      </Q>
+      <Pips n={4} r={4.5} x0={44} x1={56} color={c.glow} delayMs={d + 380} gd="1.6s" />
+      <Q x={fc(5)} y={rk(2)} w={11} h={11} cls="g28-r-go" delayMs={d + 540} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={5} r0={2} c1={3} r1={1} color={c.glow} delayMs={d + 560} gd="0.7s" />
+      <Q x={fc(3)} y={rk(1)} w={12.5} h={12.5} cls="g28-r-in" delayMs={d + 900} v={{ "--gd": "1.2s", "--s0": "1" }} style={{ background: "rgba(232,164,90,0.34)" }} />
+      <Q x={fc(3)} y={rk(1)} w={9} h={9} cls="g28-r-stamp" delayMs={d + 1000} v={{ "--gd": "1.3s" }}>
+        <Walnut c={c} />
+      </Q>
+      {[-1, 1].map((i) => (
+        <Q key={`w${i}`} x={`calc(${fc(3)} + ${i * 1.6}%)`} y={`calc(${rk(1)} + var(--fx-side, 1) * 5%)`} w={1.6} h={2.8} cls="g28-r-pip" delayMs={d + 1100} v={{ "--gd": "1.1s" }} style={{ background: c.glow, borderRadius: "1px" }} />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8 ---
-  bn4_written_in_stone: S(LetterCut, {
+  bn4_written_in_stone: S(WrittenInStoneRule, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board",
   }),
-  hx4_gorgons_court: S(PlugFeather, {
+  hx4_gorgons_court: S(GorgonsCourtRule, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "aim",
   }),
-  hx4_hunters_moon: S(TrammelArc, {
+  hx4_hunters_moon: S(HuntersMoonRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast",
   }),
   hx4_no_quarter: S(WedgeLine, {
@@ -1961,7 +2213,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_castle_of_sand: S(SandSaw, {
     ordering: "line", staggerMs: 65, victims: ["r"], hasLead: true, sound: "siege", source: "walnut", anchor: "board",
   }),
-  hx4_gorgon_field: S(BankerTurn, {
+  hx4_gorgon_field: S(GorgonFieldRule, {
     ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify", anchor: "cast",
   }),
   hx4_stone_garden: S(ClawRake, {

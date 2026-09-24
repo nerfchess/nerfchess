@@ -1,18 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-// Applies to /clubs and /clubs/[slug]; no canonical is set because it would
-// wrongly point every club page at the index.
-export const metadata: Metadata = {
-  title: "Clubs: Nerf Chess teams and communities",
-  description:
-    "Find and join Nerf Chess clubs: player-run communities for the chess variant with power-up cards and secret handicaps. Post, organize games, and play with your team.",
-  keywords: [
-    "nerf chess clubs",
-    "chess variant teams",
-    "chess variant community groups",
-    "chess with power ups clubs",
-  ],
-};
+// Full metadata from its row in src/lib/seoPages.ts (self canonical, og and
+// twitter tags, the preview from this folder's opengraph-image file).
+export const metadata: Metadata = staticMeta("/clubs", { image: "segment" });
 
 export default function ClubsLayout({ children }: { children: React.ReactNode }) {
   return children;

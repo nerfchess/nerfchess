@@ -3592,33 +3592,42 @@ const TIER5: Buff[] = [
         inst.state.placed = true;
         inst.state.captures = 0;
         if (squares.length) {
-          // Keep a reference to the exact shield effect so it can be lifted the
-          // moment two protected pawns have captured. Its squares follow the
-          // pawns as they move (engine shield-follow), so membership stays true.
-          const shield = { kind: "shield" as const, owner: api.me, squares: [...squares], turns: 5 };
+          // Tag the shield so it can be found again and lifted the moment two
+          // protected pawns have captured. Its squares follow the pawns as they
+          // move (engine shield-follow). Found by tag, not by object identity:
+          // a game restored from a snapshot holds a copy in inst.state, and the
+          // identity check then read the live shield as gone (parity fuzz).
+          const tag = `rampart:${api.me}:${api.board.history.length}:${squares.join(".")}`;
+          const shield = { kind: "shield" as const, owner: api.me, squares: [...squares], turns: 5, tag };
           addEffect(api, shield);
-          inst.state.shield = shield;
+          // A flag, not the effect object: a stored copy goes stale the moment
+          // the shield's squares follow a pawn, and replicas then disagree.
+          inst.state.shield = true;
+          inst.state.shieldTag = tag;
         } else {
           inst.spent = true;
         }
       },
       onMovePlayed: (inst, move, api) => {
-        const shield = inst.state.shield as
-          | { kind: "shield"; owner: Color; squares: Square[] | null; turns: number | null }
-          | undefined;
-        if (!shield) return;
+        if (!inst.state.shield) return;
+        const tag = inst.state.shieldTag as string | undefined;
+        // State written before the tag (inst.state.shield holds the effect
+        // object itself) falls back to the identity lookup it was written with.
+        const i = tag
+          ? api.bs.effects.findIndex((e) => e.kind === "shield" && e.tag === tag)
+          : api.bs.effects.indexOf(inst.state.shield as (typeof api.bs.effects)[number]);
         // Shield gone (its 5 turns elapsed, or all pawns lost): nothing to guard.
-        if (!api.bs.effects.includes(shield)) {
+        if (i < 0) {
           inst.spent = true;
           return;
         }
+        const shield = api.bs.effects[i] as { kind: "shield"; squares: Square[] | null };
         // A protected pawn capturing. Buff hooks run before the engine's
         // shield-follow, so shield.squares still holds the pre-move square here.
         if (move.color === api.me && move.captured && shield.squares?.includes(move.from)) {
           inst.state.captures = ((inst.state.captures as number) ?? 0) + 1;
           if ((inst.state.captures as number) >= 2) {
-            const i = api.bs.effects.indexOf(shield);
-            if (i >= 0) api.bs.effects.splice(i, 1);
+            api.bs.effects.splice(i, 1);
             inst.spent = true;
           }
         }

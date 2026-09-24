@@ -3,6 +3,7 @@ import { requireMod } from "@/lib/server/mod";
 import { pgAll, pgFirst } from "@/lib/server/pg";
 import { BOTH_HUMAN_SQL, BOT_SEAT_SQL, HUMAN_GAME_SQL } from "@/lib/server/modGames";
 import { HOUSE_BY_ID_SKILL } from "@/lib/server/bots";
+import { HUMAN_USER_SQL, isoDay } from "@/lib/server/metrics";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,7 @@ export async function GET(request: Request) {
          SUM(CASE WHEN is_guest = 1 AND created_at >= ? THEN 1 ELSE 0 END) AS guests_week,
          SUM(CASE WHEN is_guest = 0 THEN 1 ELSE 0 END) AS members_total
        FROM users
-       WHERE id NOT LIKE 'hp\\_%' ESCAPE '\\' AND id NOT LIKE 'seed\\_%' ESCAPE '\\'`,
+       WHERE ${HUMAN_USER_SQL}`,
     )
     .bind(todayStart, weekStart, todayStart, weekStart)
     .first<{
@@ -85,6 +86,34 @@ export async function GET(request: Request) {
       active_bans: number | null;
       actions_week: number | null;
     }>();
+
+  // --- Queue health (F126): how old the oldest waiting item is, and how
+  // much the team handles per day. Each MIN reads the head of an index
+  // (idx_reports_status, idx_chat_flags_created); the per-day count is a range
+  // on idx_mod_actions_kind.
+  const oldest = await db
+    .prepare(
+      `SELECT
+         (SELECT MIN(created_at) FROM reports WHERE status = 'open') AS oldest_report,
+         (SELECT MIN(created_at) FROM chat_flags WHERE reviewed = 0) AS oldest_flag`,
+    )
+    .first<{ oldest_report: number | null; oldest_flag: number | null }>();
+  const todayIndex = Math.floor(now / DAY_MS);
+  const handledRows = await db
+    .prepare(
+      `SELECT created_at / 86400000 AS day, target_kind AS kind, COUNT(*) AS n
+       FROM mod_actions
+       WHERE target_kind IN ('report', 'chat_flag', 'user') AND action <> 'rating_set' AND created_at >= ?
+       GROUP BY 1, 2`,
+    )
+    .bind((todayIndex - 6) * DAY_MS)
+    .all<{ day: number; kind: string; n: number }>();
+  const handledPerDay = Array.from({ length: 7 }, (_, i) => {
+    const day = todayIndex - 6 + i;
+    const rows = handledRows.results.filter((r) => Number(r.day) === day);
+    const of = (k: string) => Number(rows.find((r) => r.kind === k)?.n ?? 0);
+    return { date: isoDay(day), reports: of("report"), chatFlags: of("chat_flag"), sanctions: of("user") };
+  });
 
   // --- Human game volume and the human-vs-house split ---
   const volume = await pgFirst<{
@@ -238,6 +267,9 @@ export async function GET(request: Request) {
       activeMutes: Number(queue?.active_mutes ?? 0),
       activeBans: Number(queue?.active_bans ?? 0),
       modActionsWeek: Number(queue?.actions_week ?? 0),
+      oldestOpenReportAt: oldest?.oldest_report != null ? Number(oldest.oldest_report) : null,
+      oldestUnreviewedFlagAt: oldest?.oldest_flag != null ? Number(oldest.oldest_flag) : null,
+      handledPerDay,
     },
     games: {
       humanGamesLast15Min: Number(liveNow?.n ?? 0),

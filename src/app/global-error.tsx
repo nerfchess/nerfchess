@@ -1,25 +1,53 @@
 "use client";
 
 // Last-resort boundary: replaces the root layout when even it throws, so it
-// must render its own html/body and carry inline styles (globals.css is not
-// loaded here). Mirrors the site's plate-on-ink look.
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  const buttonBase: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    // Comfortable 44px touch target on phones (no Tailwind here: globals.css
-    // is not loaded when the root layout itself has crashed).
-    minHeight: "44px",
-    padding: "8px 14px",
-    fontSize: "12px",
-    fontWeight: 600,
-    letterSpacing: "0.02em",
-    cursor: "pointer",
-    textDecoration: "none",
-  };
+// renders its own html and body and cannot rely on globals.css or the font
+// setup (neither is loaded here). It mirrors RouteError, the body every other
+// boundary uses: a caption, what failed, the digest a player can quote, Retry,
+// and a way out. The colours are literal copies of the dark theme tokens
+// (design-system.md section 1) because CSS variables do not resolve without
+// the app stylesheet: page #161512, box #262421, border #404040, raised
+// #302e2c, hover #3c3934, heading #dedede, body #c6c6c6, muted #979797,
+// accent #3692e7 (hover #4a9fee). Geometry copies the live tokens too:
+// --ui-roundness is 0px on a box and --btn-roundness 2px on a button, both
+// inside the design-system ceiling (7px box, 3px button). No shadow, 13px
+// text floor.
+
+import { useEffect } from "react";
+
+const CSS = `
+.ge-btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border-radius:2px;font:inherit;font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;box-sizing:border-box}
+.ge-btn:focus-visible{outline:2px solid #3692e7;outline-offset:2px}
+.ge-primary{background:#3692e7;color:#fff;border:0}
+.ge-default{background:#302e2c;color:#c6c6c6;border:1px solid #404040}
+@media (hover:hover){.ge-primary:hover{background:#4a9fee}.ge-default:hover{background:#3c3934;color:#dedede}}
+@media (pointer:fine){.ge-btn{min-height:40px}}
+.ge-actions{margin-top:20px;display:flex;flex-direction:column;gap:8px}
+@media (min-width:640px){.ge-actions{flex-direction:row}}
+`;
+
+export default function GlobalError({
+  error,
+  reset,
+  retry,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+  retry?: () => void;
+}) {
+  useEffect(() => {
+    // Same contract as RouteError: surface it for the console and any
+    // attached reporter.
+    console.error(error);
+  }, [error]);
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme="dark">
+      <head>
+        <title>Something went wrong · Nerf Chess</title>
+        <meta name="robots" content="noindex" />
+        <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      </head>
       <body
         style={{
           margin: 0,
@@ -27,84 +55,55 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          // Breathing room so the card never touches the screen edge on phones.
           padding: "24px 16px",
           boxSizing: "border-box",
           background: "#161512",
-          color: "#b8b8b8",
-          fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+          color: "#c6c6c6",
+          fontFamily: "'Noto Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+          fontSize: "14px",
         }}
       >
-        <div
+        <main
+          role="alert"
           style={{
             background: "#262421",
-            border: "1px solid rgba(255,255,255,0.07)",
-            boxShadow: "0 12px 40px -24px rgba(0,0,0,0.7)",
-            padding: "24px",
-            maxWidth: "24rem",
+            border: "1px solid #404040",
+            padding: "20px",
+            maxWidth: "28rem",
             width: "100%",
-            textAlign: "center",
+            boxSizing: "border-box",
           }}
         >
-          <div
-            style={{
-              // 12px is the design system's caption floor, and #8c8c8c clears
-              // 4.60:1 on this panel where #7f7d77 measured 3.76:1. The colours
-              // are literals on purpose: this boundary paints when the app
-              // stylesheet may not have loaded, so it cannot use tokens.
-              fontSize: "12px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#8c8c8c",
-            }}
-          >
-            Well, that broke
-          </div>
-          <h1 style={{ margin: "6px 0 0", fontSize: "22px", fontWeight: 600, color: "#e9e7e3" }}>
-            Something went wrong
+          <div style={{ fontSize: "12px", color: "#979797" }}>Something went wrong</div>
+          <h1 style={{ margin: "4px 0 0", fontSize: "22px", fontWeight: 600, lineHeight: 1.25, color: "#dedede" }}>
+            Nerf Chess hit an error
           </h1>
-          <p style={{ margin: "10px 0 0", fontSize: "13px", lineHeight: 1.5, color: "#a3a09b" }}>
-            The site hit an unexpected error. Your game state is saved locally.
+          <p style={{ margin: "8px 0 0", fontSize: "13px", lineHeight: 1.6, color: "#c6c6c6" }}>
+            The site failed to load. Retry usually brings it back; if it does not, head to the lobby.
           </p>
-          <div
-            style={{
-              marginTop: "20px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "8px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                // A hard navigation fully resets the crashed app tree, which is
-                // exactly what recovering from a global error wants.
-                window.location.href = "/";
-              }}
+          {error.digest && (
+            <p
               style={{
-                ...buttonBase,
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                color: "#b8b8b8",
+                margin: "8px 0 0",
+                fontSize: "12px",
+                color: "#979797",
+                fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
               }}
             >
-              Back to the game
+              Reference {error.digest}
+            </p>
+          )}
+          <div className="ge-actions">
+            <button type="button" className="ge-btn ge-primary" onClick={retry ?? reset}>
+              Retry
             </button>
-            <button
-              onClick={reset}
-              style={{
-                ...buttonBase,
-                // Gold accent literals (mirror --accent-gold #d4a017): globals.css
-                // is not loaded in this boundary, so CSS vars can't resolve here.
-                background: "rgba(212,160,23,0.1)",
-                border: "1px solid rgba(212,160,23,0.4)",
-                color: "#d4a017",
-              }}
-            >
-              Reload
-            </button>
+            {/* A plain anchor on purpose: a hard navigation fully resets the
+                crashed app tree, which a client-side Link cannot do here. */}
+            <a className="ge-btn ge-default" href="/lobby">
+              Back to lobby
+            </a>
           </div>
-        </div>
+        </main>
       </body>
     </html>
   );

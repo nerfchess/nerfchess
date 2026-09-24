@@ -4,13 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Buff mode: chess with power-up cards",
-  description:
-    "Buff mode is chess with drafted power-up cards and no handicaps. Both players draft a buff every 5 moves, tiers climb from Trivial to Unhinged, and the strongest army wins. Rules and strategy.",
-  alternates: { canonical: "/guide/buff-mode" },
-};
+export const metadata: Metadata = staticMeta("/guide/buff-mode", { image: "segment" });
 
 export default function BuffModePage() {
   return (

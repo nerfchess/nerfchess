@@ -1,0 +1,17 @@
+  ✓   1 [chromium] › e2e/content-states.spec.ts:10:7 › content route states › codex copy link reports a failed clipboard write (18.3s)
+  ✓   2 [chromium] › e2e/content-states.spec.ts:30:7 › content route states › codex copy link confirms a successful clipboard write (14.0s)
+  ✓   3 [chromium] › e2e/content-states.spec.ts:284:7 › codex tabs › tabs follow the WAI-ARIA pattern (18.8s)
+  ✓   4 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex has no horizontal scroll and one h1 (22.6s)
+  ✓   5 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex/buff/pawn_push has no horizontal scroll and one h1 (18.7s)
+  ✘   6 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex/nerf/lucky has no horizontal scroll and one h1 (8.5s)
+  ✘   7 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex/hex/heavy_boots has no horizontal scroll and one h1 (1.3s)
+  ✘   8 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex/boon/extra_glance has no horizontal scroll and one h1 (286ms)
+  ✘   9 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex/build has no horizontal scroll and one h1 (1.3s)
+  ✘  10 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /codex/suggest has no horizontal scroll and one h1 (1.2s)
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/nerf/lucky
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/hex/heavy_boots
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/boon/extra_glance
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/build
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/suggest
+  5 failed
+  5 passed (1.8m)

@@ -24,7 +24,10 @@ export async function GET(request: Request) {
   if (!isCardKind(kind)) {
     return NextResponse.json({ error: "bad kind" }, { status: 400 });
   }
-  const def = kind === "nerf" ? NERF_BY_ID[id] : BUFF_BY_ID[id];
+  // Own keys only: "constructor" or "toString" used to resolve to Object's
+  // prototype members, answer 200 and get cached for an hour (F048).
+  const table = kind === "nerf" ? NERF_BY_ID : BUFF_BY_ID;
+  const def = id.length <= 80 && Object.prototype.hasOwnProperty.call(table, id) ? table[id] : undefined;
   if (!def) {
     return NextResponse.json({ error: "unknown card" }, { status: 404 });
   }

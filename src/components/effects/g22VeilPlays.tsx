@@ -273,12 +273,8 @@ const IMP: Record<string, ImpCue> = {
   hx4_eclipse: { at: 1000, x: 50, y: 42, rgb: "255 176 102", laser: true, boom: true },
   // Falling Rubble: THE CEILING LETS GO - the slab bursts apart where it lands
   hx4_falling_rubble: { at: 940, x: 49, y: 55, rgb: "168 154 134", glyph: 0, boom: true, size: 8 },
-  // Glass Floor: THE PANE CRACKS THROUGH - the light seam splits the floor panel in half
-  hx4_glass_floor: { at: 960, x: 51, y: 58, rgb: "191 228 238", laser: true, glyph: 0 },
   // The Long Night: THE LAST LAMP SPIKED - the final light is driven down into the dark
   hx4_the_long_night: { at: 1020, x: 50, y: 45, rgb: "255 210 138", laser: true, boom: true },
-  // Big Nap: THE PILLOW DROP - the bolster hits and everything settles twice
-  ov_big_nap: { at: 980, x: 48, y: 52, rgb: "143 160 216", glyph: 0, boom: true },
   // Hourglass Throne: THE GLASS TURNED AND SPLIT - the hourglass cracks along the waist
   bn4_hourglass_throne: { at: 940, x: 50, y: 49, rgb: "227 182 97", laser: true, glyph: 1 },
   // Tithe of Time: THE COLLECTION STRIKE - the tithe is exacted with a beam and a double toll
@@ -595,26 +591,7 @@ function GlassFloorScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.hx4_glass_floor}
-      d={delayMs}
-      frame={
-        <>
-          <Gloom tone="rgba(191,228,238,0.28)" />
-          <Vignette tone="rgba(22,50,58,0.44)" />
-        </>
-      }
-    >
-      <L c="g22-gf-sheen" l={34} t={38} w={32} h={18} d={90} st={{ background: "linear-gradient(105deg, transparent, #fff4e2, transparent)" }} />
-      <V c="g22-gf-craze" l={36} t={36} w={28} h={28} d={260}>{craze}</V>
-      <L c="g22-gf-milk" l={37} t={37} w={26} h={26} d={440} st={{ background: "radial-gradient(circle, rgba(191,228,238,0.92), rgba(191,228,238,0.28))" }} />
-      <V c="g22-gf-sink" l={45} t={42} w={10} h={13} d={580}><path d={ROOK} fill="none" stroke="#16323a" strokeWidth="1.4" {...SJ} /></V>
-      <L c="g22-lean" l={40} t={56} w={20} h={3} d={650} st={{ borderRadius: "999px", background: "rgba(22,50,58,0.66)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g22-glint" l={39 + i * 9} t={40 + (i % 2) * 10} w={2} h={2} d={700 + i * 90} st={{ borderRadius: "50%", background: "#fff4e2" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 6. The Long Night (t7) — THE TAPER BURNS DOWN ----------------------------
@@ -706,27 +683,7 @@ function BigNapScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.ov_big_nap}
-      d={delayMs}
-      frame={
-        <>
-          <Gloom tone="rgba(143,160,216,0.28)" />
-          <Nightfall tone="rgba(26,28,48,0.7)" />
-        </>
-      }
-    >
-      <V c="g22-bn-piece" l={41} t={40} w={9} h={13} d={80}><path d={KNIGHT} fill="#8fa0d8" stroke="#1a1c30" strokeWidth="1" {...SJ} /></V>
-      <V c="g22-bn-piece" l={51} t={40} w={9} h={13} d={160}><path d={QUEEN} fill="#8fa0d8" stroke="#1a1c30" strokeWidth="1" {...SJ} /></V>
-      <L c="g22-bn-quilt" l={38} t={45} w={26} h={12} d={330} st={{ background: "linear-gradient(180deg, #8fa0d8, #1a1c30)", transformOrigin: "50% 100%" }} />
-      <V c="g22-bn-cap" l={50} t={35} w={9} h={9} d={480}>{cap}</V>
-      <V c="g22-bn-zzz" l={53} t={30} w={12} h={10} d={620}>{zzz}</V>
-      <L c="g22-lean" l={40} t={57} w={22} h={3} d={680} st={{ borderRadius: "999px", background: "rgba(26,28,48,0.72)" }} />
-      {[0, 1].map((i) => (
-        <L key={i} c="g22-drift" l={44 + i * 8} t={44} w={1.6} h={1.6} d={720 + i * 110} st={{ borderRadius: "50%", background: "#fff2dc" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 8. Hourglass Throne (t6) — THE GLASS ON THE ARMREST ----------------------
@@ -1549,6 +1506,348 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g22-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g22-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g22-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g22-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+/** Every dark square of the board at once, whichever way it is turned (a8 and
+ *  h1 are both light, so the top-left square is always light). */
+const DARK_SQUARES = (color: string): CSSProperties => ({
+  background: `repeating-conic-gradient(${color} 0 25%, transparent 0 50%)`,
+  backgroundSize: "25% 25%",
+});
+
+/* --- hx4_glass_floor ---------------------------------------------------------------
+   "Every dark square becomes thin glass: for your opponent's next 2 turns
+   their pieces may not stop on dark squares. Their king is exempt." All 32
+   dark squares glaze over at once and a sheen runs across the pane; their
+   g8 knight tries f6 (a dark square), the glass stars under it and the move
+   is barred; the b8 knight's c6 (a light square) holds and it lands; their
+   king is ringed and walks free; two turn pips. */
+const C_GFR = { core: "#bfe4ee", glow: "#fff4e2", deep: "#16323a" };
+
+function GlassFloorRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GlassFloorScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GFR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y="50%" w={100} h={100} cls="g22-r-in" delayMs={d + 20} v={{ "--gd": "2.3s", "--s0": "1" }} style={DARK_SQUARES("rgba(191,228,238,0.6)")} />
+      <Q x="50%" y="50%" w={14} h={140} cls="g22-r-go" delayMs={d + 160} v={{ "--gd": "1s", "--tx0": "-420%", "--ty0": "0%", "--tx1": "420%", "--ty1": "0%" }} style={{ rotate: "30deg", background: "linear-gradient(90deg, rgba(255,244,226,0), rgba(255,244,226,0.5), rgba(255,244,226,0))" }} />
+      <Q x={fc(5)} y={rk(5)} w={11} h={11} cls="g22-r-dim" delayMs={d + 520} v={{ "--gd": "1.3s" }}>
+        <Man kind="n" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={fc(5)} y={rk(5)} w={12.5} h={12.5} cls="g22-r-stamp" delayMs={d + 700} v={{ "--gd": "1.4s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 10L2 4M10 10l8-7M10 10l9 4M10 10l-3 9M10 10l5 8M10 10L1 12" stroke={c.glow} strokeWidth="0.9" {...SJ} />
+          <path d="M5 7l1.6 2.6M14 6l-1 3M15 13.6l-2.4-1M7.6 15l1-2.6" stroke={c.core} strokeWidth="0.8" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={fc(5)} y={rk(5)} w={7} h={7} cls="g22-r-stamp" delayMs={d + 860} v={{ "--gd": "1.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={fc(2)} y={rk(5)} w={11} h={11} cls="g22-r-go" delayMs={d + 940} v={{ "--gd": "1.3s", "--tx0": "calc(var(--fx-side, 1) * -100%)", "--ty0": "calc(var(--fx-side, 1) * -200%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={KING_X} y={rk(7)} w={11} h={11} cls="g22-r-in" delayMs={d + 820} v={{ "--gd": "1.5s" }} style={{ border: `2px dashed ${c.glow}`, borderRadius: "50%" }} />
+      <Pips n={2} r={3.5} x0={47} x1={53} color={c.glow} delayMs={d + 1100} gd="1.2s" />
+      <Q x={fc(5)} y={rk(4.4)} w={16} h={2} cls="g22-r-lean" delayMs={d + 1560} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(191,228,238,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- ov_big_nap --------------------------------------------------------------------
+   "Night falls: every knight, bishop, rook and queen on the board (both sides)
+   sleeps and cannot move for 1 turn of its owner. Kings and pawns keep
+   watch." A moon rises and night draws over both back ranks; every officer's
+   square on both sides darkens and a Z drifts up off it; the two kings each
+   hold up a lantern and both pawn ranks stay lit; one turn pip per side. */
+const C_BNR = { core: "#8fa0d8", glow: "#fff2dc", deep: "#1a1c30" };
+const BN_OFFICERS = [0, 1, 2, 3, 5, 6, 7];
+
+function BigNapRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <BigNapScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_BNR;
+  const d = delayMs;
+  const lantern = (
+    <svg viewBox="0 0 14 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M7 1v3" stroke={c.deep} strokeWidth="1.4" {...SJ} />
+      <rect x="3" y="4" width="8" height="11" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.4" />
+      <path d="M5 15h4l-1 3H6z" fill={c.deep} />
+    </svg>
+  );
+  return (
+    <Brd>
+      <Q x="7%" y={rk(3.5)} w={10} h={10} cls="g22-r-up" delayMs={d + 20} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M13 2a8.4 8.4 0 1 0 5 15A7 7 0 0 1 13 2z" fill={c.glow} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      {[0, 7].map((r) => (
+        <Tint key={`a${r}`} x={fc(1.5)} y={rk(r)} w={50} color="rgba(26,28,48,0.6)" delayMs={d + 200 + (r ? 60 : 0)} gd="2s" />
+      ))}
+      {[0, 7].map((r) => (
+        <Tint key={`b${r}`} x={fc(6)} y={rk(r)} w={37.5} color="rgba(26,28,48,0.6)" delayMs={d + 200 + (r ? 60 : 0)} gd="2s" />
+      ))}
+      {[0, 7].flatMap((r) =>
+        BN_OFFICERS.map((col, i) => (
+          <Q key={`z${r}-${col}`} x={`calc(${fc(col)} + 3%)`} y={`calc(${rk(r)} - 3%)`} w={4} h={4} cls="g22-r-lean" delayMs={d + 520 + i * 60 + (r ? 30 : 0)} v={{ "--gd": "1.4s" }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 2h6L2 8h6" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+            </svg>
+          </Q>
+        )),
+      )}
+      {[0, 7].map((r) => (
+        <Q key={`k${r}`} x={`calc(${KING_X} + 4%)`} y={rk(r)} w={4.4} h={6.4} cls="g22-r-up" delayMs={d + 760 + (r ? 60 : 0)} v={{ "--gd": "1.5s" }}>
+          {lantern}
+        </Q>
+      ))}
+      {[1, 6].map((r) => (
+        <Tint key={`p${r}`} x="50%" y={rk(r)} w={100} color="rgba(255,242,220,0.16)" delayMs={d + 820} gd="1.4s" />
+      ))}
+      <Q x="50%" y={rk(2.3)} w={2.6} h={2.6} cls="g22-r-pip" delayMs={d + 1080} v={{ "--gd": "1.2s" }} style={{ background: c.core, borderRadius: "50%" }} />
+      <Q x="50%" y={rk(4.7)} w={2.6} h={2.6} cls="g22-r-pip" delayMs={d + 1120} v={{ "--gd": "1.2s" }} style={{ background: c.core, borderRadius: "50%" }} />
+    </Brd>
+  );
+}
+
+/** A clock face with one hand, and a short time label beside a prop. */
+function Dial({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="8" fill={c.deep} stroke={c.core} strokeWidth="1.6" />
+      <path d="M10 4.4V10l3.6 2.2" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+    </svg>
+  );
+}
+
+function Label({ text, c }: { text: string; c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 40 16" className="block h-full w-full" aria-hidden="true">
+      <rect x="1" y="1" width="38" height="14" rx="3" fill={c.deep} />
+      <text x="20" y="12" textAnchor="middle" fontSize="11" fontWeight="700" fill={c.glow}>{text}</text>
+    </svg>
+  );
+}
+
+/* --- bn4_hourglass_throne ----------------------------------------------------------
+   "Add 60 seconds to your clock and steal 30 more from your opponent's. In
+   untimed games nothing changes hands." A throne-backed hourglass stands up
+   in front of the caster's king and its lower bulb fills a first measure
+   (+1:00); a dial opens in front of their king, drops to -0:30, and a stream
+   of sand runs down the board out of it into the throne, which fills a
+   second measure (+0:30). */
+const C_HTR = { core: "#e3b661", glow: "#fff4dc", deep: "#2e2210" };
+const HT_GRAINS = [0, 1, 2, 3, 4, 5];
+
+function HourglassThroneRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HourglassThroneScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HTR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(4)} y={rk(2.5)} w={16} h={24} cls="g22-r-up" delayMs={d + 30} v={{ "--gd": "2.3s" }}>
+        <svg viewBox="0 0 24 36" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 34V9l4.5-5 4.5 4 4.5-4 4.5 5v25" fill="none" stroke={c.deep} strokeWidth="3.2" {...SJ} />
+          <path d="M3 34V9l4.5-5 4.5 4 4.5-4 4.5 5v25" fill="none" stroke={c.core} strokeWidth="1.4" {...SJ} />
+          <path d="M6.5 11h11L12 21l5.5 10h-11L12 21z" fill="rgba(46,34,16,0.55)" stroke={c.glow} strokeWidth="1.2" {...SJ} />
+          <path d="M5 11h14M5 31h14" stroke={c.core} strokeWidth="1.8" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={fc(4)} y={`calc(${rk(2.5)} + var(--fx-side, 1) * 6.4%)`} w={7} h={3.4} cls="g22-r-grow" delayMs={d + 260} v={{ "--gd": "2s" }} style={{ background: c.core, clipPath: "polygon(0 100%, 100% 100%, 64% 0, 36% 0)", transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }} />
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 14%)`} y={rk(2)} w={10} h={4} cls="g22-r-in" delayMs={d + 300} v={{ "--gd": "1.1s" }}>
+        <Label text="+1:00" c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(5)} w={9} h={9} cls="g22-r-in" delayMs={d + 420} v={{ "--gd": "1.6s" }}>
+        <Dial c={c} />
+      </Q>
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 12%)`} y={rk(5)} w={10} h={4} cls="g22-r-stamp" delayMs={d + 560} v={{ "--gd": "1.3s" }}>
+        <Label text="-0:30" c={c} />
+      </Q>
+      {HT_GRAINS.map((i) => (
+        <Q key={i} x={fc(4)} y={rk(4.5)} w={1.6} h={1.6} cls="g22-r-go" delayMs={d + 640 + i * 70} v={{ "--gd": "0.7s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${Math.round(1.1 * fileIn(1.6))}%)` }} style={{ background: c.core, borderRadius: "50%" }} />
+      ))}
+      <Q x={fc(4)} y={`calc(${rk(2.5)} + var(--fx-side, 1) * 4.2%)`} w={4.6} h={2} cls="g22-r-grow" delayMs={d + 1000} v={{ "--gd": "1.3s" }} style={{ background: c.glow, clipPath: "polygon(0 100%, 100% 100%, 70% 0, 30% 0)", transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }} />
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 14%)`} y={rk(3)} w={10} h={4} cls="g22-r-in" delayMs={d + 1060} v={{ "--gd": "1.1s" }}>
+        <Label text="+0:30" c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(3.8)} w={10} h={2} cls="g22-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(227,182,97,0.4)" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_tithe_of_time -------------------------------------------------------------
+   "Suspend your nerf for your next 9 turns, and steal 20 seconds from your
+   opponent's clock. In untimed games only the suspension applies." A
+   padlock on the caster's king (the nerf) springs open and nine tally
+   strokes are scored across the caster's side, one per suspended turn; a
+   tithe plate is passed up the board to a dial in front of their king,
+   which gives up -0:20, and the plate comes back carrying a coin marked 20. */
+const C_TTR = { core: "#a9b4bc", glow: "#fff4e2", deep: "#1b2026" };
+
+function TitheOfTimeRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TitheOfTimeScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_TTR;
+  const d = delayMs;
+  const plate = (coin: boolean) => (
+    <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="12" cy="9" rx="10" ry="3.6" fill={c.core} stroke={c.deep} strokeWidth="1.4" />
+      {coin ? (
+        <>
+          <circle cx="12" cy="6" r="4.6" fill={c.glow} stroke={c.deep} strokeWidth="1.2" />
+          <text x="12" y="8" textAnchor="middle" fontSize="5.4" fontWeight="700" fill={c.deep}>20</text>
+        </>
+      ) : null}
+    </svg>
+  );
+  return (
+    <Brd>
+      <Q x={`calc(${fc(4)} + 3%)`} y={`calc(${rk(0)} - 1.2%)`} w={6} h={5} cls="g22-r-in" delayMs={d + 40} v={{ "--gd": "1.9s", "--s0": "1.3" }}>
+        <svg viewBox="0 0 20 16" className="block h-full w-full" aria-hidden="true">
+          <rect x="3" y="3" width="14" height="12" rx="2" fill={c.core} stroke={c.deep} strokeWidth="1.6" />
+          <circle cx="10" cy="9" r="1.8" fill={c.deep} />
+        </svg>
+      </Q>
+      <Q x={`calc(${fc(4)} + 3%)`} y={`calc(${rk(0)} - 4.4%)`} w={4.4} h={4} cls="g22-r-open" delayMs={d + 40} v={{ "--gd": "1.9s", "--ra": "-80deg" }} style={{ transformOrigin: "10% 100%" }}>
+        <svg viewBox="0 0 14 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 12V6a5 5 0 0 1 10 0v6" fill="none" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+          <path d="M2 12V6a5 5 0 0 1 10 0v6" fill="none" stroke={c.glow} strokeWidth="1.5" {...SJ} />
+        </svg>
+      </Q>
+      {Array.from({ length: 9 }, (_, i) => (
+        <Q key={`t${i}`} x={`${30 + i * 5 + (i > 3 ? 2 : 0)}%`} y={rk(2.5)} w={1.1} h={5} cls="g22-r-pip" delayMs={d + 360 + i * 45} v={{ "--gd": "1.8s" }} style={{ background: c.glow, borderRadius: "1px", rotate: i === 4 ? "58deg" : "8deg" }} />
+      ))}
+      <Q x={fc(4)} y={rk(5)} w={9} h={9} cls="g22-r-in" delayMs={d + 480} v={{ "--gd": "1.6s" }}>
+        <Dial c={c} />
+      </Q>
+      <Q x={fc(3)} y={rk(1.6)} w={9} h={5.4} cls="g22-r-go" delayMs={d + 520} v={{ "--gd": "0.8s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${-3 * fileIn(5.4)}%)` }}>
+        {plate(false)}
+      </Q>
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 12%)`} y={rk(5)} w={10} h={4} cls="g22-r-stamp" delayMs={d + 860} v={{ "--gd": "1.2s" }}>
+        <Label text="-0:20" c={c} />
+      </Q>
+      <Q x={fc(3)} y={rk(4.6)} w={9} h={5.4} cls="g22-r-go" delayMs={d + 1000} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${3 * fileIn(5.4)}%)` }}>
+        {plate(true)}
+      </Q>
+      <Q x={fc(3)} y={rk(1.3)} w={8} h={2} cls="g22-r-lean" delayMs={d + 1560} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(169,180,188,0.45)" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_great_waltz: S(GreatWaltzScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
@@ -1566,7 +1865,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true,
     sound: "wall", source: "blindfold", anchor: "cast",
   }),
-  hx4_glass_floor: S(GlassFloorScene, {
+  hx4_glass_floor: S(GlassFloorRule, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true,
     sound: "clockice", source: "blindfold", anchor: "cast",
   }),
@@ -1574,15 +1873,15 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
     sound: "shades", anchor: "board",
   }),
-  ov_big_nap: S(BigNapScene, {
+  ov_big_nap: S(BigNapRule, {
     ordering: "radial", staggerMs: 70, victims: ["n", "b", "r", "q"], hasLead: true,
     sound: "snooze", source: "frozen", anchor: "board",
   }),
-  bn4_hourglass_throne: S(HourglassThroneScene, {
+  bn4_hourglass_throne: S(HourglassThroneRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "clockice", anchor: "board",
   }),
-  bn4_tithe_of_time: S(TitheOfTimeScene, {
+  bn4_tithe_of_time: S(TitheOfTimeRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "shades", anchor: "board",
   }),

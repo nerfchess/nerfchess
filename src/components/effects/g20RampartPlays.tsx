@@ -1947,6 +1947,288 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp):
 }
 
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g20-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g20-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g20-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g20-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
+
+/** Centre of the cast square (the square or rank the card was aimed at), in
+ *  board percent: the board frame sits at -col, -row cells from it, less the
+ *  stage's edge clamp. A cast-less play lands on the board centre. */
+const CAST_X = "calc((0.5 - var(--fx-board-dx, -3.5) - var(--fx-anchor-dx, 0)) * 12.5%)";
+const CAST_Y = "calc((0.5 - var(--fx-board-dy, -3.5) - var(--fx-anchor-dy, 0)) * 12.5%)";
+
+/** A barred move: a cross stamped where it would have landed. */
+function Bar({ c }: { c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- bn4_castle_ditch --------------------------------------------------------------
+   "Every empty square around your king becomes a moat for your opponent's
+   next 5 turns: no enemy piece may advance onto them, though the moat cannot
+   stop a capture that lands there." The king's ring is scored out; its e2
+   pawn steps up to e4 and the square it leaves floods; five turn pips. Their
+   knight on c3 tries to step into the water on e2 and is barred in a splash,
+   then takes on d1 instead, which the moat cannot stop. */
+const C_CDR = { core: "#5ba7c9", glow: "#eef6f2", deep: "#0f2430" };
+
+function Water({ c }: { c: typeof C_CDR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="0" y="0" width="20" height="20" fill="rgba(91,167,201,0.55)" />
+      <path d="M2 7q2-2 4 0t4 0 4 0 4 0M2 13q2-2 4 0t4 0 4 0 4 0" fill="none" stroke={c.glow} strokeWidth="1.2" {...SJ} />
+    </svg>
+  );
+}
+
+function CastleDitchRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <RingDitch lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CDR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(4)} y={rk(0.5)} w={37.5} h={25} cls="g20-r-in" delayMs={d + 30} v={{ "--gd": "2.3s", "--s0": "1.08" }} style={{ border: `2px dashed ${c.core}`, borderRadius: "3px" }} />
+      <Q x={fc(4)} y={rk(1)} w={11} h={11} cls="g20-r-go" delayMs={d + 120} v={{ "--gd": "0.8s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)` }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={fc(4)} y={rk(1)} w={12.5} h={12.5} cls="g20-r-grow" delayMs={d + 380} v={{ "--gd": "1.9s" }} style={{ transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }}>
+        <Water c={c} />
+      </Q>
+      <Pips n={5} r={3.5} x0={43} x1={57} color={c.glow} delayMs={d + 520} gd="1.6s" />
+      <Q x={fc(2)} y={rk(2)} w={11} h={11} cls="g20-r-go" delayMs={d + 600} v={{ "--gd": "1.5s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={2} r0={2} c1={4} r1={1} color={c.glow} delayMs={d + 700} gd="0.7s" />
+      {[0, 1].map((i) => (
+        <Q key={`s${i}`} x={fc(4)} y={rk(1)} w={9 + i * 4} h={9 + i * 4} cls="g20-r-toll" delayMs={d + 840 + i * 90} v={{ "--gd": "0.7s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      ))}
+      <Q x={fc(4)} y={rk(1)} w={7} h={7} cls="g20-r-stamp" delayMs={d + 880} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+      <Thread c0={2} r0={2} c1={3} r1={0} color={c.core} delayMs={d + 1040} gd="0.8s" />
+      <Tint x={fc(3)} y={rk(0)} color="rgba(238,246,242,0.3)" delayMs={d + 1300} gd="0.9s" />
+    </Brd>
+  );
+}
+
+/* --- bn4_clay_colossus -------------------------------------------------------------
+   "Raise a rook of fired clay on an empty square on your home rank. It serves
+   like the real thing, then crumbles after 8 of your turns." On the chosen
+   home square a mound of clay heaps up and is thrown into a rook, a kiln arch
+   closes over it and its flames lick up, and the rook stands fired; eight
+   turn pips count out along the rank beside the army, the last one cracked,
+   and a few crumbs already sift off its base. */
+const C_CCR = { core: "#d2703a", glow: "#ffe2b8", deep: "#2c1408" };
+
+function ClayColossusRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ClayKiln lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CCR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={CAST_X} y={`calc(${CAST_Y} + 3.4%)`} w={10} h={4} cls="g20-r-up" delayMs={d + 30} v={{ "--gd": "0.9s" }} style={{ background: c.core, borderRadius: "50% 50% 10% 10%" }} />
+      <Q x={CAST_X} y={CAST_Y} w={11} h={11} cls="g20-r-up" delayMs={d + 260} v={{ "--gd": "2s" }}>
+        <Man kind="r" fill={c.core} stroke={c.deep} />
+      </Q>
+      <Q x={CAST_X} y={`calc(${CAST_Y} - 1%)`} w={14} h={14} cls="g20-r-in" delayMs={d + 420} v={{ "--gd": "1s", "--s0": "1.2" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 19V9a8 8 0 0 1 16 0v10" fill="none" stroke={c.deep} strokeWidth="3" {...SJ} />
+          <path d="M2 19V9a8 8 0 0 1 16 0v10" fill="none" stroke={c.glow} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      {[-1, 0, 1].map((i) => (
+        <Q key={`f${i}`} x={`calc(${CAST_X} + ${i * 3.4}%)`} y={`calc(${CAST_Y} + 4%)`} w={2.4} h={4} cls="g20-r-lean" delayMs={d + 520 + (i + 1) * 60} v={{ "--gd": "0.8s" }} style={{ background: c.glow, borderRadius: "50% 50% 40% 40%" }} />
+      ))}
+      <Q x={CAST_X} y={CAST_Y} w={12.5} h={12.5} cls="g20-r-in" delayMs={d + 860} v={{ "--gd": "1.1s", "--s0": "1" }} style={{ border: `2px solid ${c.core}`, borderRadius: "2px" }} />
+      <Pips n={8} r={2.5} x0={36} x1={64} color={c.glow} delayMs={d + 760} gd="1.5s" />
+      <Q x="64%" y={rk(2.5)} w={3.4} h={4.6} cls="g20-r-stamp" delayMs={d + 1300} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 1l-1.6 4 2.4 2-2 3.4 1.2 2.6" fill="none" stroke={c.deep} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      {[0, 1, 2].map((i) => (
+        <Q key={`k${i}`} x={`calc(${CAST_X} + ${(i - 1) * 2.4}%)`} y={`calc(${CAST_Y} + 4.6%)`} w={1.2} h={1.2} cls="g20-r-part" delayMs={d + 1400 + i * 70} v={{ "--gd": "0.7s", "--tx1": `${(i - 1) * 60}%`, "--ty1": "calc(var(--fx-side, 1) * 180%)" }} style={{ background: c.core, borderRadius: "30%" }} />
+      ))}
+    </Brd>
+  );
+}
+
+/* --- hx4_dead_march ----------------------------------------------------------------
+   "For your opponent's next 6 turns, the drums forbid haste: on every second
+   turn (the 2nd, 4th and 6th) their rooks and queen cannot move." Six turn
+   pips march out along the middle of the board, every second one a drum,
+   and a big drum at the board's edge, sticks raised, sounds;
+   on each drum beat their two rooks and their queen are draped in black and
+   held, and between beats they are let go. */
+const C_DMR = { core: "#8d93a8", glow: "#f2eee4", deep: "#15161c" };
+
+function Drum({ c }: { c: typeof C_DMR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="10" cy="6" rx="7" ry="2.6" fill={c.glow} stroke={c.deep} strokeWidth="1.3" />
+      <path d="M3 6v8c0 1.4 3.2 2.6 7 2.6s7-1.2 7-2.6V6" fill={c.core} stroke={c.deep} strokeWidth="1.3" {...SJ} />
+      <path d="M3.4 8l3.2 7M16.6 8l-3.2 7M10 8.6v8" stroke={c.deep} strokeWidth="0.9" {...SJ} />
+    </svg>
+  );
+}
+
+function DeadMarchRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <DeadDrums lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_DMR;
+  const d = delayMs;
+  const held = [0, 3, 7];
+  const beats = [1, 3, 5];
+  return (
+    <Brd>
+      {[0, 1, 2, 3, 4, 5].map((i) =>
+        i % 2 ? (
+          <Q key={`b${i}`} x={`${24 + i * 10.4}%`} y={rk(3.5)} w={6} h={6} cls="g20-r-stamp" delayMs={d + 120 + i * 180} v={{ "--gd": `${2.2 - i * 0.18}s` }}>
+            <Drum c={c} />
+          </Q>
+        ) : (
+          <Q key={`b${i}`} x={`${24 + i * 10.4}%`} y={rk(3.5)} w={1.8} h={3.2} cls="g20-r-pip" delayMs={d + 120 + i * 180} v={{ "--gd": `${2.2 - i * 0.18}s` }} style={{ background: c.glow, borderRadius: "1px" }} />
+        ),
+      )}
+      {beats.flatMap((b) =>
+        held.map((col) => (
+          <Tint key={`t${b}-${col}`} x={fc(col)} y={rk(7)} color="rgba(21,22,28,0.7)" delayMs={d + 120 + b * 180} gd="0.5s" />
+        )),
+      )}
+      {beats.flatMap((b) =>
+        held.map((col) => (
+          <Q key={`r${b}-${col}`} x={fc(col)} y={rk(7)} w={12} h={12} cls="g20-r-toll" delayMs={d + 140 + b * 180} v={{ "--gd": "0.5s" }} style={{ border: `2px solid ${c.core}`, borderRadius: "2px" }} />
+        )),
+      )}
+      {held.map((col, i) => (
+        <Q key={`k${col}`} x={`calc(${fc(col)} + 3%)`} y={`calc(${rk(7)} + var(--fx-side, 1) * 3%)`} w={5} h={5} cls="g20-r-in" delayMs={d + 280 + i * 40} v={{ "--gd": "1.9s" }}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 3l14 14" stroke={c.deep} strokeWidth="5" {...SJ} />
+            <path d="M3 3l14 14" stroke={c.core} strokeWidth="2" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      <Q x="7%" y={rk(4.4)} w={9} h={5} cls="g20-r-in" delayMs={d + 60} v={{ "--gd": "1.9s", "--r0": "30deg" }}>
+        <svg viewBox="0 0 20 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 9l6-7M17 9l-6-7" stroke={c.deep} strokeWidth="2.6" {...SJ} />
+          <path d="M3 9l6-7M17 9l-6-7" stroke={c.glow} strokeWidth="1.1" {...SJ} />
+        </svg>
+      </Q>
+      <Q x="7%" y={rk(3.5)} w={10} h={10} cls="g20-r-stamp" delayMs={d + 620} v={{ "--gd": "1.4s" }}>
+        <Drum c={c} />
+      </Q>
+      <Q x="50%" y={rk(5.2)} w={40} h={1.6} cls="g20-r-lean" delayMs={d + 1300} v={{ "--gd": "0.9s" }} style={{ borderRadius: "999px", background: "rgba(141,147,168,0.45)" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8: the great works ---
   bn4_dukes_patent: S(PatentDraft, {
@@ -1955,7 +2237,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_wall_of_faith: S(FaithCourse, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "board",
   }, { rgb: "255 217 160", at: 720, laser: true, shock: true, box: [42, 33, 15, 18] }),
-  hx4_dead_march: S(DeadDrums, {
+  hx4_dead_march: S(DeadMarchRule, {
     ordering: "line", staggerMs: 65, victims: ["r", "q"], hasLead: true, sound: "shades", anchor: "board",
   }, { rgb: "141 147 168", at: 680, shock: true, box: [40, 37, 20, 13] }),
   hx4_the_long_siege: S(Circumvallation, {
@@ -1966,7 +2248,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, { rgb: "111 208 168", at: 660, laser: true, glyph: impStone("#6fd0a8", "#0e2a22"), box: [42, 35, 14, 16] }),
 
   // --- Tier 7 ---
-  bn4_clay_colossus: S(ClayKiln, {
+  bn4_clay_colossus: S(ClayColossusRule, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "colossus", anchor: "cast",
   }, { rgb: "210 112 58", at: 640, glyph: impStone("#d2703a", "#2c1408"), shock: true, box: [43, 36, 14, 15] }),
   bn4_palace_walls: S(CurtainWall, {
@@ -1974,7 +2256,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, { rgb: "207 214 224", at: 620, laser: true, shock: true, box: [42, 34, 15, 17] }),
 
   // --- Tier 6 ---
-  bn4_castle_ditch: S(RingDitch, {
+  bn4_castle_ditch: S(CastleDitchRule, {
     ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }, { rgb: "91 167 201", at: 580, shock: true, box: [41, 38, 17, 12] }),
   bn4_dowry: S(DowryChest, {

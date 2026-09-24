@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertSameOrigin } from "@/lib/server/request";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
@@ -10,6 +11,10 @@ import {
   userForSession,
 } from "@/lib/server/auth";
 import { RD_START, VOL_START } from "@/lib/glicko";
+import { whoCookieHeader } from "@/lib/session/who";
+import { hintFromRow } from "../_lib/who";
+import { isReservedUsername } from "../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 import { randomGuestName, randomGuestNameNumbered } from "@/lib/guestNames";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +23,19 @@ export const dynamic = "force-dynamic";
 // visitors can play rated games immediately. The password is an unknowable
 // random secret; registering later upgrades the same account in place.
 export async function POST(request: Request) {
+  // No body to read, but a cross-site page must not be able to mint a
+  // session or end one (F046). Shared rule: src/lib/server/request.ts.
+  const refused = assertSameOrigin(request);
+  if (refused) return refused;
   const db = await getDb();
 
   // Already signed in (guest or not): return that account instead of minting
   // another one, so refreshes and races don't pile up rows.
   const existing = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (existing) {
-    return NextResponse.json({ id: existing.id, username: existing.username });
+    const response = NextResponse.json({ id: existing.id, username: existing.username });
+    response.headers.append("Set-Cookie", whoCookieHeader(hintFromRow(existing), requestIsSecure(request)));
+    return response;
   }
 
   // Throttle guest MINTING per client IP (the same rolling-window counter the
@@ -47,6 +58,7 @@ export async function POST(request: Request) {
   let username: string | null = null;
   for (let attempt = 0; attempt < 12 && !username; attempt++) {
     const candidate = attempt < 6 ? randomGuestName() : randomGuestNameNumbered();
+    if (isReservedUsername(candidate) || claimsPowerUsername(candidate)) continue;
     const taken = await db
       .prepare("SELECT id FROM users WHERE username_lower = ?")
       .bind(candidate.toLowerCase())
@@ -69,7 +81,12 @@ export async function POST(request: Request) {
     .run();
 
   const token = await createSession(db, id);
+  const secure = requestIsSecure(request);
   const response = NextResponse.json({ id, username });
-  response.headers.set("Set-Cookie", sessionCookie(token, requestIsSecure(request)));
+  response.headers.append("Set-Cookie", sessionCookie(token, secure));
+  response.headers.append(
+    "Set-Cookie",
+    whoCookieHeader(hintFromRow({ username, avatar: null, role: "user", is_guest: 1 }), secure),
+  );
   return response;
 }

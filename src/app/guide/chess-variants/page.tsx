@@ -4,13 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Chess variants: where Nerf Chess fits",
-  description:
-    "A tour of popular chess variants (Chess960, Crazyhouse, Atomic, Fog of War, Duck Chess) and where Nerf Chess fits: hidden information plus card drafting on a standard board.",
-  alternates: { canonical: "/guide/chess-variants" },
-};
+export const metadata: Metadata = staticMeta("/guide/chess-variants", { image: "segment" });
 
 export default function ChessVariantsPage() {
   return (

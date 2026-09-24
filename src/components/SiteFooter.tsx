@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { TEAM_ANCHOR } from "@/lib/team";
 
 // Shared site footer for non-game public pages. The in-game screens are
 // full-bleed and intentionally omit this; it is opted into per page (and by
 // InfoPageLayout) rather than mounted globally, so the board view stays clean.
-const FOOTER_LINKS = [
+export const FOOTER_LINKS = [
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
   { href: "/guidelines", label: "Guidelines" },
@@ -41,8 +42,16 @@ export function SiteFooter() {
           </span>
         ))}
       </nav>
-      <div className="mt-3 text-center text-[13px] text-parchment-400">
-        <span className="opacity-70">Nerf Chess</span>
+      {/* The team credit (brief section 18) points at the team section on
+          /about. It was a bare "Nerf Chess" at 70% opacity, which also put
+          muted text below its own contrast floor. */}
+      <div className="mt-3 flex justify-center text-[13px] text-parchment-400">
+        <Link
+          href={`/about#${TEAM_ANCHOR}`}
+          className="-my-1 flex min-h-[44px] items-center px-3 transition-colors hover:text-parchment [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0"
+        >
+          Made by the Nerf Chess team
+        </Link>
       </div>
     </footer>
   );

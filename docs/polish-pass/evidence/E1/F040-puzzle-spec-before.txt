@@ -1,0 +1,4 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:212:7 › puzzle by id › an unknown puzzle id uses the shared not-found panel (32.4s)
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+  1 failed

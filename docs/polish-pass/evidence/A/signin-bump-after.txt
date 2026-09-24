@@ -1,0 +1,15 @@
+  ✓   1 section 4 sign-in bump at 1280x800 › /: header keeps its first-paint shape and CLS stays low (29.3s)
+  ✓   2 section 4 sign-in bump at 1280x800 › /lobby: header keeps its first-paint shape and CLS stays low (27.4s)
+  ✓   3 section 4 sign-in bump at 1280x800 › /play: header keeps its first-paint shape and CLS stays low (8.8s)
+  ✓   4 section 4 sign-in bump at 1280x800 › /profile: header keeps its first-paint shape and CLS stays low (26.5s)
+  ✓   5 section 4 sign-in bump at 1280x800 › bot game: header keeps its first-paint shape and CLS stays low (32.5s)
+  ✘   6 section 4 sign-in bump at 390x844 › /: header keeps its first-paint shape and CLS stays low (29.7s)
+  ✓   7 section 4 sign-in bump at 390x844 › /: header keeps its first-paint shape and CLS stays low (retry #1) (30.9s)
+  ✓   8 section 4 sign-in bump at 390x844 › /lobby: header keeps its first-paint shape and CLS stays low (27.0s)
+  ✓   9 section 4 sign-in bump at 390x844 › /play: header keeps its first-paint shape and CLS stays low (9.7s)
+  ✓  10 section 4 sign-in bump at 390x844 › /profile: header keeps its first-paint shape and CLS stays low (26.7s)
+  ✓  11 section 4 sign-in bump at 390x844 › bot game: header keeps its first-paint shape and CLS stays low (14.6s)
+    Expected: < 0.015
+    Received:   0.1541
+  1 flaky
+  9 passed (4.4m)

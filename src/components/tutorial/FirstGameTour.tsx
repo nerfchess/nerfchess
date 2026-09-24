@@ -26,7 +26,7 @@ function Gloss({ term, fallback }: { term: string; fallback: string }) {
 }
 
 // Spotlight targets, resolved against the game page's existing DOM (stable
-// hooks it already exposes — no game component was changed for positioning).
+// hooks it already exposes, no game component was changed for positioning).
 const BOARD = ["[data-board-measure]"] as const;
 // The "Next draft in N moves" chip is the dock's first status row; below the
 // lg breakpoint the dock lives in a drawer, so fall back to the whole dock
@@ -230,7 +230,7 @@ export function FirstGameTour() {
     } else {
       if (state.offerOpen && phase <= UNTIL_DRAFT && !draftSeen) setDraftSeen(true);
       if (phase === FIRST_MOVE && state.myMoves >= 1) setPhase(DRAFT_COUNTER);
-      // Resolved offer (picked or banked) — also satisfied instantly when a
+      // Resolved offer (picked or banked), also satisfied instantly when a
       // refreshed mid-game already holds cards from an earlier draft.
       if (phase === UNTIL_DRAFT && !state.offerOpen && draftResolved) setPhase(DOCK_STEP);
     }
@@ -248,7 +248,7 @@ export function FirstGameTour() {
 
   // The draft overlay owns the screen: pause the coach card. The first time,
   // float a slim pick-vs-bank explainer above the overlay; later drafts (past
-  // the dock step) need no banner — the coach simply resumes after.
+  // the dock step) need no banner, the coach simply resumes after.
   if (state.offerOpen && !state.over) {
     return phase <= UNTIL_DRAFT ? <DraftCoachBanner /> : null;
   }

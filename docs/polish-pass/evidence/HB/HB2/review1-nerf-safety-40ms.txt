@@ -1,0 +1,5 @@
+nerf safety: 240 positions (28 where some root move allows a loss in one), hard@40ms, 30s, load 1.1 1.0 1.1
+  f2d20b4        unsafe picks 0/240 (0.0%, 95% 0.0-1.6%), 0/28 of the at-risk positions, mean depth 2.93, mean 41ms
+  current        unsafe picks 0/240 (0.0%, 95% 0.0-1.6%), 0/28 of the at-risk positions, mean depth 2.93, mean 41ms
+  current-noP4   unsafe picks 6/240 (2.5%, 95% 1.2-5.3%), 6/28 of the at-risk positions, mean depth 2.92, mean 41ms
+wrote docs/polish-pass/evidence/HB/HB2/review1-nerf-safety-40ms.json

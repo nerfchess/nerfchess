@@ -1,0 +1,8 @@
+PASS  control: Chess Diff is offered with no exclusion  (101 of 8000 rolls at its tier)
+PASS  exclusion: Chess Diff never offered in arena drafts  (0 of 8000 rolls at its tier)
+PASS  exclusion off by default
+PASS  live filler games: no Chess Diff offer, records carry the overrides and replay  (8 finished, 182 picks (0 offers with Chess Diff), 5 banks, 35 cards fired, 0 replay failures)
+PASS  DO-seated personas are never seated by the arena  (20000 seats over 10000 spawns, 0 clashes)
+PASS  sync reply: seated read when present, empty from an older DO
+
+RESULT: PASS (6 checks)

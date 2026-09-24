@@ -434,17 +434,25 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       )}
 
       {showingRecent && (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label="Recent searches"
-          className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown overflow-hidden shadow-2xl"
-        >
-          <p className="px-4 pt-2 pb-1">Recent</p>
-          <div className="divide-y divide-[color:var(--edge)]">
-            {recent.map((item, i) => (
-              <div key={item.username} className="relative flex items-center">
+        <div className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown overflow-hidden shadow-2xl">
+          {/* The caption sits outside the listbox, which may hold only
+              options (F150); the listbox is named by it. */}
+          <p id={`${listId}-caption`} className="px-4 pt-2 pb-1">Recent</p>
+          {/* The listbox holds only its options (A-D1): the Remove buttons
+              sit in a sibling column, outside it. Both columns are subgrids
+              of one grid, so each option and its Remove button share a row
+              height whatever the row's content. */}
+          <div className="grid grid-cols-[minmax(0,1fr)_auto]">
+            <div
+              id={listId}
+              role="listbox"
+              aria-labelledby={`${listId}-caption`}
+              className="col-start-1 grid grid-rows-subgrid divide-y divide-[color:var(--edge)]"
+              style={{ gridRow: `1 / span ${recent.length}` }}
+            >
+              {recent.map((item, i) => (
                 <button
+                  key={item.username}
                   id={`${listId}-${i}`}
                   role="option"
                   aria-selected={i === active}
@@ -452,24 +460,36 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
                   onMouseEnter={() => setActive(i)}
                   onClick={() => go(item)}
                   className={
-                    "flex w-full min-h-[44px] items-center gap-2 py-2 pl-4 pr-12 text-left text-sm transition-colors " +
+                    "flex w-full min-h-[44px] items-center gap-2 py-2 pl-4 pr-2 text-left text-sm transition-colors " +
                     (i === active ? "bg-[color:var(--bg-raised)]" : "hover:bg-[color:var(--bg-raised)]")
                   }
                 >
                   {rowContent(item)}
                 </button>
+              ))}
+            </div>
+            <div
+              className="col-start-2 grid grid-rows-subgrid divide-y divide-[color:var(--edge)]"
+              style={{ gridRow: `1 / span ${recent.length}` }}
+            >
+              {recent.map((item, i) => (
                 <button
+                  key={item.username}
                   type="button"
                   aria-label={`Remove ${item.username} from recent searches`}
+                  onMouseEnter={() => setActive(i)}
                   onClick={() => removeRecent(item.username)}
-                  className="absolute right-1 top-1/2 flex h-[44px] w-[44px] -translate-y-1/2 items-center justify-center rounded-none text-parchment-500 transition-colors hover:bg-[color:var(--bg-raised)] hover:text-parchment-200"
+                  className={
+                    "flex min-h-[44px] w-[44px] items-center justify-center rounded-none text-parchment-500 transition-colors hover:text-parchment-200 " +
+                    (i === active ? "bg-[color:var(--bg-raised)]" : "hover:bg-[color:var(--bg-raised)]")
+                  }
                 >
                   <svg viewBox="0 0 20 20" width={14} height={14} aria-hidden fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
                     <path d="M5 5l10 10M15 5L5 15" />
                   </svg>
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}

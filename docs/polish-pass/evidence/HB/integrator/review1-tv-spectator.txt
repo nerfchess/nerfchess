@@ -1,0 +1,35 @@
+
+=== UNIT: snapshot serialize / deserialize + spectator rebuild ===
+
+=== UNIT: public-state sanitization (no hidden info reaches the wire) ===
+
+=== UNIT: sequence handling (in-order / dedupe / out-of-order) ===
+
+=== UNIT: deterministic public-state hashing ===
+
+=== UNIT: schema migration guards ===
+
+=== UNIT: candidate health validation + failover selection ===
+
+=== UNIT: sticky featured selection (no per-poll churn) ===
+
+=== UNIT: over/ended games always yield to a live candidate ===
+
+=== CARD-PARITY: every board-mutating activated card ===
+  (matrix: 761 activated, 703 fired, 703 board-mutating, 703 parity-exact)
+
+=== CARD-PARITY: combinations / ordering / stacking of board-mutating cards ===
+
+=== INTEGRATION: join scenarios through applySpectatorEnvelope ===
+
+=== INTEGRATION: buff game, nerf game, and secret-nerf hash agreement ===
+
+=== INTEGRATION: switch nerf->buff, rapid switching ===
+
+=== INTEGRATION: disconnect gap, missing event recovery, game-ends-during-loading, corrupted cache, failover ===
+
+=== CONSUMER ROUTING: dropped move frame -> buffer -> resync -> board matches live ===
+
+=== CONSUMER ROUTING: draft action after a gap keeps the interleave exact ===
+
+TV-SPECTATOR: all 141 checks passed (unit + card-parity + integration, headless)

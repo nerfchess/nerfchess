@@ -1,0 +1,38 @@
+# Typecheck, lint and the cheap guards on every push and pull request (F250).
+# The same guard list runs locally with `npm run guard` (scripts/polish/guard.mjs),
+# so a green pre-push run means a green job here. Browser guards (test:cls,
+# test:console, e2e) need a running dev server and are not part of this job yet.
+name: guards
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+concurrency:
+  group: guards-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # test:sitemap-dates and the build stamp read recent git history.
+          fetch-depth: 50
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Cheap guards
+        run: npm run guard

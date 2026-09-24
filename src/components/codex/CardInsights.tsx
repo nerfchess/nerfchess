@@ -2,10 +2,10 @@
 
 // The live half of a codex card page: aggregate gameplay stats and runtime
 // moderator changes, fetched from /api/cards/insights. Supplemental by
-// design: the page's crawlable content is all server-rendered, so this panel
-// renders nothing while loading and nothing at all on failure, and the
-// section heading only appears once data has landed (no layout jump into an
-// empty box).
+// design: the page's crawlable content is all server-rendered. The collapsed
+// "In play" row is on the page from the first paint and only its hidden body
+// waits for the numbers: it used to render nothing until the fetch landed and
+// then push "How it works" and everything below it down 87px.
 
 import { useEffect, useState } from "react";
 import { TIER_ROMAN } from "@/lib/tiers";
@@ -97,6 +97,8 @@ export function CardInsights({
   noun: string;
 }) {
   const [data, setData] = useState<Insights | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,13 +110,44 @@ export function CardInsights({
       .then((d) => {
         if (!cancelled) setData(d);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [kind, id]);
+  }, [kind, id, attempt]);
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <details className="plate group">
+        <InPlaySummary noteChip={null} />
+        <div className="px-6 pb-6 text-[15px] leading-relaxed text-parchment-200 sm:px-7 sm:pb-7">
+          {failed ? (
+            <p role="alert" className="flex flex-wrap items-center gap-3 text-sm text-parchment-300">
+              The numbers for this {noun} could not load.
+              <button
+                type="button"
+                onClick={() => {
+                  setFailed(false);
+                  setAttempt((n) => n + 1);
+                }}
+                className="inline-flex min-h-[44px] items-center text-gold-leaf underline-offset-2 hover:underline [@media(pointer:fine)]:min-h-0"
+              >
+                Retry
+              </button>
+            </p>
+          ) : (
+            <div aria-busy="true" aria-label="Loading the numbers" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="skeleton h-[62px]" />
+              ))}
+            </div>
+          )}
+        </div>
+      </details>
+    );
+  }
 
   const { effective, stats, events } = data;
   const human = stats?.human;
@@ -137,24 +170,7 @@ export function CardInsights({
 
   return (
     <details className="plate group">
-      <summary className="cursor-pointer list-none p-6 outline-none focus-visible:text-coral sm:p-7 [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2.5">
-            <span className="display-3 text-parchment">In play</span>
-            {noteChip && (
-              <span className="rounded-none border border-sun/30 bg-sun/5 px-1.5 py-px text-[12px] text-parchment-200">
-                {noteChip}
-              </span>
-            )}
-          </span>
-          <span
-            aria-hidden
-            className="shrink-0 text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
-          >
-            &#9656;
-          </span>
-        </span>
-      </summary>
+      <InPlaySummary noteChip={noteChip} />
       <div className="space-y-3 px-6 pb-6 text-[15px] leading-relaxed text-parchment-200 sm:px-7 sm:pb-7">
         {!effective.enabled && (
           <p className="rounded-none border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
@@ -232,5 +248,30 @@ export function CardInsights({
         )}
       </div>
     </details>
+  );
+}
+
+/** The collapsed row, the same before and after the numbers land. The note
+ *  chip is shorter than the heading's line, so its arrival does not move it. */
+function InPlaySummary({ noteChip }: { noteChip: string | null }) {
+  return (
+    <summary className="cursor-pointer list-none p-6 outline-none focus-visible:text-coral sm:p-7 [&::-webkit-details-marker]:hidden">
+      <span className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-2.5">
+          <span className="display-3 text-parchment">In play</span>
+          {noteChip && (
+            <span className="rounded-none border border-sun/30 bg-sun/5 px-1.5 py-px text-[12px] text-parchment-200">
+              {noteChip}
+            </span>
+          )}
+        </span>
+        <span
+          aria-hidden
+          className="shrink-0 text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
+        >
+          &#9656;
+        </span>
+      </span>
+    </summary>
   );
 }

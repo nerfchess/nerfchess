@@ -41,7 +41,7 @@ import {
   FeaturedDraft,
   NOT_A_DRAFT,
   withFeaturedDraftState,
-} from "@/lib/spectate/featuredBoard";
+} from "@/lib/spectate/featuredDraft";
 import {
   beginWatch,
   createSpectatorSync,

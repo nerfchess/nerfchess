@@ -1,0 +1,72 @@
+L request 1: the daily email cron
+FAIL  default export has scheduled()
+FAIL  scheduled() runs runDailyJob under waitUntil
+FAIL  a failed run is logged, never thrown
+FAIL  runDailyJob is imported
+  ok  wrangler.jsonc has the "0 13 * * *" cron
+R4: an away human never drains the bot's clock
+FAIL  houseTick no longer holds the bot while its human is away
+FAIL  a bot move hands an away human the bounded pause
+FAIL  the alarm no longer drops a guard-held bot action
+  ok  clockPause exports openHandoverPause
+  ok  the move opens a 45s pause for the away human
+  ok  the bot paid only its 800ms think
+  ok  30s away costs the human 30s and the bot nothing
+  ok  nothing is decided on time
+  ok  60s away: the bot keeps its clock, the human is billed as today
+  ok  no pause for a present human
+  ok  no pause for a bot seat
+R1, R7: remote only when it pays, with a graded timeout and a breaker
+FAIL  the flat 5s clock rule is gone
+FAIL  remote iff the graded budget beats the local ceiling
+FAIL  filler never goes remote
+FAIL  the local search gets the increment
+FAIL  the breaker gates and records every remote call
+FAIL  the timeout follows the budget
+  ok  1+0 with 20s left: local (no round trip on a bullet move)
+  ok  5+0 with 280s left: remote
+  ok  breaker state is not on the public /healthz
+FAIL  breaker state is on the internal /mod/online view
+R2, R11: pacing gives way to search; filler pacing frozen; snap moves
+FAIL  filler keeps its exact call (multiplier, tempo, no options)
+FAIL  human games pass expectedSearchMs
+FAIL  human games pass the opening, forced and sharpness inputs
+FAIL  a snap is recorded server-side
+FAIL  a snapped move plays houseSnapMove locally
+  ok  filler delays identical to the frozen pacing for 2000 seeds
+R3, R10: persona, increment, deadline and overrides to the engine; scoreCp back
+FAIL  the body carries persona, incrementSec and deadlineMs
+FAIL  the reply's scoreCp is read
+  ok  serializeMatchForEngine carries cardOverrides
+R6: resign and draws through the human paths
+FAIL  resignSeat is factored out
+FAIL  a human resign uses resignSeat
+FAIL  a human accept uses acceptDrawSeat
+FAIL  a draw offer to a bot is answered in 1.5-5s
+FAIL  a decline is today's drawDeclined frame
+FAIL  a bot's offer is the human drawOffer frame
+FAIL  resign decisions for human games only
+R5: rematch against a bot
+FAIL  a bot seat answers instead of opponent_gone
+FAIL  accept checks availability then starts the rematch
+FAIL  a decline uses the frames of a person leaving
+FAIL  the rematch carries the colour-swapped bots map
+R9: persona cards and drafts
+FAIL  drafts use houseDraftChoice
+FAIL  activations use houseChooseActivation
+FAIL  the old coin plus engine calls are gone
+R12, R14: one persona per game; arena overrides
+FAIL  /arena/games returns the DO-seated personas
+FAIL  arena-seated personas are not free in houseTick
+FAIL  the /play picker skips arena-seated personas
+FAIL  the arena replica installs the snapshot's overrides
+FAIL  the end rebuild installs the record's overrides
+  ok  the arena end route archives the overrides
+  ok  arenaRecord exports sanitizeArenaCardOverrides
+  ok  keeps only valid off ids and 1-8 tiers
+  ok  garbage reads as no overrides
+No bot tell reaches a client
+  ok  no server-only house field on a frame line
+  ok  sendStart carries none of them
+
+40 check(s) failed

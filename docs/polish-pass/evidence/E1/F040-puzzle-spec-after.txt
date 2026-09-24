@@ -1,0 +1,4 @@
+  ✓  1 [chromium] › e2e/content-states.spec.ts:97:7 › content route layout stability (390x844) › /puzzles keeps the board still while the date and corpus arrive (4.7s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:105:7 › content route layout stability (390x844) › /puzzles/[id] keeps the board still while the corpus arrives (3.5s)
+  ✓  3 [chromium] › e2e/content-states.spec.ts:212:7 › puzzle by id › an unknown puzzle id uses the shared not-found panel (1.2s)
+  3 passed (13.1s)

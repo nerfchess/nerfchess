@@ -62,6 +62,10 @@ const SOCIALS: {
   },
 ];
 
+/** The official accounts as plain links: the Organization structured data
+ *  lists them as sameAs, and the footer and /contact can share them. */
+export const SOCIAL_LINKS: { href: string; label: string }[] = SOCIALS.map(({ href, label }) => ({ href, label }));
+
 export function SocialsRow({
   label = "Socials",
   className = "mt-8",

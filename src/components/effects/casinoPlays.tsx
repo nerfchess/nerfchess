@@ -53,42 +53,30 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
   );
 }
 
-/** Board-crop stage for a lead that declares `anchor: "board"`: oversized
- * around the lead square so the skit takes over the whole visible board.
+/** The scene canvas for a lead: 0..100 of every scene's viewBox is EXACTLY
+ * the board.
  *
- * Board.tsx re-centres the wrapper on the board for a "board" anchor, so this
- * canvas must NOT correct itself a second time. Cast-anchored leads use
- * `Framed` instead. */
+ * The scenes were authored as if the viewBox were the board (headlines at y
+ * 26 to 30, felt arcs and labels at 83 to 86), but Wide was a 14-cell canvas
+ * and Framed reproduced that same 14-cell composition pinned to the board, so
+ * only 21.4 to 78.6 of each axis was on screen: headlines ran off both edges,
+ * labels sat below the board and the roulette wheel covered six ranks.
+ * Mapping the viewBox onto the board (BoardFrame reads the board offset
+ * itself, so it is right for either anchor) shows the scene that was drawn. */
 function Wide({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
-  return (
-    <span className="csp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span
-        className={`absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]${quakeMs != null ? ` ${QUAKE_CLASS}` : ""}`}
-        style={quakeMs != null ? impactVars(undefined, quakeMs / 1000) : undefined}
-      >
-        {children}
-      </span>
-    </span>
-  );
+  return <Framed quakeMs={quakeMs}>{children}</Framed>;
 }
 
-/** The same 14-cell composition for a lead that declares `anchor: "cast"`,
- * pinned to the BOARD.
- *
- * Every scene in this module is one table-scale prop (a cabinet, a wheel, a
- * felt arc) authored to fill the crop, so it is a board-scale layer in the
- * sense of the design brief and belongs in a `BoardFrame` rather than at a
- * fixed percentage of the anchored canvas. The canvas is 14 cells and the
- * board is the middle 8, so the art is re-expanded to 175% of the frame and
- * offset -37.5%: that reproduces the pre-anchoring composition EXACTLY while
- * making it independent of which square the card was cast on. The cast square
- * then carries the play's own local beats — see `Spot`. */
+/** The board-mapped canvas (see Wide). Every scene in this module is one
+ * table-scale prop (a cabinet, a wheel, a felt arc), a board-scale layer in
+ * the sense of the design brief, so it lives in a `BoardFrame`. The cast
+ * square carries the play's own local beats; see `Spot`. */
 function Framed({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
   // The quake rides an INNER wrapper: .fx-stage's own transform is the anchor
   // clamp, and imp-quake's keyframed transform would override it mid-jolt.
   const inner = (
     <BoardFrame>
-      <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+      <span className="absolute inset-0 block">{children}</span>
     </BoardFrame>
   );
   return (

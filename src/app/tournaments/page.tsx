@@ -1,7 +1,8 @@
 "use client";
 
 import { SiteHeader } from "@/components/SiteHeader";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { FIELD_TEXT } from "@/components/social/fieldText";
 import type { TournamentListRow } from "@/app/api/tournaments/route";
 import {
   clockLabel,
@@ -17,10 +18,13 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Plus, Trophy, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 interface Club {
   id: string;
   name: string;
+  /** 1 when the viewer is a member (GET /api/clubs). */
+  joined?: number;
 }
 
 // Common arena clocks, offered as chips so creating an event is a couple of
@@ -38,7 +42,7 @@ const CLOCK_PRESETS: { label: string; t: number; i: number }[] = [
 const DURATION_PRESETS = [20, 30, 45, 60, 90, 120];
 
 const INPUT_CLASS =
-  "mt-1 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-[13px] text-parchment";
+  `mt-1 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 ${FIELD_TEXT} text-parchment`;
 const LABEL_CLASS = "block text-[12px] font-medium text-parchment-400";
 
 function ModeTag({ mode }: { mode: string }) {
@@ -50,9 +54,19 @@ function ModeTag({ mode }: { mode: string }) {
 
 export default function TournamentsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // Who is looking, from the shared session (F014).
+  // `ensure` (wave 2): the header gives a first-time visitor a guest account,
+  // and guests can do everything this page offers. Without it the page read
+  // "signed out" while that mint ran and showed a sign-in prompt that turned
+  // into the guest view seconds later. Now the mint reads as unknown; only a
+  // failed mint (null) shows the sign-in prompt.
+  const { display } = useSession({ ensure: true });
   const [clubs, setClubs] = useState<Club[]>([]);
   const [tournaments, setTournaments] = useState<TournamentListRow[]>([]);
+  // The clock the sections bucket against. It does not tick every second
+  // (F110: that re-rendered the whole page, create form included, once a
+  // second); it jumps to the next moment an event starts or ends. The
+  // per-second countdowns live in their own row labels.
   const [now, setNow] = useState(() => Date.now());
 
   // Create form state
@@ -75,6 +89,8 @@ export default function TournamentsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
+  // The directory skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(loading);
 
   const load = async () => {
     const [tournamentRes, clubRes] = await Promise.all([fetch("/api/tournaments"), fetch("/api/clubs")]);
@@ -108,7 +124,6 @@ export default function TournamentsPage() {
     let cancelled = false;
     const initialClub = new URLSearchParams(window.location.search).get("club");
     if (initialClub) queueMicrotask(() => setClubId(initialClub));
-    fetchMe().then((me) => !cancelled && setUser(me));
     void (async () => {
       try {
         await load();
@@ -118,12 +133,25 @@ export default function TournamentsPage() {
         if (!cancelled) setLoading(false);
       }
     })();
-    const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => {
       cancelled = true;
-      window.clearInterval(tick);
     };
   }, []);
+
+  // Wake at the next start or end among the listed events and re-bucket then.
+  useEffect(() => {
+    let next = Infinity;
+    for (const t of tournaments) {
+      if (t.status === "finished" || t.starts_at == null) continue;
+      const endsAt = t.starts_at + t.duration_min * 60_000;
+      if (t.starts_at > now) next = Math.min(next, t.starts_at);
+      else if (endsAt > now) next = Math.min(next, endsAt);
+    }
+    if (!Number.isFinite(next)) return;
+    // setTimeout holds a signed 32-bit delay; a far-off boundary re-arms.
+    const id = window.setTimeout(() => setNow(Date.now()), Math.min(next - now, 2 ** 31 - 1));
+    return () => window.clearTimeout(id);
+  }, [tournaments, now]);
 
   // Re-bucket on every tick so an event slides from "starting soon" into "in
   // progress" and then "finished" on its own, without a reload.
@@ -148,9 +176,15 @@ export default function TournamentsPage() {
     return { ongoing, upcoming, finished };
   }, [tournaments, now]);
 
+  // Only clubs the viewer belongs to can host an event (the API refuses the
+  // rest with 403), so only those are offered (F181). A ?club= prefill that is
+  // not one of them is not kept as a hidden value: what the form shows and
+  // what it submits are the same.
+  const joinedClubs = useMemo(() => clubs.filter((club) => club.joined), [clubs]);
+  const effectiveClubId = joinedClubs.some((club) => club.id === clubId) ? clubId : "";
   const selectedClubName = useMemo(
-    () => clubs.find((club) => club.id === clubId)?.name ?? null,
-    [clubId, clubs],
+    () => joinedClubs.find((club) => club.id === effectiveClubId)?.name ?? null,
+    [effectiveClubId, joinedClubs],
   );
 
   const createTournament = async (event: FormEvent) => {
@@ -174,7 +208,7 @@ export default function TournamentsPage() {
           clockIncrementSec: preset.i,
           durationMin,
           roundsTotal,
-          clubId: clubId || null,
+          clubId: effectiveClubId || null,
           startsAt: starts != null && Number.isFinite(starts) ? starts : null,
           maxPlayers,
         }),
@@ -197,7 +231,7 @@ export default function TournamentsPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="page-title">Tournaments</h1>
-            <p className="mt-2 text-[13px] text-parchment-300">Scheduled arenas for the Nerfchess ladder.</p>
+            <p className="mt-2 text-[13px] text-parchment-300">Scheduled events for the Nerfchess ladder.</p>
           </div>
           <div className="flex items-center gap-2">
             <LinkButton tone="ghost" href="/clubs" className="px-4 py-2 text-[13px]">
@@ -208,7 +242,7 @@ export default function TournamentsPage() {
               onClick={() => setShowCreate((v) => !v)}
               aria-expanded={showCreate}
               className="px-4 py-2 text-[13px] font-semibold">
-              {showCreate ? <X size={15} /> : <Plus size={15} />}
+              {showCreate ? <X size={15} aria-hidden /> : <Plus size={15} aria-hidden />}
               {showCreate ? "Close" : "New tournament"}
             </Button>
           </div>
@@ -239,15 +273,15 @@ export default function TournamentsPage() {
           <form onSubmit={createTournament} className="mt-5 plate p-5">
             <div className="font-display text-xl text-parchment">Create tournament</div>
             {createError && (
-              <div className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
+              <div role="alert" className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
                 {createError}
               </div>
             )}
-            {user === undefined ? (
-              <p className="mt-4 text-sm text-parchment-400">Checking account...</p>
-            ) : !user ? (
+            {display === undefined ? (
+              <p className="mt-4 text-sm text-parchment-400">Checking account…</p>
+            ) : !display ? (
               <p className="mt-4 text-sm text-parchment-400">
-                <Link href="/login?next=/tournaments" className="text-gold-leaf hover:underline">
+                <Link href="/login?next=/tournaments" className="text-gold-leaf underline underline-offset-2">
                   Sign in
                 </Link>{" "}
                 to create a tournament.
@@ -283,7 +317,10 @@ export default function TournamentsPage() {
                   </div>
                 </div>
 
-                <label className="mt-3 block text-[12px] font-medium text-parchment-400">Time control</label>
+                {/* A group with a legend, not a label that points at no
+                    control (F150). */}
+                <fieldset className="m-0 mt-3 min-w-0 border-0 p-0">
+                <legend className="block p-0 text-[12px] font-medium text-parchment-400">Time control</legend>
                 <div className="mt-1 flex flex-wrap gap-1.5">
                   {CLOCK_PRESETS.map((preset, i) => (
                     <button
@@ -302,6 +339,7 @@ export default function TournamentsPage() {
                     </button>
                   ))}
                 </div>
+                </fieldset>
 
                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
@@ -366,14 +404,14 @@ export default function TournamentsPage() {
                   className={INPUT_CLASS}
                 />
 
-                {clubs.length > 0 && (
+                {joinedClubs.length > 0 && (
                   <>
                     <label className="mt-3 block text-[12px] font-medium text-parchment-400" htmlFor="t-club">
                       Club
                     </label>
-                    <select id="t-club" value={clubId} onChange={(e) => setClubId(e.target.value)} className={INPUT_CLASS}>
+                    <select id="t-club" value={effectiveClubId} onChange={(e) => setClubId(e.target.value)} className={INPUT_CLASS}>
                       <option value="">Open event</option>
-                      {clubs.map((club) => (
+                      {joinedClubs.map((club) => (
                         <option key={club.id} value={club.id}>
                           {club.name}
                         </option>
@@ -404,9 +442,10 @@ export default function TournamentsPage() {
 
                 <Button tone="leaf"
                   type="submit"
-                  disabled={busy || name.trim().length < 3}
+                  disabled={name.trim().length < 3}
+                  loading={busy}
                   className="mt-4 w-full px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50">
-                  {busy ? "Creating..." : "Create tournament"}
+                  Create tournament
                 </Button>
               </>
             )}
@@ -415,7 +454,7 @@ export default function TournamentsPage() {
 
         {/* Directory: in progress, starting soon, finished */}
         <div className="mt-6 min-w-0 space-y-4">
-          {loading ? (
+          {(loading || held) && !error ? (
             <div className="plate overflow-hidden">
               <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
                 Loading events
@@ -423,10 +462,11 @@ export default function TournamentsPage() {
               <ul className="divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 3 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-4 px-5 py-4">
-                    <div className="h-11 w-14 shrink-0 bg-[color:var(--bg-raised)] animate-pulse" />
+                    {/* The shared .skeleton sweep (F026). */}
+                    <div className="skeleton h-11 w-14 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <div className="h-3.5 w-44 bg-white/[0.07] animate-pulse" />
-                      <div className="mt-2 h-3 w-32 bg-[color:var(--bg-raised)] animate-pulse" />
+                      <div className="skeleton h-3.5 w-44 max-w-full" />
+                      <div className="skeleton mt-2 h-3 w-32" />
                     </div>
                   </li>
                 ))}
@@ -500,8 +540,27 @@ function Section({
   );
 }
 
-function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
+// The clock for one row's countdown. Only a row that shows a live countdown
+// ticks, once a second, so the rest of the page does not re-render (F110).
+function useRowNow(pageNow: number, live: boolean): number {
+  const [now, setNow] = useState(pageNow);
+  const [seen, setSeen] = useState(pageNow);
+  if (seen !== pageNow) {
+    setSeen(pageNow);
+    setNow(pageNow);
+  }
+  useEffect(() => {
+    if (!live) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [live]);
+  return now;
+}
+
+function TournamentRow({ t, now: pageNow }: { t: TournamentListRow; now: number }) {
   const endsAt = t.starts_at == null ? null : t.starts_at + t.duration_min * 60_000;
+  const counting = t.status !== "finished" && t.starts_at != null && endsAt != null && pageNow < endsAt;
+  const now = useRowNow(pageNow, counting);
   let when: string;
   let whenClass = "text-parchment-400";
   if (t.status === "finished") {
@@ -544,11 +603,20 @@ function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
             {formatLabel(t.format)} · {durationLabel(t.duration_min)}
             {t.club_name ? ` · ${t.club_name}` : ""} · by {t.creator_name}
           </div>
+          {/* Below sm the start time and seats fold into a meta line here
+              instead of disappearing (F156). */}
+          <div className="mt-0.5 flex items-center gap-2 text-[13px] sm:hidden">
+            <span className={"font-mono tabular-nums " + whenClass}>{when}</span>
+            <span className="flex items-center gap-1 font-mono tabular-nums text-parchment-400">
+              <Users size={12} aria-hidden /> {t.players}/{t.max_players}
+              <span className="sr-only"> seats taken</span>
+            </span>
+          </div>
         </div>
         <div className="hidden shrink-0 flex-col items-end gap-1 text-right sm:flex">
           <span className={"font-mono text-[13px] tabular-nums " + whenClass}>{when}</span>
-          <span className="flex items-center gap-1 font-mono text-[12px] text-parchment-500 tabular-nums">
-            <Users size={12} /> {t.players}/{t.max_players}
+          <span className="flex items-center gap-1 font-mono text-[12px] text-parchment-400 tabular-nums">
+            <Users size={12} aria-hidden /> {t.players}/{t.max_players}
           </span>
         </div>
       </Link>

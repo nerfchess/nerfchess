@@ -70,11 +70,50 @@ function serverDaySnapshot(): string | null {
 }
 
 export default function PuzzlesPage() {
-  // useSearchParams needs a Suspense boundary during prerender.
+  // The header, the title and the intro do not depend on the query string, so
+  // they render outside the Suspense boundary that useSearchParams needs. With
+  // the whole view inside a null fallback, the prerendered page was an empty
+  // body (header included) until the client bundle ran (F019). The fallback is
+  // the body's own loading geometry, so nothing moves when it resolves.
   return (
-    <Suspense fallback={null}>
-      <PuzzlesView />
-    </Suspense>
+    <main className="min-h-screen pb-16">
+      <SiteHeader active="/lobby" />
+      <section className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6">
+        <header className="mb-4">
+          <h1 className="page-title">Daily puzzle</h1>
+          <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-parchment-300">
+            There is no checkmate in this game, so a puzzle here ends with the king
+            taken. Every one of them was proved by playing out every alternative:
+            the answer is the only answer.
+          </p>
+        </header>
+        <Suspense
+          fallback={
+            <>
+              <DayStripPlaceholder />
+              <PuzzleSkeleton status="Picking today's puzzle" />
+            </>
+          }
+        >
+          <PuzzlesView />
+        </Suspense>
+      </section>
+    </main>
+  );
+}
+
+/** The day strip's footprint before the date is known on the client. The date
+ *  is deliberately client-only (see below), so the strip cannot be rendered
+ *  for real on the server; this holds its exact height (a small LinkButton:
+ *  44px on touch, 36px on a fine pointer) so the board does not drop by a row
+ *  when the date arrives (F015). */
+function DayStripPlaceholder() {
+  return (
+    <div className="mb-4 flex flex-wrap items-center gap-2" aria-hidden>
+      <span className="skeleton inline-block h-[44px] w-[104px] [@media(pointer:fine)]:h-9" />
+      <span className="skeleton inline-block h-4 w-20" />
+      <span className="skeleton inline-block h-4 w-28" />
+    </div>
   );
 }
 
@@ -120,66 +159,56 @@ function PuzzlesView() {
   const isToday = dateKey != null && dateKey === today;
 
   return (
-    <main className="min-h-screen pb-16">
-      <SiteHeader active="/lobby" />
-      <section className="mx-auto max-w-[1200px] px-4 py-6 sm:px-6">
-        <header className="mb-4">
-          <h1 className="page-title">Daily puzzle</h1>
-          <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-parchment-300">
-            There is no checkmate in this game, so a puzzle here ends with the king
-            taken. Every one of them was proved by playing out every alternative:
-            the answer is the only answer.
-          </p>
-        </header>
-
-        {dateKey && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <LinkButton
-              tone="default"
-              size="sm"
-              href={`/puzzles?date=${shiftDay(dateKey, -1)}`}
-              aria-label="Previous day's puzzle"
-            >
-              <ChevronLeft size={15} aria-hidden />
-              Previous
+    <>
+      {!dateKey ? (
+        <DayStripPlaceholder />
+      ) : (
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <LinkButton
+            tone="default"
+            size="sm"
+            href={`/puzzles?date=${shiftDay(dateKey, -1)}`}
+            aria-label="Previous day's puzzle"
+          >
+            <ChevronLeft size={15} aria-hidden />
+            Previous
+          </LinkButton>
+          <span className="font-mono text-[13px] tabular-nums text-parchment-200">
+            Puzzle {puzzleNumber(dateKey)}
+          </span>
+          <span className="text-[13px] text-parchment-400">{readableDate(dateKey)}</span>
+          {!isToday && (
+            <LinkButton tone="default" size="sm" href="/puzzles">
+              Today
+              <ChevronRight size={15} aria-hidden />
             </LinkButton>
-            <span className="font-mono text-[13px] tabular-nums text-parchment-200">
-              Puzzle {puzzleNumber(dateKey)}
+          )}
+          {streak.days > 1 && (
+            <span className="inline-flex items-center gap-1.5 text-[13px] text-[color:var(--pos)]">
+              <Check size={14} aria-hidden />
+              {streak.days} days in a row
             </span>
-            <span className="text-[13px] text-parchment-400">{readableDate(dateKey)}</span>
-            {!isToday && (
-              <LinkButton tone="default" size="sm" href="/puzzles">
-                Today
-                <ChevronRight size={15} aria-hidden />
-              </LinkButton>
-            )}
-            {streak.days > 1 && (
-              <span className="inline-flex items-center gap-1.5 text-[13px] text-[color:var(--pos)]">
-                <Check size={14} aria-hidden />
-                {streak.days} days in a row
-              </span>
-            )}
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        <PuzzleConnectionNotice corpus={corpus} />
+      <PuzzleConnectionNotice corpus={corpus} />
 
-        {corpus.status !== "ready" ? (
-          <PuzzleStates corpus={corpus} />
-        ) : puzzle && dateKey ? (
-          <PuzzleRunner
-            key={puzzle.id}
-            puzzle={puzzle}
-            nextHref={nextPuzzle ? `/puzzles/${nextPuzzle.id}` : undefined}
-            onSolved={handleSolved}
-          />
-        ) : (
-          <PuzzleSkeleton status="Picking today's puzzle" />
-        )}
+      {corpus.status !== "ready" ? (
+        <PuzzleStates corpus={corpus} />
+      ) : puzzle && dateKey ? (
+        <PuzzleRunner
+          key={puzzle.id}
+          puzzle={puzzle}
+          nextHref={nextPuzzle ? `/puzzles/${nextPuzzle.id}` : undefined}
+          onSolved={handleSolved}
+        />
+      ) : (
+        <PuzzleSkeleton status="Picking today's puzzle" />
+      )}
 
-        {corpus.status === "ready" && <Archive puzzles={corpus.puzzles} />}
-      </section>
-    </main>
+      {corpus.status === "ready" && <Archive puzzles={corpus.puzzles} />}
+    </>
   );
 }
 

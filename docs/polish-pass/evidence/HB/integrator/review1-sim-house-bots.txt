@@ -1,0 +1,26 @@
+house move legality + budget:
+  skill 1350 nerf: 153 moves ok, worst search 110ms (budget 120ms)
+  skill 1350 buff: 316 moves ok, worst search 83ms (budget 120ms)
+  skill 1550 nerf: 239 moves ok, worst search 83ms (budget 240ms)
+  skill 1550 buff: 307 moves ok, worst search 87ms (budget 240ms)
+  skill 1750 nerf: 311 moves ok, worst search 83ms (budget 600ms)
+  skill 1750 buff: 244 moves ok, worst search 86ms (budget 600ms)
+pacing: 10+0 base 1-4s, long 6-10s share 10.1% (target ~10%)
+pacing: 1+0 within 0.15-1.0s, 2+1 within 1.4s, 3+0 and 3+2 within 2.2s, no long think below 5+0
+pacing: opening moves within 1.1s, forced moves within 0.7s, search time taken out of the wait
+pacing: low-clock clamps and 2-8s draft picks ok
+roster: 900 personas -> 800:100 900:81 1050:92 1200:79 1350:57 1450:43 1550:67 1650:70 1750:58 1900:46 1950:38 2000:21 2050:17 2100:16 2150:14 2400:45 2500:27 2600:19 2700:10
+  sample: pawnstorm77(1200->1219), coffeeknight(900->884), blitzbrain(1900->1890), night0wl(1350->1354), sarah92(800->839), kev_in99(1050->1032)
+seek mix: 50.7% buff / 49.3% nerf
+skill resolution: overrides merge/clamp, sanitize degrades to baked
+rotation: step 31 covers all 900/900 offsets; every persona reachable in the active window
+fair pairing (weighted 1/(1+games), 420 days x 40 pairs, window 260):
+  weighted -> min 27, median 37, max 49  (spread 22)
+  uniform  -> min 18, median 37, max 58  (spread 40)
+flag safety: filler think (x8) stays within the clock clamp (<=max(800, clock/5)), never a premature flag
+filler lifetime (x8 pacing, derived): mean 622s, min 346s, max 914s
+concurrency: ramp to 80 games in 213s; steady state over 6h -> min 87, mean 97.3, max 120 (floor 80, cap 120, seat cap 127)
+social delay: 8-20s, deterministic per request, jittered across requests
+chess diff exclusion: tier-6 offers over 4000 seeds x 2 modes -> 101 with the card in pool, 0 with the filler override (must be 0)
+
+all checks passed

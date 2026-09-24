@@ -1,0 +1,8 @@
+part 1: 40 seeds x 2 colors, Buff-mode drafts, tiers 1350,1450,1550,1650, policy under test: today (no wrapper on this tree)
+  candidate: fires 108 (turn-costing 96), bad fires 16, unused activated cards per seat 0.28 (of which the gates had accepted 0.16), score 50.0% (95% CI 39.3%-60.7%)
+  today    : fires 113 (turn-costing 98), bad fires 14, unused activated cards per seat 0.46 (of which the gates had accepted 0.17), score 50.0% (95% CI 39.3%-60.7%)
+  results: king captured x66, ply cap x13, draw by threefold repetition x1  [159s]
+
+part 2: 200 same-tier offers x 40 personas (today (no wrapper on this tree)): personas disagree on the card in 0 (0.0%, 95% CI 0.0%-1.9%)
+  bank rate by offered tier: 1:11.6% 2:12.2% 3:11.8% 4:12.4% 5:12.4% 6:11.8% 7:12.3% 8:12.1%
+wrote /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/before-cards.json

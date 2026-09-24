@@ -1,0 +1,30 @@
+== run 1 (settings, profile edit; /profile and /u cells lost to a dev server restart)
+  /u/polish_user  1280x800|dark|full|user|normal  HTTP 404  CLS 0.031 (sum 0.0318, 1 >0.01)  49168ms
+  /profile/edit  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0014, 0 >0.01)  6221ms
+  /profile/edit  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0024 (sum 0.0039, 0 >0.01)  3982ms
+  /profile/edit  360x780|dark|full|user|normal  HTTP 200  CLS 0.004 (sum 0.004, 0 >0.01)  4059ms
+  /profile/edit  1280x800|dark|full|user|normal  HTTP 200  CLS 0.002 (sum 0.0035, 0 >0.01)  3881ms
+  /settings  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0841 (sum 0.0842, 1 >0.01)  5664ms
+  /settings  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0212 (sum 0.0237, 1 >0.01)  2912ms
+  /settings  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0027, 0 >0.01)  2867ms
+  /settings  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0039, 0 >0.01)  2874ms
+[cls] 16 cells, 3 above target 0.01, 10 over ceiling
+  FAIL  /u/polish_user|1280x800|dark|full|user|normal  CLS 0.031  ceiling 0.01  top: div#panel-activity > div.border-t.border-\[color\:var(--edge)\].px-4 dy -117
+  FAIL  /settings|360x780|dark|full|signed-out|normal  CLS 0.0841  ceiling 0.01  top: main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.flex.min-w-0.items-center dy 99
+  FAIL  /settings|1280x800|dark|full|signed-out|normal  CLS 0.0212  ceiling 0.01  top: main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.flex.min-w-0.items-center dy 50
+
+== run 2 (/profile, /u)
+  /profile  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  2717ms
+  /profile  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.004, 0 >0.01)  34899ms
+  /profile  360x780|dark|full|user|normal  HTTP 200  CLS 0.0807 (sum 0.0832, 1 >0.01)  37852ms
+  /profile  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0027, 0 >0.01)  3060ms
+  /u/polish_user  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  4420ms
+  /u/polish_user  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.004, 0 >0.01)  4636ms
+  /u/polish_user  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4101ms
+  /u/polish_user  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0027, 0 >0.01)  5746ms
+  /u/polish_mod  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  9466ms
+  /u/polish_mod  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0028 (sum 0.0041, 0 >0.01)  4027ms
+  /u/polish_mod  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  3688ms
+  /u/polish_mod  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0027, 0 >0.01)  4015ms
+[cls] 12 cells, 1 above target 0.01, 1 over ceiling
+  FAIL  /profile|360x780|dark|full|user|normal  CLS 0.0807  ceiling 0.01  top: div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton dy 0

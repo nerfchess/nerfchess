@@ -1223,7 +1223,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
         if (!alreadySounded) {
           playMoveCue(lm, { opponent: lm.color !== myColor, premove: wasAwaitingPremove && lm.color === myColor });
-          if (gameInCheck(next, next.board.turn)) later(() => playCheck({ onMe: next.board.turn === myColor }), 80);
+          // No check bell on a move that ended the game: the result panel
+          // voices the ending, and the two used to ring over each other (F205).
+          if (!next.result && gameInCheck(next, next.board.turn)) later(() => playCheck({ onMe: next.board.turn === myColor }), 80);
         }
         // Our turn again (opponent moved, or our premove landed and the next
         // queued one already applies): fire the queued premove immediately.
@@ -2218,9 +2220,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!session.claimDraw()) setError("Disconnected from the game server.");
   };
 
+  // Same contract as abort and the claims: a frame that never left the
+  // socket says so. Resign used to drop the result on the floor, so a player
+  // who resigned while disconnected saw the confirm close as if it had
+  // worked and the game carry on (F085).
   const onResign = () => {
     if (!game || game.result) return;
-    session.resign();
+    setError(null);
+    if (!session.resign()) setError("Disconnected from the game server.");
   };
 
   // Abort: no confirm step -- it is only offered before one whole turn exists,

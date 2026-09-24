@@ -15,7 +15,8 @@ import {
   PuzzleStates,
 } from "../_components/PuzzleStates";
 import { SiteHeader } from "@/components/SiteHeader";
-import { EmptyState } from "@/components/EmptyState";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
 import type { Puzzle, PuzzleFormat } from "@/lib/puzzles/types";
 import { usePuzzleCorpus } from "@/lib/puzzles/useCorpus";
 
@@ -41,6 +42,15 @@ export default function PuzzleByIdPage() {
       ? corpus.puzzles[(Math.max(0, index) + 1) % corpus.puzzles.length]
       : null;
 
+  // An id that is not in the corpus gets the site's shared not-found panel and
+  // copy (F040), the same words the root 404 uses for /puzzles/<anything>.
+  if (corpus.status === "ready" && !puzzle && id) {
+    const copy = NOT_FOUND_COPY.puzzle;
+    return (
+      <NotFoundPanel title={copy.title} detail={copy.detail} action={copy.action} secondary={copy.secondary} />
+    );
+  }
+
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader active="/lobby" />
@@ -53,16 +63,26 @@ export default function PuzzleByIdPage() {
         <h1 className="page-title mt-1">
           {puzzle ? TITLE[puzzle.format](puzzle) : "Puzzle"}
         </h1>
-        {puzzle && (
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-300">
-            {puzzle.tags.map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-            <span className="font-mono tabular-nums text-parchment-400">
-              Difficulty {puzzle.difficulty}/5
+        {/* The tag line is always in the flow: it used to mount with the
+            corpus and push the board down a line (F015). Before the puzzle is
+            known it holds one invisible line of the same text, so the line box
+            is the real font's, not a guessed height. */}
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-300">
+          {puzzle ? (
+            <>
+              {puzzle.tags.map((t) => (
+                <span key={t}>{t}</span>
+              ))}
+              <span className="font-mono tabular-nums text-parchment-400">
+                Difficulty {puzzle.difficulty}/5
+              </span>
+            </>
+          ) : (
+            <span className="invisible font-mono tabular-nums" aria-hidden>
+              Difficulty 0/5
             </span>
-          </p>
-        )}
+          )}
+        </p>
 
         <div className="mt-4">
           <PuzzleConnectionNotice corpus={corpus} />
@@ -73,14 +93,6 @@ export default function PuzzleByIdPage() {
               key={puzzle.id}
               puzzle={puzzle}
               nextHref={next ? `/puzzles/${next.id}` : undefined}
-            />
-          ) : id ? (
-            <EmptyState
-              glyph="♞"
-              title="No puzzle with that id"
-              body="Puzzles are regenerated in batches, so an old link can stop resolving. Today's is always one click away."
-              action={{ href: "/puzzles", label: "Today's puzzle" }}
-              secondary={{ href: "/play", label: "Play the computer" }}
             />
           ) : (
             <PuzzleSkeleton />

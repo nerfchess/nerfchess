@@ -1,0 +1,30 @@
+# m3-spectate x6, new harness, unmodified c383949 arena bundle (regression check: still fails on the ordering)
+=== run 1
+  "moves": 32,
+  "seconds": 90
+FAIL  snapshot precedes first move
+RESULT: FAIL
+=== run 2
+  "moves": 98,
+  "seconds": 54
+RESULT: PASS
+=== run 3
+  "moves": 100,
+  "seconds": 90
+FAIL  snapshot precedes first move
+RESULT: FAIL
+=== run 4
+  "moves": 126,
+  "seconds": 90
+FAIL  snapshot precedes first move
+RESULT: FAIL
+=== run 5
+  "moves": 64,
+  "seconds": 90
+FAIL  snapshot precedes first move
+RESULT: FAIL
+=== run 6
+  "moves": 143,
+  "seconds": 5
+RESULT: PASS
+TOTAL PASS 2 of 6

@@ -1,0 +1,71 @@
+ok   [F047] null body POST /api/friends: status 400
+ok   [F047] null body POST /api/messages/polish_fuzz_b: status 400
+ok   [F047] null body POST /api/notifications: status 400
+ok   [F047] null body POST /api/report: status 400
+ok   [F047] null body POST /api/suggest: status 400
+ok   [F047] null body POST /api/challenges: status 400
+ok   [F047] null body POST /api/clubs: status 400
+ok   [F047] null body POST /api/tournaments: status 400
+ok   [F047] null body POST /api/buff-feedback: status 400
+ok   [F047] null body POST /api/nerf-feedback: status 400
+ok   [F047] null body PUT /api/users/settings: status 400
+ok   [F047] null body POST /api/users/settings: status 400
+ok   [F047] null body POST /api/desync: status 400
+ok   [F047] null body POST /api/tv-telemetry: status 400
+ok   [F046] cross-site Origin refused: status 403
+ok   [F046] Sec-Fetch-Site cross-site refused: status 403
+ok   [F046] text/plain body refused: status 415
+ok   [F046] Origin null refused: status 403
+ok   [F046] cross-site bodiless POST refused: status 403
+ok   [F072] long thread shows the newest message: status 200, 200 messages, last "fuzz message 204", ascending true
+ok   [F105] thread is private no-store: cache-control "private, no-store"
+ok   [F075] friend request survives opening the DM: request 200, rows [{"read":0,"href":"/friend"}]
+ok   [F075] DM after a friend request still notifies: [{"n":1}]
+ok   [F052] zero-width-only DM refused: status 400
+ok   [F052] RTL override stripped from DM: status 200, text "fuzz evil done"
+ok   [F053] emoji DM capped without a split surrogate: status 200, code points 1000, lone surrogate false
+ok   [F052] HTML in a DM stored as typed text: status 200
+ok   [F073] hex game id with 0 and 1 is looked up: status 404
+ok   [F073] junk game id is a 400: status 400
+ok   [F048] insights id=constructor is unknown: status 404
+ok   [F048] insights id=toString is unknown: status 404
+ok   [F048] insights id=__proto__ is unknown: status 404
+ok   [F048] insights id=hasOwnProperty is unknown: status 404
+ok   [F077] archive without ?limit returns every game up to 30: status 200, 3 games
+ok   [F059] challenge with a 999999s clock refused: status 400
+ok   [F059] challenge with a negative increment refused: status 400
+ok   [F059] muted player cannot send a challenge: status 403
+ok   [F096] accepting an expired challenge is 410: create 200, accept 410
+ok   [F096] resolving one challenge leaves a longer code's bell alone: [{"read":0}]
+ok   [F059] challenge flood is rate limited: 200,200,429,429,429,429,429,429,429,429,429,429,429,429
+ok   [F059] challenge flood rings the bell a bounded number of times: [{"n":5}]
+ok   [F058] muted player cannot send a friend request: status 403
+ok   [F058] request/cancel loop is limited: statuses 200,429, bell rows 1
+ok   [F058] unknown friend action is a 400: status 400
+ok   [F061] profane club name refused: status 400
+ok   [F061] invisible club name refused: status 400
+ok   [F061] muted player cannot create a club: status 403
+ok   [F061] club name loses its override, description is censored: status 200, "fuzz club flip", "fuzz **** description"
+ok   [F104] oversized club icon refused before decoding: status 413
+ok   [F061] club post flood is rate limited: 200,200,200,200,200,200,200,200,429,429,429,429
+ok   [F061] non-member post still 403: status 403
+ok   [F061] club creation is capped per owner: 200,200,429,429,429
+ok   [F060] profane tournament name refused: status 400
+ok   [F060] muted player cannot create a tournament: status 403
+ok   [F060] start date in the year 3000 refused: status 400
+ok   [F078] 3 hour clock refused (the game server caps at 2 hours): status 400
+ok   [F074] withdraw from a finished tournament refused, standings kept: status 400, entry rows 1
+ok   [F105] tournament detail (carries seat tokens) is private no-store: cache-control "private, no-store"
+ok   [F107] junk tournament id is a 404: status 404
+ok   [F060] tournament creation is rate limited: 200,200,200,200,429,429
+ok   [F057] anonymous suggest flood is limited per IP: 200,200,200,200,200,200,200,200,200,200,429,429
+ok   [F066] desync body over 4 KB refused: status 413
+ok   [F066] tv-telemetry body over 4 KB refused: status 413
+ok   [F066] tv-telemetry flood is sampled: 20 of 140 limited
+ok   [F070] bot game counter is rate limited: 5 of 35 limited
+ok   [F097] arena/end without a bearer is 401: status 401
+ok   [F106] leaderboard default returns the full board: status 200, 3 rows
+ok   [F106] leaderboard ?limit=2 returns 2 rows: status 200, 2 rows
+ok   [F106] leaderboard ?meOnly=1 returns only the viewer row: status 200, 0 rows, me.rank 3
+ok   [F168] tournament detail includes club_slug: create 200, club_slug fuzz-club-flip
+ok   [F047] bad-input matrix (1246 requests) has no 5xx: 0 server errors

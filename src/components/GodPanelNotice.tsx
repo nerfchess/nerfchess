@@ -4,7 +4,7 @@
 // (summon a card, -15s clock, peek at hidden cards) are no longer silent: the
 // server broadcasts a `godUsed` frame to the whole table whenever one fires,
 // and this surfaces it as a prominent, unmissable notice to everyone in the
-// game — the opponent, spectators, and the owner alike. Transient (fades after
+// game, the opponent, spectators, and the owner alike. Transient (fades after
 // a few seconds), so it is driven by an ephemeral notice list, not stored.
 //
 // Rendered inside the relatively-positioned board wrapper, just above the top
@@ -31,11 +31,9 @@ export function GodPanelNotice({ notices }: { notices: GodPanelNoticeItem[] }) {
       {notices.map((n) => (
         <div
           key={n.key}
-          className={
-            "glass-chip flex max-w-[min(22rem,calc(100vw-1.5rem))] items-center gap-2 border border-coral/60 " +
-            "bg-coral/15 px-4 py-2 transition-opacity duration-300 " +
-            (n.leaving ? "opacity-0" : "opacity-100")
-          }
+          // Same toast motion as DraftNotice (globals.css .m-toast).
+          data-leaving={n.leaving ? "" : undefined}
+          className="m-toast glass-chip flex max-w-[min(22rem,calc(100vw-1.5rem))] items-center gap-2 border border-coral/60 bg-coral/15 px-4 py-2"
         >
           {/* No glyph/emoji per the design law; a small coral tick marks it. */}
           <span aria-hidden className="inline-block h-1.5 w-1.5 shrink-0 bg-coral-glow" />

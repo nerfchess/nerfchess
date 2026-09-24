@@ -172,7 +172,7 @@ export function TargetingBanner({
       {/* Your card is mid-use: a frosted glass chip with the card name, the
           current step, a picked-so-far counter, and clear Done / Cancel. Sits
           just BELOW the board's bottom edge so it never hides the squares the
-          player is aiming at. Blue marks the active card (yours — your buff),
+          player is aiming at. Blue marks the active card (yours, your buff),
           coral the back-out. */}
       <div className="glass-chip pointer-events-auto flex max-w-full items-center gap-2.5 border border-mode-buff/40 px-3.5 py-2">
         <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-mode-buffGlow" />
@@ -249,13 +249,16 @@ export function EnemyBuffModal({
     // a button, and without it Tab walks straight past Cancel into the board
     // behind, which is covered and not meant to be reachable while a pick is
     // pending.
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 px-4 py-6">
+    // Enter only (.m-scrim on the dim, .m-modal on the panel): the parent
+    // unmounts this on pick or cancel, so there is no exit to mirror here.
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-4 py-6">
+      <div aria-hidden className="m-scrim pointer-events-none fixed inset-0 bg-black/80" />
       <div
         ref={attachDialog}
         role="dialog"
         aria-modal="true"
         aria-label={target.label}
-        className="plate w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto"
+        className="m-modal plate relative w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto"
       >
         <div className="text-[12px] text-parchment-400">{buffName}</div>
         <div className="font-display text-lg text-parchment mt-0.5">{target.label}</div>

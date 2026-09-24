@@ -1,0 +1,2 @@
+error boundaries: 26 error.tsx files checked, 11 required
+check-error-boundaries: ok

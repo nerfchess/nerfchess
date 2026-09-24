@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
 import { isModeCategory } from "@/lib/speed";
+import { apiError, intParam, PUBLIC_SHORT_CACHE, usernameParam } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +22,14 @@ const MAX_LIMIT = 50;
 // unavailable rather than failing the caller.
 export async function GET(request: Request, props: { params: Promise<{ username: string }> }) {
   const params = await props.params;
-  const username = params.username.trim().toLowerCase();
+  const username = usernameParam(params.username);
+  if (!username) return apiError(404, "User not found.");
   const db = await getDb();
   const user = await db
     .prepare(`SELECT id FROM users WHERE username_lower = ?`)
     .bind(username)
     .first<{ id: string }>();
-  if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  if (!user) return apiError(404, "User not found.");
 
   const url = new URL(request.url);
   const modeParam = url.searchParams.get("mode");
@@ -39,10 +41,9 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   const rated = ratedParam === "1" ? 1 : ratedParam === "0" ? 0 : null;
   const beforeRaw = Number(url.searchParams.get("before"));
   const before = Number.isFinite(beforeRaw) && beforeRaw > 0 ? beforeRaw : null;
-  const limitRaw = Number(url.searchParams.get("limit"));
-  const limit = Number.isFinite(limitRaw)
-    ? Math.min(MAX_LIMIT, Math.max(1, Math.floor(limitRaw)))
-    : DEFAULT_LIMIT;
+  // A missing ?limit is the default page, not a page of one (F077:
+  // Number(null) is 0, which the old clamp turned into 1).
+  const limit = intParam(url.searchParams.get("limit"), 1, MAX_LIMIT, DEFAULT_LIMIT);
 
   // Build the WHERE with `?` placeholders (pgAll rewrites them to $1..$n and
   // falls back to D1 with the same list). The player is white OR black; the
@@ -122,5 +123,5 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     mode: isModeCategory(row.category) ? row.category : null,
   }));
 
-  return NextResponse.json({ games, hasMore });
+  return NextResponse.json({ games, hasMore }, { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } });
 }

@@ -1,16 +1,17 @@
 // House-bot roster audit. Run with:
 //
-//   npx -y tsx scripts/audit-house-bots.ts
+//   ./node_modules/.bin/tsx scripts/audit-house-bots.ts
 //
 // Asserts the three properties a healthy roster needs so every persona's
 // profile/leaderboard entry resolves and looks right:
-//   1. UNIQUE pfps — no two personas share a profile picture.
-//   2. FULL PROFILE COVERAGE — every persona has the expected fields, a unique
+//   1. UNIQUE pfps, no two personas share a profile picture.
+//   2. FULL PROFILE COVERAGE, every persona has the expected fields, a unique
 //      user id + username, and an avatar that resolves to a real served asset.
 //   3. Every house-pfp avatar maps to an SVG file that exists on disk.
+//   4. The strength table in docs/house-bots.md equals HOUSE_SKILL_PROFILES.
 // Exits non-zero (with a report) if any assertion fails.
 
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
@@ -21,6 +22,10 @@ import {
   HOUSE_ONLINE_MIN,
   HOUSE_ONLINE_MAX,
   HOUSE_SKILL_WEIGHTS,
+  HOUSE_SKILL_PROFILES,
+  HOUSE_SKILLS,
+  bakedResolvedProfile,
+  type HouseSkill,
   houseSkillForName,
   houseOnlineCount,
   EXPANSION_SIZE,
@@ -128,7 +133,7 @@ note(
   "expansion bios must all be distinct (no repeated templates)",
 );
 for (const bio of expansionBios) {
-  note(!/—|–/.test(bio), `bio contains an em/en dash: ${bio}`);
+  note(!/\u2014|\u2013/.test(bio), `bio contains an em/en dash: ${bio}`);
   note(!/[\u{1F000}-\u{1FAFF}☀-➿]/u.test(bio), `bio contains an emoji: ${bio}`);
   note(bio.length <= 70, `bio too long (${bio.length}): ${bio}`);
 }
@@ -200,7 +205,7 @@ for (const p of HOUSE_ROSTER.slice(0, 25)) {
   );
 }
 
-// Availability: never everyone online at once — both windows must sit clearly
+// Availability: never everyone online at once, both windows must sit clearly
 // below the roster size, and active stays a subset of online.
 note(
   HOUSE_ONLINE_MAX < HOUSE_ROSTER.length,
@@ -218,6 +223,40 @@ note(og.members.some((m) => m.userId === og.owner.userId), "OG club owner not am
 note(ogShare >= 55 && ogShare <= 75, `OG club share out of target 55-75%: ${ogShare}%`);
 const ogIds = new Set(og.members.map((m) => m.userId));
 note(ogIds.size === og.members.length, "OG club has duplicate members");
+
+// --- docs/house-bots.md strength table matches HOUSE_SKILL_PROFILES --------
+// The doc is what maintainers tune against, and it used to describe budgets the
+// code had long left behind. The table between the house-skill-profiles markers
+// must equal the resolved baked profile of every tier. `--print-profile-table`
+// prints the rows the doc should hold.
+function profileRow(skill: HouseSkill): string {
+  const raw = HOUSE_SKILL_PROFILES[skill];
+  const p = bakedResolvedProfile(skill);
+  const opt = (v: number | undefined, shown: number | string) => (v == null ? "-" : String(shown));
+  return `| ${skill} | ${p.level} | ${p.budgetMs} | ${p.blunderChance} | ${opt(raw.maxDepth, p.maxDepth)} | ${opt(raw.topK, p.topK)} | ${opt(raw.temperatureCp, p.temperatureCp)} | ${opt(raw.evalNoiseCp, p.evalNoiseCp)} |`;
+}
+const expectedRows = HOUSE_SKILLS.map(profileRow);
+if (process.argv.includes("--print-profile-table")) {
+  console.log(expectedRows.join("\n"));
+  process.exit(0);
+}
+{
+  const doc = readFileSync(join(__dirname, "..", "docs", "house-bots.md"), "utf8");
+  const m = doc.match(/<!-- house-skill-profiles:start -->([\s\S]*?)<!-- house-skill-profiles:end -->/);
+  note(!!m, "docs/house-bots.md has no house-skill-profiles table");
+  if (m) {
+    const docRows = m[1]
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => /^\| \d+ \|/.test(l));
+    const missing = expectedRows.filter((r) => !docRows.includes(r));
+    const extra = docRows.filter((r) => !expectedRows.includes(r));
+    note(
+      !missing.length && !extra.length,
+      `docs/house-bots.md strength table differs from HOUSE_SKILL_PROFILES: expected ${missing.join(" ")} ; doc has ${extra.join(" ")}`,
+    );
+  }
+}
 
 // --- Report ----------------------------------------------------------------
 const uniquePfps = new Set(HOUSE_ROSTER.map((p) => p.avatar)).size;
@@ -239,4 +278,4 @@ if (problems.length) {
   if (problems.length > 40) console.error(`  ... and ${problems.length - 40} more`);
   process.exit(1);
 }
-console.log("PASS: unique pfps, full profile coverage, all assets present.");
+console.log("PASS: unique pfps, full profile coverage, all assets present, strength table matches docs/house-bots.md.");

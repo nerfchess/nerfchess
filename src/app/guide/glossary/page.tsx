@@ -10,13 +10,9 @@ import {
   type GlossaryEntry,
 } from "@/lib/glossary";
 import { BreadcrumbJsonLd, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Glossary: nerf, buff, hex, boon, bank, and more",
-  description:
-    "Every Nerf Chess term defined in one place: nerf, buff, hex, boon, item, draft, bank, reroll, tier (up to Apex and Mythic), freeze, walnut, shield, Chess Diff, lock-in window, and the rest of the card vocabulary.",
-  alternates: { canonical: "/guide/glossary" },
-};
+export const metadata: Metadata = staticMeta("/guide/glossary", { image: "segment" });
 
 // Anchor id for a group heading (the term chips at the top jump to these).
 function groupSlug(group: string): string {
@@ -133,7 +129,7 @@ export default function GlossaryPage() {
             // The jump chips are navigation, so §10's 44px hit area applies:
             // px-3 py-1 left them 27px tall. A min-height rather than more
             // padding keeps the row's density, and the step-down is
-            // `(pointer: fine)` and never `sm:` — a 1024px tablet is a coarse
+            // `(pointer: fine)` and never `sm:`: a 1024px tablet is a coarse
             // pointer, and a width breakpoint here would only move the defect.
             className="inline-flex min-h-[44px] items-center rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1 font-display text-sm text-parchment-200 hover:border-coral/60 hover:text-coral motion-safe:transition-colors [@media(pointer:fine)]:min-h-0"
           >

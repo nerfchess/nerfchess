@@ -1,0 +1,55 @@
+ok   ilovewhimperingaudios: 0 visible texts
+ok   cappuccino_assassino: 0 visible texts
+ok   fingertip_maltese: 0 visible texts
+ok   i_love_cam: 0 visible texts
+ok   bench_225: 0 visible texts
+ok   full_planche: 0 visible texts
+ok   tung_tung_sahur: 2 visible texts
+ok   cs_loot_box: 0 visible texts
+ok   danielle: 0 visible texts
+ok   expansion_permit: 1 visible texts
+ok   haerin: 0 visible texts
+ok   hanni: 0 visible texts
+ok   hyein: 0 visible texts
+ok   ilovechaewon: 0 visible texts
+ok   la_vaca_saturno_saturnita: 0 visible texts
+ok   minji: 0 visible texts
+ok   pay_to_win: 3 visible texts
+ok   pop_up_ad: 5 visible texts
+ok   smurf_account: 5 visible texts
+FAIL cs_blackjack: 6 visible texts
+     "BLACKJACK PAYS 3:2" leaves the board by 86px
+     "21" leaves the board by 72px
+FAIL cs_poker_bluff: 3 visible texts
+     "ALL IN" leaves the board by 11px
+ok   middle_part: 0 visible texts
+ok   mute_button: 1 visible texts
+ok   pr_captcha: 4 visible texts
+ok   pr_chain_letter: 3 visible texts
+ok   pr_popup_storm: 9 visible texts
+ok   pr_ratiod: 4 visible texts
+ok   skibidi_flush: 0 visible texts
+ok   skill_issue: 2 visible texts
+ok   ballerina_cappuccina: 0 visible texts
+FAIL cs_roulette: 1 visible texts
+     "RED" leaves the board by 43px
+ok   cs_scratch_card: 2 visible texts
+ok   cs_slot_machine: 1 visible texts
+ok   ctrl_z: 3 visible texts
+ok   frigo_camelo: 0 visible texts
+ok   main_character: 2 visible texts
+ok   monkeytype: 7 visible texts
+ok   onearmmuscleupismydream: 0 visible texts
+ok   pr_defender_scan: 3 visible texts
+ok   rubber_chicken: 1 visible texts
+ok   rubiks_cube: 0 visible texts
+ok   trippi_troppi: 1 visible texts
+ok   chill_guy: 0 visible texts
+FAIL cs_let_it_ride: 2 visible texts
+     "H" leaves the board by 348px
+ok   emotional_support_pawn: 0 visible texts
+ok   handstand_pushup: 0 visible texts
+ok   moai_head: 2 visible texts
+ok   muscle_up: 0 visible texts
+ok   touch_grass: 1 visible texts
+ok   stream_sniper: 1 visible texts

@@ -1,0 +1,3 @@
+FAIL russian word that folds to a listed word passes -> ["cock"]
+FAIL russian prose is not censored -> "***** и кот"
+56 passed, 2 failed

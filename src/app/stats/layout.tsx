@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-// /stats is a client component that forwards players to their own profile
-// statistics; this server layout supplies its metadata. It is a user-specific
-// redirect surface, so it stays out of the index, and the self-canonical stops
-// it inheriting the root layout's canonical "/".
-export const metadata: Metadata = {
-  title: "Your statistics",
-  robots: { index: false, follow: true },
-  alternates: { canonical: "/stats" },
-};
+// A per-viewer surface: its own title and canonical, kept out of the index,
+// the brand card as its preview (src/lib/seoPages.ts).
+export const metadata: Metadata = staticMeta("/stats");
 
 export default function StatsLayout({ children }: { children: React.ReactNode }) {
   return children;

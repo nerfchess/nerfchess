@@ -1,0 +1,5 @@
+  ✘  1 [chromium] › control.spec.ts:124:11 › section 4 sign-in bump at 1280x800 › /: header keeps its first-paint shape and CLS stays low (13.0s)
+  ✘  2 [chromium] › control.spec.ts:124:11 › section 4 sign-in bump at 1280x800 › /lobby: header keeps its first-paint shape and CLS stays low (9.6s)
+    Error: header changed shape after the first frame at 1280x800: [{"t":1020,"h":60,"left":1088,"w":175},{"t":2863,"h":60,"left":953,"w":309}]
+    Error: header changed shape after the first frame at 1280x800: [{"t":1198,"h":60,"left":1088,"w":175},{"t":2800,"h":60,"left":953,"w":309}]
+  2 failed

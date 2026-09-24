@@ -1,0 +1,4 @@
+/codex/buff/pawn_push 1 list(s) unique ["Home https://nerfchess.com","Codex https://nerfchess.com/codex","Buffs https://nerfchess.com/codex?tab=buffs","Pawn Push https://nerfchess.com/codex/buff/pawn_push"]
+/codex/nerf/lucky 1 list(s) unique ["Home https://nerfchess.com","Codex https://nerfchess.com/codex","Nerfs https://nerfchess.com/codex?tab=rules","Lucky https://nerfchess.com/codex/nerf/lucky"]
+/codex/hex/heavy_boots 1 list(s) unique ["Home https://nerfchess.com","Codex https://nerfchess.com/codex","Hexes https://nerfchess.com/codex?tab=hexes","Heavy Boots https://nerfchess.com/codex/hex/heavy_boots"]
+/codex/boon/extra_glance 1 list(s) unique ["Home https://nerfchess.com","Codex https://nerfchess.com/codex","Boons https://nerfchess.com/codex?tab=boons","Extra Glance https://nerfchess.com/codex/boon/extra_glance"]

@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Community: Nerf Chess players, clubs, and live games",
-  description:
-    "See who is playing Nerf Chess right now: top-rated players, the busiest members, live games, clubs, and recent results across Buff and Nerf mode.",
-  keywords: [
-    "nerf chess community",
-    "chess variant players",
-    "chess variant clubs",
-    "online chess variant community",
-  ],
-  alternates: { canonical: "/community" },
-};
+// Full metadata from its row in src/lib/seoPages.ts (self canonical, og and
+// twitter tags, the preview from this folder's opengraph-image file).
+export const metadata: Metadata = staticMeta("/community", { image: "segment" });
 
 export default function CommunityLayout({ children }: { children: React.ReactNode }) {
   return children;

@@ -1,0 +1,14 @@
+blunder probe: 40 midgame positions, 2 forced blunders per tier, judge 1000ms
+   800: n=80 king hangs 1, CPL median 232 (IQR 75-430), >=900cp 13.8%, zero-loss 2.5%
+  1200: n=80 king hangs 2, CPL median 259 (IQR 70-440), >=900cp 12.5%, zero-loss 1.3%
+  1550: n=80 king hangs 2, CPL median 255 (IQR 80-463), >=900cp 10.0%, zero-loss 1.3%
+  1900: n=80 king hangs 2, CPL median 219 (IQR 85-426), >=900cp 15.0%, zero-loss 1.3%
+  pooled: n=320 king hangs 7, CPL median 240, >=900cp 12.8%; judge mean depth 5.05
+  FAIL 800 forced-blunder king hangs: 1 (limit 0)
+  FAIL 1200 forced-blunder king hangs: 2 (limit 0)
+  FAIL 1550 forced-blunder king hangs: 2 (limit 0)
+  FAIL 1900 forced-blunder king hangs: 2 (limit 0)
+  FAIL pooled forced-blunder share losing 900cp or more: 0.1281 (limit 0.1)
+wrote docs/polish-pass/evidence/HB/HB1/before-blunder-gate.json
+5 gate(s) failed: 800 forced-blunder king hangs; 1200 forced-blunder king hangs; 1550 forced-blunder king hangs; 1900 forced-blunder king hangs; pooled forced-blunder share losing 900cp or more
+exit 1

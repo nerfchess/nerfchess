@@ -25,7 +25,7 @@ nav.site-nav {
   font-weight: 600;
   line-height: 1.2;
   color: var(--text-secondary);
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
 }
 .site-nav-link:hover {
   color: var(--text-heading);
@@ -36,10 +36,32 @@ nav.site-nav {
 }
 
 /* The hover dropdown under a nav link, and the header's own popovers: the same
-   plain box the quick-settings menu uses. */
+   plain box the quick-settings menu uses. Elevation is the raised fill and
+   the hairline, never a shadow (design system: no shadows, F161). */
 .site-nav-pop {
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
   border-radius: var(--ui-roundness);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* The brand block takes whatever the right-hand cluster leaves, and when that
+   is too narrow for the wordmark (a signed-in phone: search, challenges, bell,
+   settings and the avatar need about 230px of a 360px bar) the word steps out
+   of view and the mark stays, instead of the icons painting over the text
+   (F153). Visually hidden, not display:none, so the home link keeps its
+   accessible name. A container query, so it follows the real space left for
+   every auth state and width, and it holds from the first paint. */
+nav.site-nav > .site-nav-brand {
+  container-type: inline-size;
+  flex: 1 1 0%;
+}
+@container (max-width: 199px) {
+  .site-nav-brand > a > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }

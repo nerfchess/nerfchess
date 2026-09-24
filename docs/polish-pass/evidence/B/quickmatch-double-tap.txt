@@ -1,0 +1,6 @@
+e2e/polish/quickmatch-double-tap.spec.ts, shared dev server, 2026-09-23. Signed-out visitor on /lobby,
+the guest mint (/api/auth/guest) held 2.5s, Find tapped twice inside it, queue frames counted on the
+routed game server socket.
+
+before (QuickMatch.tsx at 8a3dd72^, no start guard): failed twice (run and retry), Expected 1, Received 2
+after (8a3dd72, startingRef guard plus state check): passed, 1 queue frame

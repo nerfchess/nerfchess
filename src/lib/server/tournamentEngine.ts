@@ -170,7 +170,9 @@ async function collectRoundResults(db: D1Database, t: EngineTournamentRow, now: 
   }
 
   const expired = t.round_started_at != null && now > t.round_started_at + roundCapMs(t);
-  for (const g of pending.results) {
+  // Boards are independent (each result is its own CAS), so they resolve a few
+  // at a time instead of one D1 round trip chain per board (F107).
+  await mapLimit(pending.results, ENGINE_PARALLELISM, async (g) => {
     const archived = g.game_id ? finished.has(g.game_id) : false;
     if (archived) {
       const winner = finished.get(g.game_id!) ?? null;
@@ -182,7 +184,7 @@ async function collectRoundResults(db: D1Database, t: EngineTournamentRow, now: 
       // the round can complete. No points move.
       await applyResult(db, t, g.round, g.board, g.white_user_id, g.black_user_id, "void", now);
     }
-  }
+  });
 }
 
 /**
@@ -277,10 +279,10 @@ async function startNextRound(db: D1Database, t: EngineTournamentRow, now: numbe
   }));
   const { boards, bye } = pairSwissRound(field, previousPairs, previousByes);
 
-  const statements: D1PreparedStatement[] = [];
   const stub = getGameServerStub();
-  for (let board = 0; board < boards.length; board++) {
-    const { white, black } = boards[board];
+  // One Durable Object call per board, a few in flight at once rather than up
+  // to 128 in series inside one GET (F107). Results keep board order.
+  const statements: D1PreparedStatement[] = await mapLimit(boards, ENGINE_PARALLELISM, async ({ white, black }, board) => {
     let gameId: string | null = null;
     let whiteToken: string | null = null;
     let blackToken: string | null = null;
@@ -316,8 +318,7 @@ async function startNextRound(db: D1Database, t: EngineTournamentRow, now: numbe
     // A board whose game could not be created is recorded voided (game_id
     // NULL, result 'void') so the round never waits on a game that does not
     // exist; both players simply score nothing and get repaired next round.
-    statements.push(
-      db
+    return db
         .prepare(
           `INSERT INTO tournament_games (
              tournament_id, round, board, game_id,
@@ -339,9 +340,8 @@ async function startNextRound(db: D1Database, t: EngineTournamentRow, now: numbe
           gameId ? null : "void",
           now,
           gameId ? null : now,
-        ),
-    );
-  }
+        );
+  });
   if (bye) {
     // The bye scores its point immediately (single-writer: we hold the round
     // CAS). games_played does not move — a bye is not a game.
@@ -361,6 +361,24 @@ async function startNextRound(db: D1Database, t: EngineTournamentRow, now: numbe
     );
   }
   if (statements.length) await db.batch(statements);
+}
+
+// How many boards the engine resolves or creates concurrently. Bounded so one
+// busy event cannot open a hundred subrequests at once from a single GET.
+const ENGINE_PARALLELISM = 8;
+
+/** Map `items` through `fn` with at most `limit` calls in flight; results keep input order. */
+async function mapLimit<T, R>(items: readonly T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return out;
 }
 
 /** Every pairing row for the detail page, newest round first (no tokens). */

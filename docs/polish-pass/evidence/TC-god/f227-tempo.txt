@@ -1,0 +1,13 @@
+F227 short cut, measured in the browser (/dev/plays on :3100, data-anim full, fx 1).
+300ms after play(): every gp-* CSS animation of the scene, its playbackRate, and
+the latest end of those animations in wall-clock ms (endTime / playbackRate).
+Before the fix every card here ran at rate 1 and its gp layers ended at about 3.5s.
+
+warp_sovereign   T4  rate 1.8   gp layers end 1944ms  (35 animations)
+crown_and_castle T4  rate 1.8   gp layers end 1906ms  (51 animations)
+mind_empire      T5  rate 1.35  gp layers end 2444ms  (40 animations)
+genesis          T7  rate 1     gp layers end 3500ms  (control, unchanged)
+
+The card-strip visualMs for these cards stays near 2.4s because the shared
+cast banner and frame pulse (Board / UseSpectacle, slice J) hold the board that
+long for every card; that part is outside godPlays.

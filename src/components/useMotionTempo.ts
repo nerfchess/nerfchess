@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 
+import { lowTimeMotionHeld } from "@/lib/lowTimeMotion";
+import { loadSettings } from "@/lib/settings";
+
 /**
  * The player's Animations setting, as a tempo the JS-driven choreographies can
  * actually use.
@@ -26,22 +29,33 @@ import { useEffect, useState } from "react";
  */
 export type MotionTempo = "normal" | "fast" | "off";
 
-export function useMotionTempo(): MotionTempo {
-  const [tempo, setTempo] = useState<MotionTempo>(detectTempo);
+export function useMotionTempo(opts?: { ignoreLowTimeHold?: boolean }): MotionTempo {
+  // See useReducedMotion: only the result screen looks through the hold.
+  const ignoreHold = !!opts?.ignoreLowTimeHold;
+  const [tempo, setTempo] = useState<MotionTempo>(() => detectTempo(ignoreHold));
   useEffect(() => {
-    const update = () => setTempo(detectTempo());
+    const update = () => setTempo(detectTempo(ignoreHold));
     const observer = new MutationObserver(update);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-anim"] });
     // The attribute is stamped by applyUiPrefs after hydration, so read once
     // more on mount rather than trusting the render-time value forever.
     update();
     return () => observer.disconnect();
-  }, []);
+  }, [ignoreHold]);
   return tempo;
 }
 
-export function detectTempo(): MotionTempo {
+export function detectTempo(ignoreLowTimeHold = false): MotionTempo {
   if (typeof document === "undefined") return "normal";
+  if (ignoreLowTimeHold && lowTimeMotionHeld()) {
+    // The attribute reads "off" for the hold alone; answer from the settings
+    // it was stamped from (the same inputs applyUiPrefs folds together).
+    const s = loadSettings();
+    const os =
+      s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (s.reducedMotion || os) return "off";
+    return s.animationSpeed === "off" || s.animationSpeed === "fast" ? s.animationSpeed : "normal";
+  }
   const anim = document.documentElement.getAttribute("data-anim");
   return anim === "off" || anim === "fast" ? anim : "normal";
 }

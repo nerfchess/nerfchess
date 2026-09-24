@@ -1,0 +1,3 @@
+  ✓  1 [chromium] › e2e/content-states.spec.ts:233:7 › analysis deep links › ?fen= is the first rendered position (119ms)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:239:7 › analysis deep links › ?moves= is the first rendered line (67ms)
+  2 passed (1.1s)

@@ -1,19 +1,22 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/server/db";
+import { guardJsonWrite } from "@/lib/server/request";
+import { getDb, requestIsSecure } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isAvatarId, isCustomAvatar } from "@/lib/avatars";
+import { whoCookieHeader } from "@/lib/session/who";
+import { hintFromRow } from "../_lib/who";
 
 export const dynamic = "force-dynamic";
 
 // Sets the signed-in account's profile picture: a preset id from lib/avatars,
 // or an uploaded image as a small data URL (client-side cropped to 96px).
 export async function POST(request: Request) {
-  let body: { avatar?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  // Refuses cross-site browser requests (F046, login CSRF) and anything but
+  // a JSON object body under 16 KB (F047: `null` used to crash the field
+  // reads below with a 500). Shared with slice F: src/lib/server/request.ts.
+  const parsed = await guardJsonWrite(request);
+  if (parsed instanceof NextResponse) return parsed;
+  const body = parsed as { avatar?: unknown };
 
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
@@ -25,5 +28,7 @@ export async function POST(request: Request) {
   }
 
   await db.prepare("UPDATE users SET avatar = ? WHERE id = ?").bind(avatar, user.id).run();
-  return NextResponse.json({ ok: true, avatar });
+  const response = NextResponse.json({ ok: true, avatar });
+  response.headers.append("Set-Cookie", whoCookieHeader(hintFromRow({ ...user, avatar }), requestIsSecure(request)));
+  return response;
 }

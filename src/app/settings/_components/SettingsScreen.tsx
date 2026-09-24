@@ -9,7 +9,7 @@
 //
 // It is NOT a second implementation. Every row, control and picker comes from
 // components/settings/rows.tsx, and the rows themselves from
-// components/settings/config.ts — the identical modules the panel renders. A row
+// components/settings/config.ts, the identical modules the panel renders. A row
 // added to that config appears here and in the panel at once, and a change made
 // on either surface reaches the other through SETTINGS_CHANGED_EVENT, which
 // useSettingsModel subscribes to. There is nothing to keep in step by hand.
@@ -17,27 +17,28 @@
 // DEEP LINKING is a real path segment: /settings/appearance, not a fragment.
 // A path reaches the server, so the section gets its own <title> and canonical,
 // an unknown one gets a real 404 through notFound(), and browser history moves
-// between sections. The fragment form still works on this index page — every
+// between sections. The fragment form still works on this index page, every
 // section is rendered here with id={section.id}, so /settings#appearance scrolls
-// to it — but it is the weaker half of the pair: a fragment is invisible to the
+// to it, but it is the weaker half of the pair: a fragment is invisible to the
 // server, so it can never be more than a scroll position.
 //
 // The five system states (design-system.md §8), all real dependencies of this
 // surface rather than states invented to fill a checklist:
-//   1. Loading      — the stored values live in localStorage, which the server
+//   1. Loading:      the stored values live in localStorage, which the server
 //                     render cannot see, so the rows mount after hydration.
-//   2. Empty        — the filter matched no setting.
-//   3. Error        — this browser refuses to persist (private mode, blocked
+//   2. Empty:        the filter matched no setting.
+//   3. Error:        this browser refuses to persist (private mode, blocked
 //                     site data), so nothing changed here would survive.
-//   4. Disconnected — the account sync endpoint is unreachable; changes still
+//   4. Disconnected: the account sync endpoint is unreachable; changes still
 //                     apply and still save locally, they just do not follow you.
-//   5. Recovered    — the sync came back, announced once and then dismissed.
+//   5. Recovered:    the sync came back, announced once and then dismissed.
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { EmptyState } from "@/components/EmptyState";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -47,8 +48,12 @@ import { SettingsRows, useSettingsModel } from "@/components/settings/rows";
 import { SettingsSkeleton } from "./SettingsSkeleton";
 
 /** Where the account copy stands. `local` is not a failure: it is what a
- *  signed-out player should be told, and it is the common case. */
+ *  signed-out player should be told. */
 type SyncState = "checking" | "synced" | "local" | "offline" | "recovered";
+
+/** The connection half of it, the only part the probe below decides. Who the
+ *  reader is comes from the session (F013). */
+type ConnState = "ok" | "offline" | "recovered";
 
 /** Does this browser actually let us keep anything? Private windows and
  *  "block site data" both throw on write, and every setting on this page is
@@ -81,7 +86,7 @@ function matches(row: RowConfig, section: SectionConfig, needle: string): boolea
 export function SettingsScreen({ focus }: { focus?: string }) {
   // Hydration gate AND the loading state in one flag. The stored values are
   // read synchronously by useSettingsModel so no surface ever paints a frame of
-  // defaults — which is exactly why the rows must not render during hydration,
+  // defaults, which is exactly why the rows must not render during hydration,
   // when the server's markup (defaults) and the client's (the real values)
   // would disagree. The heading and chrome render on both passes; only the rows
   // wait a frame.
@@ -92,13 +97,20 @@ export function SettingsScreen({ focus }: { focus?: string }) {
   const ready = useSyncExternalStore(subscribeNever, isClient, isServer);
   const writable = useSyncExternalStore(subscribeNever, storageWritable, alwaysWritable);
   const [query, setQuery] = useState("");
-  const [sync, setSync] = useState<SyncState>("checking");
+  const [conn, setConn] = useState<ConnState>("ok");
+  // Signed in, a guest, or signed out, from the session store and the display
+  // cookie, so the notice is decided on the first paint. It used to wait for
+  // its own /api/auth/me and then insert the signed-out line above the rows,
+  // pushing them 99px down at 360px wide (0.084 CLS). `ensure` matches the
+  // header: a first visit is minted a guest, and until that lands the reader
+  // is unknown (nothing drawn), not signed out.
+  const { display } = useSession({ ensure: true });
+  const sync: SyncState =
+    conn !== "ok" ? conn : display === undefined ? "checking" : display === null ? "local" : "synced";
   // One subscription for the whole page, not one per section. Reading the
   // stored values here is safe on the hydration pass because nothing renders
   // them until `ready`.
   const { settings, update } = useSettingsModel();
-  // Where the recovered notice hands back to once it has been seen.
-  const settleTo = useRef<SyncState>("synced");
 
   // Honour /settings#appearance ourselves.
   //
@@ -121,40 +133,31 @@ export function SettingsScreen({ focus }: { focus?: string }) {
     }
   }, [ready]);
 
-  // The account sync probe.
+  // The connection probe.
   //
-  // fetchMe() is the site's own "who am I", and its three-way answer is exactly
-  // the three-way answer this surface needs: a user means the settings blob
-  // follows the account, `null` means signed out (a fact about the page, not an
-  // outage), and `undefined` means the request never landed, which is the only
-  // thing that counts as a disconnection. Reusing it rather than probing
-  // /api/users/settings directly also keeps the network quiet: /api/auth/me is
-  // already fetched by SiteHeader on this page, so this adds no new endpoint,
-  // and the offline branch below short-circuits before any request at all.
+  // fetchMe() answers `undefined` only when the request never landed, which is
+  // the one thing that counts as a disconnection here (a user or `null` both
+  // mean the server answered; which of the two it was is the session's
+  // business above). It shares the header's in-flight /api/auth/me, so this
+  // adds no request, and the offline branch short-circuits before any at all.
   // Working out where the sync stands is kept PURE, and applying it is a second
   // step, so the effect below starts with an await rather than a setState. That
   // is the shape react-hooks/set-state-in-effect is asking for, and it reads
   // better anyway: one place decides, one place applies.
-  const resolveSync = useCallback(async (): Promise<"offline" | "local" | "synced"> => {
+  const resolveSync = useCallback(async (): Promise<"offline" | "ok"> => {
     if (typeof navigator !== "undefined" && navigator.onLine === false) return "offline";
-    const me = await fetchMe();
-    if (me === undefined) return "offline";
-    return me === null ? "local" : "synced";
+    return (await fetchMe()) === undefined ? "offline" : "ok";
   }, []);
 
-  const applySync = useCallback((settled: "offline" | "local" | "synced") => {
+  const applySync = useCallback((settled: "offline" | "ok") => {
     if (settled === "offline") {
-      setSync("offline");
+      setConn("offline");
       return;
     }
-    // Where this settles once any recovery notice has had its moment. A signed
-    // out reader lands on "local", which is not a failure state, but they are
-    // still owed the recovery notice: they watched the page say it had lost
-    // touch, so it has to say when it stopped being true.
-    settleTo.current = settled;
     // Only announce a recovery if there was something to recover from;
-    // §8.5 says a silent return is the right default otherwise.
-    setSync((prev) => (prev === "offline" ? "recovered" : settled));
+    // §8.5 says a silent return is the right default otherwise. A signed out
+    // reader is owed it too: they watched the page say it had lost touch.
+    setConn((prev) => (prev === "offline" ? "recovered" : "ok"));
   }, []);
 
   /** Retry, and the browser coming back online, both re-probe. */
@@ -172,7 +175,7 @@ export function SettingsScreen({ focus }: { focus?: string }) {
       const settled = await resolveSync();
       if (!cancelled) applySync(settled);
     })();
-    const onOffline = () => setSync("offline");
+    const onOffline = () => setConn("offline");
     const onOnline = () => void probeSync();
     window.addEventListener("offline", onOffline);
     window.addEventListener("online", onOnline);
@@ -185,10 +188,10 @@ export function SettingsScreen({ focus }: { focus?: string }) {
 
   // The recovered notice retires itself rather than sitting there forever.
   useEffect(() => {
-    if (sync !== "recovered") return;
-    const id = window.setTimeout(() => setSync(settleTo.current), 4000);
+    if (conn !== "recovered") return;
+    const id = window.setTimeout(() => setConn("ok"), 4000);
     return () => window.clearTimeout(id);
-  }, [sync]);
+  }, [conn]);
 
   const needle = query.trim().toLowerCase();
   const shown = (focus ? SECTIONS.filter((s) => s.id === focus) : SECTIONS)
@@ -224,7 +227,11 @@ export function SettingsScreen({ focus }: { focus?: string }) {
             : "Everything the quick panel holds, at an address you can bookmark and share. Changes save as you make them, on this device first."}
         </p>
 
-        <SyncNotice state={sync} onRetry={() => void probeSync()} />
+        <SyncNotice
+          state={sync}
+          onRetry={() => void probeSync()}
+          next={focus ? `/settings/${focus}` : "/settings"}
+        />
 
         {!writable && (
           <div
@@ -341,7 +348,7 @@ function SectionPanel({
 /** States 4 and 5, plus the signed-out fact that is neither. Nothing is drawn
  *  while the probe is in flight or once it has quietly succeeded: a settings
  *  page that shouts "synced" at you has told you nothing. */
-function SyncNotice({ state, onRetry }: { state: SyncState; onRetry: () => void }) {
+function SyncNotice({ state, onRetry, next }: { state: SyncState; onRetry: () => void; next: string }) {
   if (state === "checking" || state === "synced") return null;
 
   if (state === "offline") {
@@ -378,7 +385,8 @@ function SyncNotice({ state, onRetry }: { state: SyncState; onRetry: () => void 
       <p className="text-[13px] leading-relaxed text-parchment-400">
         These settings live on this device. Sign in to carry them to your phone and back.
       </p>
-      <LinkButton tone="default" size="sm" href="/login" className="shrink-0">
+      {/* Back to this page after signing in (F013). */}
+      <LinkButton tone="default" size="sm" href={`/login?next=${encodeURIComponent(next)}`} className="shrink-0">
         Sign in
       </LinkButton>
     </div>

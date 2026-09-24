@@ -7,13 +7,44 @@ import { useSettingsValue } from "@/lib/useSettingsValue";
 import { playLowTime, playUrgentTick } from "@/lib/sounds";
 
 // Shared across every ClockPill instance so the duplicated mobile/desktop
-// copies of the same clock never double-play a warning within one tick.
-let lastClockWarnAt = 0;
-function warnClockOnce(play: () => void) {
+// copies of the same clock never double-play a warning within one tick. Kept
+// per cue: one shared stamp for both cues let the low-time warning throttle
+// the urgent tick when a single tick crossed both lines (a lag spike, a slow
+// tab, a bullet clock), and the urgent cue was marked fired without ever
+// sounding (F212).
+const lastClockWarnAt: Record<ClockCue, number> = { low: 0, urgent: 0 };
+function warnClockOnce(cue: ClockCue, play: () => void) {
   const now = Date.now();
-  if (now - lastClockWarnAt < 900) return;
-  lastClockWarnAt = now;
+  if (now - lastClockWarnAt[cue] < 900) return;
+  lastClockWarnAt[cue] = now;
   play();
+}
+
+export type ClockCue = "low" | "urgent";
+
+/** One tick of the low-time warnings for a remaining time: which cue (if any)
+ *  to sound now, updating the per-pill fired flags. Each fires once per
+ *  crossing and re-arms only when time climbs back above its line
+ *  (increment). When one tick crosses both lines only the urgent tick sounds:
+ *  it is the more severe of the two and the low cue is then stale. */
+export function clockWarnCue(
+  fired: { low: boolean; urgent: boolean },
+  remaining: number,
+  emergMs: number,
+): ClockCue | null {
+  const urgentAt = emergMs / 2;
+  if (remaining > emergMs) fired.low = false;
+  if (remaining > urgentAt) fired.urgent = false;
+  if (remaining > 0 && remaining <= urgentAt && !fired.urgent) {
+    fired.urgent = true;
+    fired.low = true;
+    return "urgent";
+  }
+  if (remaining <= emergMs && !fired.low) {
+    fired.low = true;
+    return "low";
+  }
+  return null;
 }
 
 // Lives in a pure module so the boundary behaviour is unit-testable without
@@ -62,8 +93,7 @@ export function ClockPill({
   ended?: boolean;
 }) {
   const [displayMs, setDisplayMs] = useState(ms);
-  const lowFiredRef = useRef(false);
-  const urgentFiredRef = useRef(false);
+  const firedRef = useRef({ low: false, urgent: false });
   // First value ever seen, kept as the fallback base for the urgency scale
   // when the caller does not name the time control. Captured once at mount
   // rather than tracked as a running maximum: an increment pushes `ms` above
@@ -115,17 +145,9 @@ export function ClockPill({
       // thresholds ride the same time-control-relative scale as the colours,
       // so in a bullet game the first warning is not shouting from move one.
       if (warnLowTime && grace <= 0) {
-        if (remaining > emergMs) lowFiredRef.current = false;
-        else if (!lowFiredRef.current) {
-          lowFiredRef.current = true;
-          warnClockOnce(playLowTime);
-        }
-        const urgentAt = emergMs / 2;
-        if (remaining > urgentAt) urgentFiredRef.current = false;
-        else if (remaining > 0 && !urgentFiredRef.current) {
-          urgentFiredRef.current = true;
-          warnClockOnce(playUrgentTick);
-        }
+        const cue = clockWarnCue(firedRef.current, remaining, emergMs);
+        if (cue === "urgent") warnClockOnce("urgent", playUrgentTick);
+        else if (cue === "low") warnClockOnce("low", playLowTime);
       }
     };
 
@@ -173,7 +195,9 @@ export function ClockPill({
     <div
       data-clock-seat={seat ?? undefined}
       className={
-        "plate flex items-center justify-center transition " +
+        // Only the idle fade animates; the border and fill swap on a turn
+        // change is a state flip, not a paint transition (F220).
+        "plate flex items-center justify-center transition-opacity duration-[var(--dur-1)] ease-[var(--ease-out)] " +
         (compact ? "shrink-0 px-2.5 py-1 sm:px-3 sm:py-1.5 " : "p-4 ") +
         (active
           ? critical

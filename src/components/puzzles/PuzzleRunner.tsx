@@ -27,7 +27,7 @@ import {
   playMove,
   type NerfGame,
 } from "@/engine/game";
-import { cardPath } from "@/lib/cardCodex";
+import { cardPath } from "@/lib/cardPaths";
 import {
   markSolved,
   solvedServerSnapshot,
@@ -374,12 +374,12 @@ export function PuzzleRunner({
             {puzzle.rule.description}
           </p>
           {ruleView.progress && (
-            <p className="mt-1.5 font-mono text-[12px] tabular-nums text-parchment-400">
+            <p className="mt-1.5 font-mono text-[13px] tabular-nums text-parchment-400">
               {ruleView.progress.label}
             </p>
           )}
           {ruleView.hint && (
-            <p className="mt-1.5 text-[12px] text-parchment-300">{ruleView.hint.text}</p>
+            <p className="mt-1.5 text-[13px] text-parchment-300">{ruleView.hint.text}</p>
           )}
         </div>
 
@@ -411,7 +411,7 @@ export function PuzzleRunner({
             {GOAL[puzzle.format](puzzle)}
           </p>
           {puzzle.format !== "only-move" && phase === "play" && (
-            <p className="mt-1.5 font-mono text-[12px] tabular-nums text-parchment-400">
+            <p className="mt-1.5 font-mono text-[13px] tabular-nums text-parchment-400">
               {heroDone} of {heroPlies} moves played
             </p>
           )}

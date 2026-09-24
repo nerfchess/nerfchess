@@ -1,0 +1,58 @@
+# before: next build of 2d175c9 on :3100
+  1) [chromium] › e2e/polish/home-stable.spec.ts:64:9 › home, phone › loading and loaded share one geometry 
+    - Expected  -  8
+    + Received  + 12
+    -     "11,979 369x32",
+    -     "11,1021 369x32",
+    -     "11,1063 369x32",
+    -     "11,1105 369x32",
+    -     "11,1147 369x32",
+    -     "11,1189 369x32",
+    +     "11,976 369x53",
+    +     "11,1028 369x53",
+    +     "11,1081 369x53",
+    +     "11,1133 369x53",
+    +     "11,1186 369x53",
+    +     "11,1239 369x53",
+    +     "11,1291 369x53",
+    +     "11,1344 369x53",
+    +     "11,1397 369x53",
+    +     "11,1449 369x52",
+    -     "11,1249 369x524",
+    -     "11,1794 369x186",
+    +     "11,1529 369x524",
+    +     "11,2074 369x186",
+  2) [chromium] › e2e/polish/home-stable.spec.ts:64:9 › home, desktop › loading and loaded share one geometry 
+    - Expected  -  6
+    + Received  + 10
+    -     "18,104 250x32",
+    -     "18,146 250x32",
+    -     "18,188 250x32",
+    -     "18,230 250x32",
+    -     "18,272 250x32",
+    -     "18,314 250x32",
+    +     "18,101 250x53",
+    +     "18,153 250x53",
+    +     "18,206 250x53",
+    +     "18,258 250x53",
+    +     "18,311 250x53",
+    +     "18,364 250x53",
+    +     "18,416 250x53",
+    +     "18,469 250x53",
+    +     "18,522 250x53",
+    +     "18,574 250x52",
+  3) [chromium] › e2e/polish/home-stable.spec.ts:77:5 › one lobby request serves the hero and the live counter 
+    Expected: 1
+    Received: 2
+  3 failed
+# after: dev server
+  3 passed (21.8s)
+# before (2d175c9 build on :3100), rejoin slot tests
+    Error: page.waitForFunction: Test timeout of 150000ms exceeded.
+      115 |     expect(new Set(ys).size, `counter tops: ${[...new Set(ys)].join(", ")}`).toBe(1);
+    Error: expect(locator).toBeVisible() failed
+    Error: element(s) not found
+      115 |     expect(new Set(ys).size, `counter tops: ${[...new Set(ys)].join(", ")}`).toBe(1);
+  2 failed
+# after (dev)
+  2 passed (15.6s)

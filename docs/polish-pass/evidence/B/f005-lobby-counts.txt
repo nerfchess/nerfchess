@@ -1,0 +1,21 @@
+/lobby layout shift offenders, test:cls (scripts/polish/cls.ts --routes /lobby), shared dev server, 2026-09-23.
+
+before this change (cls-core-mid.json, /lobby 1280x800 signed-out, CLS 0.0177):
+  span "0 waiting" in the Open challenges fold header    "..." -> "0 waiting"   dx -42, dw +42
+  the Quick pairing mode segments (user)                  "Buff ? Nerf ?" -> "Buff 1500 Nerf 1500"   dx -43 / -44
+after (cls-lobby-after.json, --runs 2):
+  /lobby 390 signed-out 0.0012, 1280 signed-out 0.005-0.0076, 390 user 0.0036-0.0064, 1280 user 0.0108
+  the "waiting" count: dx 4-7 (one skeleton digit against the real digit), no dy
+  the mode segments: still -43 in the harness user cell, because the seeded user.json has no nc_who
+  display cookie, so the first paint does not know the player is registered. With the cookie (any
+  returning player after one /me), scripts probe of the segment group width each frame,
+  sessionStorage cleared so the ratings cache is empty:
+    before the change: "Buff ? Nerf ?" 125px, then "Buff 1500 Nerf 1500" 169px  (+44px)
+    after:  "Buff [4ch skeleton] Nerf [4ch skeleton]" 168px from the first frame, then 169px (+1px)
+
+Left (not this slice, or a proposal):
+  site header chip (slice A): guest mint grows it 175 -> 369px for a signed-out visitor; user without
+    the display cookie grows 135px.
+  the connection pill "Connecting..." -> "Live . N players" changes width (dx 13 at 1280): the live label's
+    width depends on the count, so no skeleton can hold it exactly.
+  Games to watch: 210px skeleton -> 106px empty sentence when there are no live games (P-B-games-rail).

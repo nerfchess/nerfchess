@@ -2,7 +2,7 @@
 
 // One card row, shared by both hands. Collapsed to a single line (chevron,
 // name, state chips, tier numeral); tap to open the detail body with the full
-// rule text and — for your own activatable cards — the one Use button. The old
+// rule text and, for your own activatable cards, the one Use button. The old
 // dock rendered your rows and the opponent's from two near-identical inline
 // closures; this is that pair merged, with `owner` driving the differences
 // (Use affordances for yours, a notch larger name for theirs).
@@ -10,9 +10,8 @@
 import { BuffInstance, turnCost } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { TIER_ROMAN } from "@/lib/tiers";
-import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Button } from "@/components/ui/Button";
 import { TurnCostBadge } from "../TurnCostBadge";
 import { PassiveChip, StatusChip, UsedBadge, pliesTitle } from "./bits";
@@ -28,7 +27,6 @@ export function DockRow({
   hasTarget,
   onStartUse,
   finePointer,
-  reduceMotion,
   flash,
 }: {
   inst: BuffInstance;
@@ -45,7 +43,6 @@ export function DockRow({
   hasTarget?: boolean;
   onStartUse?: (index: number) => void;
   finePointer?: boolean;
-  reduceMotion?: boolean;
   /** The newest card in the hand wears the pocket flash once as it lands. */
   flash?: boolean;
 }) {
@@ -74,6 +71,15 @@ export function DockRow({
   const [prevStatus, setPrevStatus] = useState(status);
   const [burst, setBurst] = useState(0);
   const [bursting, setBursting] = useState(false);
+  // The entrance is a mount-only beat. It is picked once, from the props the
+  // row mounted with, and the class comes off for good the moment it ends (or
+  // a use burst supersedes it). Without that, any later class change swaps
+  // the row's animation-name back to the entrance and CSS restarts it: the
+  // previous newest row losing `flash` (dock-arrive to m-enter) and a burst
+  // ending (dock-used-burst to m-enter) both replayed the slide from opacity
+  // 0 on a row that had long since landed.
+  const [entrance] = useState<"dock-arrive" | "m-enter">(() => (flash ? "dock-arrive" : "m-enter"));
+  const [entered, setEntered] = useState(false);
   if (prevDead !== dead || prevStatus !== status) {
     setPrevDead(dead);
     setPrevStatus(status);
@@ -83,6 +89,7 @@ export function DockRow({
     if ((!prevDead && dead) || (prevStatus != null && status != null && prevStatus !== status)) {
       setBurst((b) => b + 1);
       setBursting(true);
+      setEntered(true);
     }
   }
   // The burst layer unmounts itself after its animation; the timer callback
@@ -99,15 +106,24 @@ export function DockRow({
   const inEffect = !dead && !!status;
 
   return (
-    <motion.div
-      // Gated: ungated, every dock row slid in from x:-20 under OS reduced
-      // motion (and under Settings > Animations: Off).
-      initial={reduceMotion ? false : { opacity: 0, x: -14 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.25 }}
+    <div
+      // One entrance per row (F194). It used to stack three: a framer slide
+      // on every mount, .dock-arrive on the newest card (whose transform
+      // animation overrode the framer one mid-flight) and .dock-pocket-flash,
+      // which the cascade silently discarded because .dock-arrive's animation
+      // declaration comes later. Now the newest card of your own hand gets
+      // the dock's arrival beat (.dock-arrive plus its sheen layer), and any
+      // other row that mounts (an opponent's reveal, a row moving to Used)
+      // gets the shared list enter from the left. Both stand down under
+      // data-anim="off" through the globals.css backstop.
+      // The entrance class is mount-only (see `entrance` above).
+      style={entrance === "m-enter" ? ({ "--m-dx": "-8px", "--m-dy": "0px" } as CSSProperties) : undefined}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget && e.animationName === entrance) setEntered(true);
+      }}
       className={
-        "dock-card relative w-full overflow-hidden rounded-[1px] border transition-colors duration-200 " +
-        (flash ? "dock-pocket-flash dock-arrive " : "") +
+        "dock-card relative w-full overflow-hidden rounded-[1px] border transition-colors " +
+        (entered ? "" : entrance + " ") +
         (bursting ? "dock-used-burst " : "") +
         (inEffect ? "dock-live " : "") +
         (dead
@@ -125,7 +141,7 @@ export function DockRow({
       {!canUse && !dead && <span aria-hidden className={`dock-tier-edge tier-bg-${inst.tier}`} />}
       {/* Arrival sheen: a tier-coloured band crosses the row once as it lands.
           Its own layer, so it plays over usable and idle rows alike. */}
-      {flash && <span aria-hidden className={`dock-arrive-sheen tier-bg-${inst.tier}`} />}
+      {flash && entrance === "dock-arrive" && <span aria-hidden className={`dock-arrive-sheen tier-bg-${inst.tier}`} />}
       {/* Use burst: a bright ring that blooms and fades the moment the card
           fires. Mounted only for the burst so nothing idles. */}
       {bursting && <span aria-hidden className={`dock-used-ring tier-bg-${inst.tier}`} />}
@@ -148,7 +164,8 @@ export function DockRow({
           aria-hidden
           size={12}
           strokeWidth={2.4}
-          className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+          data-open={open}
+          className="m-chevron m-chevron--quarter shrink-0 text-parchment-400"
         />
         <span
           className={
@@ -252,6 +269,6 @@ export function DockRow({
           )}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

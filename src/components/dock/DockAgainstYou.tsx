@@ -3,7 +3,7 @@
 // The "Against you" strip: every constraint currently limiting your play,
 // compressed to one wrapping row of tappable chips instead of the old stack of
 // full-width rows. Each chip opens a small popover with the constraint's
-// detail, its remaining time, and — via the glossary — a plain-language
+// detail, its remaining time, and, via the glossary, a plain-language
 // explanation of the effect kind, so no weird status is ever unexplained.
 // This strip is also where victim-side receive animations land: a fresh
 // constraint mounts its chip with the pocket flash (keys are stable while an

@@ -1,0 +1,11 @@
+
+Running 6 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/content-states.spec.ts:10:7 › content route states › codex copy link reports a failed clipboard write (10.1s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:30:7 › content route states › codex copy link confirms a successful clipboard write (2.7s)
+  ✓  3 [chromium] › e2e/content-states.spec.ts:114:7 › content route layout stability (390x844) › /codex keeps the list still while the library loads (10.7s)
+  ✓  4 [chromium] › e2e/content-states.spec.ts:293:7 › codex tabs › tabs follow the WAI-ARIA pattern (2.9s)
+  ✓  5 [chromium] › e2e/content-states.spec.ts:357:9 › content routes at 360px › /codex has no horizontal scroll and one h1 (3.5s)
+  ✓  6 [chromium] › e2e/content-states.spec.ts:482:7 › codex deep links › ?tab= and filters are the first render (129ms)
+
+  6 passed (30.9s)

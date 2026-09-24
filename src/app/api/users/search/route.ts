@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { bestLiveRatingSql } from "@/lib/server/ratingSql";
+import { PUBLIC_SHORT_CACHE } from "@/lib/server/request";
+import { cleanText } from "@/lib/textInput";
 
 export const dynamic = "force-dynamic";
 
@@ -78,8 +80,13 @@ function withinEditDistanceOne(a: string, b: string): boolean {
 // letter and near-equal length) fills in. Banned accounts and house personas
 // are excluded (same rule as the leaderboard). Returns up to RESULT_LIMIT.
 export async function GET(request: Request) {
-  const q = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
-  if (q.length < 2 || q.length > 20) return NextResponse.json({ players: [] });
+  // Usernames are plain [A-Za-z0-9_], so invisible or control characters in
+  // the box are dropped before matching.
+  const raw = new URL(request.url).searchParams.get("q") ?? "";
+  const q = raw.length > 200 ? "" : cleanText(raw, { maxChars: 21 }).toLowerCase();
+  if (q.length < 2 || q.length > 20) {
+    return NextResponse.json({ players: [] }, { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } });
+  }
   const escaped = q.replace(/[\\%_]/g, (ch) => `\\${ch}`);
   const now = Date.now();
 
@@ -161,5 +168,5 @@ export async function GET(request: Request) {
     nerfRating: h.nerf_rating != null ? Math.round(h.nerf_rating) : null,
     buffRating: h.buff_rating != null ? Math.round(h.buff_rating) : null,
   }));
-  return NextResponse.json({ players });
+  return NextResponse.json({ players }, { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } });
 }

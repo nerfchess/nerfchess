@@ -1,0 +1,2 @@
+check-seo-static: 40 static routes, 1665 card pages, 20 robots expectations
+OK

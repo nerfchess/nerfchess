@@ -1,0 +1,21 @@
+  ok  games.ts exports countsForRating
+  ok  two accounts, rated, decided: rated
+  ok  the same account on both seats is never rated (F080)
+  ok  an anonymous seat is not rated
+  ok  a casual game is not rated
+  ok  a takeback offer pins the ply it rewinds to (F086)
+  ok  accepting rewinds to the pinned ply, not a recomputed one (F086)
+  ok  the move's flag check uses the arrival time (F088)
+  ok  the move's clock bank uses the same arrival time (F088)
+  ok  a seated player cannot post spectator chat in their live game (F083)
+  ok  spectator chat fan-out skips seated players (F083)
+  ok  the watch start frame hides spectator chat from seated players (F083)
+  ok  player chat goes through cleanText, not a UTF-16 slice (F052, F053)
+  ok  spectator chat goes through cleanText (F052, F053)
+  ok  no clock bound literal is left in worker.ts (F078)
+  ok  all three clock checks use src/lib/clockBounds.ts (F078)
+  ok  the see-opponent-buffs toggle survives a hibernation wake (F091)
+  ok  the infinite-rerolls toggle survives a hibernation wake (F091)
+  ok  the clock-adjust debounce survives a hibernation wake (F091)
+
+all realtime rule checks passed

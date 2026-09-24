@@ -1,0 +1,8 @@
+
+Running 3 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /about has no horizontal scroll and one h1 (2.9s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:348:9 › content routes at 360px › /contact has no horizontal scroll and one h1 (2.9s)
+  ✓  3 [chromium] › e2e/content-states.spec.ts:420:7 › contact socials › socials match the shared list and clear the touch floor (1.5s)
+
+  3 passed (8.4s)

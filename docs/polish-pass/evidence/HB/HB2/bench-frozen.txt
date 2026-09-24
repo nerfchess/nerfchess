@@ -1,0 +1,17 @@
+bench-house-search: 27 mid + 20 late positions, engines baseline vs current (baseline = bbe4271), node v22.22.2, load 2.09 2.46 8.98, 61s
+
+[mid]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms | current    depth(min-max)  nodes     n/ms   ms
+medium     80ms             3.00 (3-3)        6389    198    32 |             3.00 (3-3)       10801    225    48
+hard       80ms             4.22 (4-5)      160001    205   781 |             5.22 (4-6)      160003    229   698
+  current vs baseline, medium: 80ms +0.00 ply, n/ms x1.14
+  current vs baseline, hard: 80ms +1.00 ply, n/ms x1.12
+
+[late]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms | current    depth(min-max)  nodes     n/ms   ms
+medium     80ms             3.00 (3-3)        3167    384     8 |             3.00 (3-3)        5717    383    15
+hard       80ms             5.30 (4-7)      160001    303   528 |             6.75 (5-11)      160002    413   388
+  current vs baseline, medium: 80ms +0.00 ply, n/ms x1.00
+  current vs baseline, hard: 80ms +1.45 ply, n/ms x1.36
+
+wrote docs/polish-pass/evidence/HB/HB2/bench-frozen.json

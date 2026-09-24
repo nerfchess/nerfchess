@@ -1,0 +1,12 @@
+ladder (Nerf mode, frozen clock, colors swapped per seed, 200-ply cap):
+  900 vs 800: 900 scores 55.0% (95% CI 34.2%-74.2%), W11 D0 L9, median 17 moves per side  [0s]
+  1050 vs 900: 1050 scores 40.0% (95% CI 21.9%-61.3%), W8 D0 L12, median 17.25 moves per side  [0s]
+  1200 vs 1050: 1200 scores 75.0% (95% CI 53.1%-88.8%), W15 D0 L5, median 12.5 moves per side  [29s]
+  1350 vs 1200: 1350 scores 87.5% (95% CI 66.9%-96.0%), W17 D1 L2, median 28.5 moves per side  [79s]
+  1450 vs 1350: 1450 scores 50.0% (95% CI 29.9%-70.1%), W7 D6 L7, median 18.75 moves per side  [21s]
+  1200 vs 800: 1200 scores 82.5% (95% CI 61.1%-93.4%), W16 D1 L3, median 14.25 moves per side  [36s]
+  node rate on this box now: 217 nodes/ms (argmax depth 3 over 200 low-tier positions)
+  frozen-clock cost 800: 778 moves, CPU p50 0.07ms p95 0.20ms max 1.1ms, nodes not reported by the sampled path, estimated p95 44 max 237
+  frozen-clock cost 900: 802 moves, CPU p50 0.08ms p95 0.23ms max 7.4ms, nodes not reported by the sampled path, estimated p95 49 max 1597
+  frozen-clock cost 1050: 691 moves, CPU p50 0.09ms p95 0.27ms max 3.5ms, nodes not reported by the sampled path, estimated p95 59 max 758
+wrote /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/before-ladder.json

@@ -1,0 +1,7 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/content-states.spec.ts:515:7 › codex card insights › the In play row is in the server HTML (9.0s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:521:7 › codex card insights › a failed insights request says so and offers Retry (3.0s)
+
+  2 passed (13.0s)

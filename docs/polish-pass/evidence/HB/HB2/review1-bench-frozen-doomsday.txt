@@ -1,0 +1,17 @@
+bench-house-search: 20 random + 20 hist positions, engines baseline vs f2d20b4 vs current (baseline = bbe4271), node v22.22.2, load 1.04 0.95 1.05, 111s
+
+[random]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms   max | f2d20b4    depth(min-max)  nodes     n/ms   ms   max | current    depth(min-max)  nodes     n/ms   ms   max
+medium     25ms             3.00 (3-3)        3632    159    23    49 |             2.95 (2-3)        9848     48   204   526 |             2.95 (2-3)       18316    255    72   211
+medium     80ms             3.00 (3-3)        3632    163    22    46 |             3.00 (3-3)        9916     50   199   469 |             3.00 (3-3)       35797    263   136   310
+hard       25ms             4.45 (4-6)       50001    229   218   348 |             6.40 (2-12)       41464    130   319   627 |             6.25 (2-12)       41642    260   160   256
+hard       80ms             5.25 (4-7)      160001    253   631   854 |             7.55 (4-12)      125050    213   588   897 |             7.30 (4-12)      129646    284   457   625
+
+[hist]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms   max | f2d20b4    depth(min-max)  nodes     n/ms   ms   max | current    depth(min-max)  nodes     n/ms   ms   max
+medium     25ms             3.00 (3-3)        2680    144    19    81 |             3.00 (3-3)        5090    141    36   158 |             3.00 (3-3)        7569    227    33    85
+medium     80ms             3.00 (3-3)        2680    139    19    79 |             3.00 (3-3)        5090    134    38   152 |             3.00 (3-3)        8944    241    37   163
+hard       25ms             5.00 (4-7)       50001    203   247   359 |             5.45 (4-8)       50003    264   189   288 |             5.40 (4-8)       50002    289   173   223
+hard       80ms             5.70 (4-8)      160001    232   691  1081 |             7.15 (5-10)      160003    317   506   648 |             7.10 (5-10)      160003    324   494   596
+
+wrote docs/polish-pass/evidence/HB/HB2/review1-bench-frozen-doomsday.json

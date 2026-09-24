@@ -1606,6 +1606,115 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp):
 }
 
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g12-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g12-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/* --- ov_nerfchess_the_musical ------------------------------------------------------
+   "The whole board takes the stage, once: rearrange up to five of your pieces
+   onto empty squares in your half, then collect 10 seconds for putting on a
+   show." Curtains part across the caster's half and it goes up in stage
+   light; five of the caster's pieces step out to new marks on empty squares
+   of that half, each with a small bow; then a +0:10 card is held up for the
+   show. */
+const C_NMR = { core: "#e88ab8", glow: "#fff2e0", deep: "#2a1020" };
+
+function MusicalRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <MusicalScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_NMR;
+  const d = delayMs;
+  const moves: Array<[keyof typeof MEN, number, number, number, number]> = [
+    ["n", 1, 0, 2, 2],
+    ["n", 6, 0, 5, 2],
+    ["b", 2, 0, 3, 3],
+    ["p", 4, 1, 4, 3],
+    ["q", 3, 0, 1, 2],
+  ];
+  return (
+    <Brd>
+      {[-1, 1].map((s) => (
+        <Q key={`c${s}`} x={s < 0 ? "12.5%" : "87.5%"} y={rk(1.5)} w={25} h={50} cls="g12-r-go" delayMs={d + 30} v={{ "--gd": "1.3s", "--tx0": `${-s * 100}%`, "--ty0": "0%", "--tx1": `${s * 90}%`, "--ty1": "0%" }} style={{ background: "repeating-linear-gradient(90deg, rgba(160,40,80,0.55) 0 8%, rgba(120,24,60,0.55) 8% 16%)" }} />
+      ))}
+      <Tint x="50%" y={rk(1.5)} w={100} h={50} color="rgba(255,242,224,0.14)" delayMs={d + 300} gd="1.8s" />
+      {moves.map(([k, c0, r0, c1, r1], i) => (
+        <Q key={`m${i}`} x={fc(c0)} y={rk(r0)} w={10} h={10} cls="g12-r-go" delayMs={d + 440 + i * 110} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${(c1 - c0) * fileIn(10)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-(r1 - r0) * fileIn(10)}%)` }}>
+          <Man kind={k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(4.2)} w={11} h={5} cls="g12-r-stamp" delayMs={d + 1100} v={{ "--gd": "1.1s" }}>
+        <svg viewBox="0 0 40 16" className="block h-full w-full" aria-hidden="true">
+          <rect x="1" y="1" width="38" height="14" rx="3" fill={c.deep} />
+          <text x="20" y="12" textAnchor="middle" fontSize="11" fontWeight="700" fill={c.glow}>+0:10</text>
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   ov_board_of_directors: S(BoardOfDirectorsScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }, { rgb: "232 182 76", at: 760, laser: true, glyph: impGear("#e8b64c", "#2a2011"), shock: true, box: [41, 34, 16, 16] }),
   ov_deja_vu: S(DejaVuScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }, { rgb: "127 200 232", at: 700, laser: true, glyph: impGear("#7fc8e8", "#12242e"), shock: true, box: [43, 36, 14, 18], rot: 12 }),
@@ -1615,7 +1724,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_relay_baton: S(RelayBatonScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, { rgb: "207 216 224", at: 560, shock: true, box: [46, 41, 10, 10] }),
   ov_democracy: S(DemocracyScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "127 201 141", at: 620, laser: true, shock: true, box: [43, 38, 14, 14] }),
   ov_dev_console: S(DevConsoleScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }, { rgb: "111 224 160", at: 540, laser: true, box: [44, 34, 12, 18] }),
-  ov_nerfchess_the_musical: S(MusicalScene, { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }, { rgb: "232 138 184", at: 600, shock: true, box: [42, 37, 15, 15] }),
+  ov_nerfchess_the_musical: S(MusicalRule, { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
   ov_standing_ovation: S(StandingOvationScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "board" }, { rgb: "240 196 92", at: 640, glyph: impGear("#f0c45c", "#2b2311"), shock: true, box: [43, 36, 14, 14] }),
   ov_the_tutorial: S(TutorialScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "127 208 232", at: 580, laser: true, box: [43, 37, 13, 15] }),
   ov_wish_fish: S(WishFishScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "board" }, { rgb: "111 184 216", at: 520, shock: true, box: [44, 41, 12, 11] }),

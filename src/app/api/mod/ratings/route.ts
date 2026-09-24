@@ -9,7 +9,9 @@ import {
 } from "@/lib/server/auth";
 import { isRatingEditor } from "@/lib/godPanel";
 import { MODE_CATEGORIES } from "@/lib/speed";
+import { modEventStatement, readModBody } from "@/lib/server/mod";
 import { notifyModEvent } from "@/lib/server/modWebhook";
+import { assertSameOrigin } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,8 @@ const SETTLED_RD = 90;
 async function resolveEditor(
   request: Request,
 ): Promise<{ db: D1Database; user: SessionUser } | NextResponse> {
+  const refused = assertSameOrigin(request);
+  if (refused) return refused;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -58,12 +62,8 @@ export async function POST(request: Request) {
   if (guard instanceof NextResponse) return guard;
   const { db } = guard;
 
-  let body: { username?: unknown; rating?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  const body = await readModBody(request);
+  if (body instanceof NextResponse) return body;
 
   const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : "";
   if (!username) return NextResponse.json({ error: "Provide a username." }, { status: 400 });
@@ -119,7 +119,30 @@ export async function POST(request: Request) {
   // and rd only settles (MIN) — an edit never inflates deviation — and hand_set
   // marks the row so the leaderboard includes a player edited into a mode they
   // never actually played (its population filter otherwise needs games > 0).
+  // The values this edit overwrites (F123): kept in the audit row so a rating
+  // edit can be read back and undone, which it could not be before.
+  const beforeRows = await db
+    .prepare("SELECT category, rating, rd, peak FROM user_ratings WHERE user_id = ?")
+    .bind(target.id)
+    .all<{ category: string; rating: number; rd: number; peak: number }>();
+  const beforeLegacy = await db
+    .prepare("SELECT rating, rd FROM users WHERE id = ?")
+    .bind(target.id)
+    .first<{ rating: number; rd: number }>();
+
   await db.batch([
+    // 0) The audit row, in the same batch so the edit and its record land
+    //    together or not at all.
+    modEventStatement(db, guard.user, {
+      action: "rating_set",
+      targetKind: "user",
+      targetUserId: target.id,
+      targetName: target.username,
+      targetRef: target.id,
+      reason: typeof body.note === "string" ? body.note : null,
+      before: { users: beforeLegacy, user_ratings: beforeRows.results },
+      after: { rating },
+    }),
     // 1) Legacy shared column (displayRating fallback: lobby online list,
     //    player search, club lists, in-game rows for players with no bucket).
     db

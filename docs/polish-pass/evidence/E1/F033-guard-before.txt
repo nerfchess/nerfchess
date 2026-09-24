@@ -1,0 +1,13 @@
+error boundaries: 23 error.tsx files checked, 11 required
+
+check-error-boundaries: 10 failure(s)
+  src/app/error.tsx: does not render RouteError (no log, no digest, no shared Retry and way out)
+  src/app/error.tsx: does not pass Next's retry() to RouteError
+  src/app/global-error.tsx has no <title>
+  src/app/global-error.tsx does not log the error
+  src/app/global-error.tsx has no way out link
+  src/app/global-error.tsx uses a shadow
+  src/app/global-error.tsx uses the retired uppercase caption
+  src/app/codex/suggest/error.tsx is missing
+  src/app/history/[id]/error.tsx is missing
+  src/app/stats/error.tsx is missing

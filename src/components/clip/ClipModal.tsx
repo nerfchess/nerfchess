@@ -136,7 +136,7 @@ export function ClipModal({
   ratings,
   modeChip,
 }: Props) {
-  const chrome = useModalChrome(open, onClose);
+  const { attachDialog, onBackdropPointerDown } = useModalChrome(open, onClose);
   const reduced = useReducedMotion();
   const [pliesChoice, setPliesChoiceState] = useState<PliesChoice>("auto");
   const [opts, setOpts] = useState<ClipOptionsState>(TIKTOK_MODE);
@@ -1367,9 +1367,6 @@ export function ClipModal({
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Clip studio: cut and save a reel of the final moves"
       data-clip-modal
       data-clip-bytes={clip?.blob.size ?? 0}
       data-clip-gif-bytes={gif?.blob.size ?? 0}
@@ -1405,11 +1402,18 @@ export function ClipModal({
       data-clip-quality={opts.quality}
       data-clip-board={opts.boardTheme}
       data-clip-compare={compareOn ? "on" : "off"}
-      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/80 px-2 py-3 sm:px-4 sm:py-6"
-      onPointerDown={chrome.onBackdropPointerDown}
+      // The site scrim (was an off-palette #0f0d0a), and the panel, not the
+      // backdrop, is the dialog, so the focus trap has something to hold
+      // (F138). No shadow: elevation is the plate's own fill.
+      className="fixed inset-0 z-[60] grid place-items-center bg-black/60 px-2 py-3 sm:px-4 sm:py-6"
+      onPointerDown={onBackdropPointerDown}
     >
       <div
-        className="plate plate-raised relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
+        ref={attachDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Clip studio: cut and save a reel of the final moves"
+        className="plate plate-raised relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 sm:p-5"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -1419,14 +1423,14 @@ export function ClipModal({
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p>Clip the finish</p>
+            <p className="text-[12px] text-parchment-400">Clip the finish</p>
             <h2 className="mt-0.5 font-display text-xl font-bold text-parchment sm:text-2xl">
               The studio
             </h2>
           </div>
           <div className="flex items-center gap-2">
             <span
-              className="hidden font-mono text-[12px] uppercase tracking-[0.06em] text-parchment-400 sm:inline"
+              className="hidden font-mono text-[12px] text-parchment-400 sm:inline"
               data-clip-tier={support?.tier ?? 0}
             >
               {support ? support.detail : "Probing encoder"}
@@ -1535,7 +1539,7 @@ export function ClipModal({
                   />
                 </div>
                 {reduced && (
-                  <p className="mt-1 font-mono text-[12px] uppercase tracking-[0.06em] text-parchment-400">
+                  <p className="mt-1 font-mono text-[12px] text-parchment-400">
                     Reduced motion: chrome still; transport live
                   </p>
                 )}
@@ -1604,7 +1608,7 @@ export function ClipModal({
                     )}
                   </>
                 ) : support?.tier === 1 ? (
-                  <span className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 border border-white/10 bg-white/[0.02] px-4 font-mono text-[13px] uppercase tracking-[0.06em] text-parchment-300">
+                  <span className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 border border-white/10 bg-white/[0.02] px-4 font-mono text-[13px] text-parchment-300">
                     {progress !== null
                       ? `Render ${Math.round(progress * 100)}%`
                       : images

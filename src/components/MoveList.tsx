@@ -252,7 +252,7 @@ function MoveCell({
       className={
         "min-w-0 text-left px-1 py-0.5 truncate transition " +
         (selected
-          ? "bg-[color:var(--accent)] text-[color:var(--text-on-accent)]"
+          ? "bg-[rgb(var(--accent-dim-rgb))] text-[color:var(--text-on-accent)]"
           : "text-parchment hover:bg-white/[0.04]")
       }
     >

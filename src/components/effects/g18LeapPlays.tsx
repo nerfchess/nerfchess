@@ -1875,6 +1875,151 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp):
 }
 
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g18-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g18-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g18-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/* --- bn4_dancing_master ------------------------------------------------------------
+   "For your next 2 turns, your knights may also move like bishops and your
+   bishops may also leap like knights." The dancing master taps out the
+   count; the caster's knight on c3 turns once on its square and glides
+   along the diagonal to f6 like a bishop, footprints marking the line; the
+   bishop on f4 turns and leaps like a knight to e6, over whatever is in the
+   way; two turn pips. */
+const C_DMR = { core: "#f0a8c8", glow: "#fff4e6", deep: "#2c1420" };
+
+function Steps({ c }: { c: typeof C_DMR }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="3.4" cy="6" rx="1.6" ry="2.6" fill={c.core} />
+      <ellipse cx="6.8" cy="3.8" rx="1.6" ry="2.6" fill={c.core} />
+    </svg>
+  );
+}
+
+function DancingMasterRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GrandJete lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_DMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      {[0, 1, 2].map((i) => (
+        <Q key={`b${i}`} x={`${44 + i * 6}%`} y={rk(3.5)} w={2.4} h={2.4} cls="g18-r-toll" delayMs={d + 40 + i * 110} v={{ "--gd": "0.6s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      ))}
+      <Q x={fc(2)} y={rk(2)} w={11} h={11} cls="g18-r-in" delayMs={d + 300} v={{ "--gd": "0.7s", "--s0": "1", "--r0": "-180deg" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      {[3, 4].map((k, i) => (
+        <Q key={`f${k}`} x={fc(k)} y={rk(k)} w={4.4} h={4.4} cls="g18-r-pip" delayMs={d + 560 + i * 90} v={{ "--gd": "1.2s" }} style={{ rotate: `calc(45deg + (1 - var(--fx-side, 1)) * 90deg)` }}>
+          <Steps c={c} />
+        </Q>
+      ))}
+      <Q x={fc(2)} y={rk(2)} w={11} h={11} cls="g18-r-go" delayMs={d + 520} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${3 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-3 * fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={fc(5)} y={rk(3)} w={11} h={11} cls="g18-r-in" delayMs={d + 780} v={{ "--gd": "0.7s", "--s0": "1", "--r0": "180deg" }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Thread c0={5} r0={3} c1={4} r1={5} color={c.core} delayMs={d + 960} gd="0.8s" />
+      <Q x={fc(5)} y={rk(3)} w={11} h={11} cls="g18-r-go" delayMs={d + 980} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)` }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Pips n={2} r={1.5} x0={47} x1={53} color={c.glow} delayMs={d + 1200} gd="1.1s" />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8 ---
   bn4_founding_of_the_city: S(FurrowLeap, {
@@ -1882,9 +2027,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, { rgb: "224 180 92", at: 760, laser: true, glyph: impShoe("#e0b45c", "#2c2010"), shock: true, box: [41, 34, 16, 16] }),
 
   // --- Tier 7 ---
-  bn4_dancing_master: S(GrandJete, {
+  bn4_dancing_master: S(DancingMasterRule, {
     ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "coronation", source: "empower", anchor: "aim",
-  }, { rgb: "201 162 232", at: 700, laser: true, shock: true, box: [43, 35, 14, 16], rot: 10 }),
+  }),
   bn4_griffins_brood: S(FledgeLedge, {
     ordering: "radial", staggerMs: 65, victims: ["n", "b"], hasLead: true, sound: "coronation", anchor: "aim",
   }, { rgb: "127 208 192", at: 660, laser: true, shock: true, box: [42, 34, 15, 17] }),

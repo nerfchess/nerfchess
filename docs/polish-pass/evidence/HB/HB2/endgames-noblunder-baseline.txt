@@ -1,0 +1,70 @@
+1350 kqk #0 w: window    after 50 moves
+1350 kqk #1 b: window    after 50 moves
+1350 kqk #2 w: win       after 2 moves
+1350 kqk #3 b: win       after 2 moves
+1350 kqk #4 w: window    after 50 moves
+1350 kqk #5 b: window    after 50 moves
+1350 kqk #6 w: window    after 50 moves
+1350 kqk #7 b: window    after 50 moves
+1350 kqk #8 w: window    after 50 moves
+1350 kqk #9 b: window    after 50 moves
+1350 krk #0 w: window    after 50 moves
+1350 krk #1 b: window    after 50 moves
+1350 krk #2 w: window    after 50 moves
+1350 krk #3 b: window    after 50 moves
+1350 krk #4 w: window    after 50 moves
+1350 krk #5 b: window    after 50 moves
+1350 krk #6 w: window    after 50 moves
+1350 krk #7 b: window    after 50 moves
+1350 krk #8 w: window    after 50 moves
+1350 krk #9 b: window    after 50 moves
+1350 krpkp #0 w: win       after 12 moves
+1350 krpkp #1 b: window    after 50 moves
+1350 krpkp #2 w: window    after 50 moves
+1350 krpkp #3 b: win       after 10 moves
+1350 krpkp #4 w: window    after 50 moves
+1350 krpkp #5 b: window    after 50 moves
+1350 krpkp #6 w: window    after 50 moves
+1350 krpkp #7 b: window    after 50 moves
+1350 krpkp #8 w: window    after 50 moves
+1350 krpkp #9 b: window    after 50 moves
+1750 kqk #0 w: win       after 9 moves
+1750 kqk #1 b: win       after 8 moves
+1750 kqk #2 w: win       after 2 moves
+1750 kqk #3 b: win       after 2 moves
+1750 kqk #4 w: win       after 5 moves
+1750 kqk #5 b: win       after 5 moves
+1750 kqk #6 w: win       after 3 moves
+1750 kqk #7 b: win       after 3 moves
+1750 kqk #8 w: win       after 6 moves
+1750 kqk #9 b: win       after 6 moves
+1750 krk #0 w: window    after 50 moves
+1750 krk #1 b: window    after 50 moves
+1750 krk #2 w: window    after 50 moves
+1750 krk #3 b: window    after 50 moves
+1750 krk #4 w: window    after 50 moves
+1750 krk #5 b: window    after 50 moves
+1750 krk #6 w: window    after 50 moves
+1750 krk #7 b: window    after 50 moves
+1750 krk #8 w: window    after 50 moves
+1750 krk #9 b: window    after 50 moves
+1750 krpkp #0 w: win       after 20 moves
+1750 krpkp #1 b: win       after 4 moves
+1750 krpkp #2 w: window    after 50 moves
+1750 krpkp #3 b: win       after 8 moves
+1750 krpkp #4 w: win       after 22 moves
+1750 krpkp #5 b: window    after 50 moves
+1750 krpkp #6 w: win       after 6 moves
+1750 krpkp #7 b: win       after 10 moves
+1750 krpkp #8 w: win       after 8 moves
+1750 krpkp #9 b: win       after 5 moves
+
+engine baseline (defender baseline hard@80ms), 10 starts per family, seed 1, 618s, load 2.4 2.6 2.4
+  1350 kqk    converted 2/10 (95% 6-51%)  threefold 0  fifty 0  window 8  loss 0  median moves to win 2
+  1350 krk    converted 0/10 (95% 0-28%)  threefold 0  fifty 0  window 10  loss 0  median moves to win -
+  1350 krpkp  converted 2/10 (95% 6-51%)  threefold 0  fifty 0  window 8  loss 0  median moves to win 12
+  1750 kqk    converted 10/10 (95% 72-100%)  threefold 0  fifty 0  window 0  loss 0  median moves to win 5
+  1750 krk    converted 0/10 (95% 0-28%)  threefold 0  fifty 0  window 10  loss 0  median moves to win -
+  1750 krpkp  converted 8/10 (95% 49-94%)  threefold 0  fifty 0  window 2  loss 0  median moves to win 8
+  threefold draws with a rook or more ahead: 0 of 60
+wrote docs/polish-pass/evidence/HB/HB2/endgames-noblunder-baseline.json

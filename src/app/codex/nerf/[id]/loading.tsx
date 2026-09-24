@@ -1,5 +1,5 @@
 // Route skeleton for /codex/nerf/[id]: the shared card-page geometry, so this
-// route no longer inherits the library grid from /codex/loading.tsx.
+// route no longer inherits the library grid from /codex/(index)/loading.tsx.
 
 import { CardPageSkeleton } from "@/app/codex/_components/CardPageSkeleton";
 

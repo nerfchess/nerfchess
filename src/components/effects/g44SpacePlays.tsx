@@ -12,6 +12,10 @@
 // ranks, a shelf aisle telescoping shorter, a staircase that returns to its
 // own foot.
 //
+// PER-CARD RULE SCENES (slice TC-g). Puppet Court lead with a scene of
+// their own rule on the real board (see that section before the registry);
+// the old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g44SpacePlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx (cycle hazard), only the SigPlugin / SigRole TYPES imported.
@@ -1188,29 +1192,7 @@ function ArcheryButt({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead centred d={delayMs} frame={<><Wash tone="rgba(217,139,74,0.26)" d={70} /><Rim tone="rgba(255,240,212,0.28)" d={150} /></>}>
-      {/* tell: the range scribed out to where the shot could have gone */}
-      <L c="g44-tellline" d={90} s={{ ...lane(0.13), background: "#fff0d4" }} />
-      {/* the stock on the cast square */}
-      <V c="g44-bow-stock" d={190} s={box(2.4, 1.6, -0.2)}>
-        <path d="M3 11h13l5-3v8l-5-3H3z" fill="#2a1508" stroke="#d98b4a" strokeWidth="1.2" {...SJ} />
-        <path d="M16 4v16" stroke="#d98b4a" strokeWidth="1.4" strokeLinecap="round" />
-      </V>
-      {/* the bolt runs the real distance, once, before the rule lands */}
-      <L c="g44-run1" d={280} s={{ ...box(1, 0.22, 0.5), borderRadius: "999px", background: "linear-gradient(90deg, transparent, #fff0d4)" }} />
-      {/* strike: the butt is hauled the whole way in from the far square */}
-      <V c="g44-haul1" d={400} s={{ ...box(1, 1, 0.5), filter: "drop-shadow(0 0 5px #d98b4a)" }}>{butt}</V>
-      {/* and re-pegged at exactly one square out */}
-      <L c="g44-bow-peg" d={560} s={{ ...box(0.34, 1.6, 1), background: "linear-gradient(180deg, #2a1508, #d98b4a)", border: "1px solid #fff0d4" }} />
-      {/* everything past the peg is struck off the range */}
-      <L c="g44-bow-strike" d={620} s={{ ...seg(0.25, 1, 0.22), background: "repeating-linear-gradient(90deg, #2a1508 0 10%, transparent 10% 24%)" }} />
-      {/* settle: straw off the butt, thrown away from the caster */}
-      {R3.map((i) => (
-        <L key={i} c="g44-grit" d={700 + i * 45} s={{ ...box(0.34, 0.14, 1 + [0.2, -0.2, 0.5][i], [-0.4, 0.5, 0.1][i]), background: "#fff0d4", "--sx": ["150%", "-140%", "180%"][i], "--sy": "calc(var(--fx-side, 1) * -170%)" }} />
-      ))}
-    </AimLead>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1454,27 +1436,7 @@ function Pigeonholes({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(169,184,232,0.26)" d={70} />}>
-      <L c="g44-tell" d={90} s={{ ...box(1.4, 1.4, 0, -0.2), borderRadius: "50%", background: "#1a1c33" }} />
-      {/* a rack on the cast square and its twin at the real far square */}
-      {R2.map((i) => (
-        <V key={i} c="g44-file-rack" d={190 + i * 70} s={at(i, 2.4, 2.6)}>{rack}</V>
-      ))}
-      {/* strike: the docket goes in one slot and comes out of the other rack */}
-      <L c="g44-file-post" d={340} s={{ ...at(0.08, 0.8, 0.55, -0.6), background: "#fff2e2", border: "1px solid #1a1c33" }} />
-      <L c="g44-run1" d={420} s={{ ...box(1, 0.5, 0.5, -0.6), background: "linear-gradient(90deg, rgba(255,242,226,0.1), #fff2e2)", border: "1px solid #1a1c33" }} />
-      {/* the misfiling stamp lands over the join */}
-      <V c="g44-file-stamp" d={560} s={{ ...at(0.5, 1.8, 1.8, 0.6), filter: "drop-shadow(0 0 4px #a9b8e8)" }}>
-        <circle cx="12" cy="12" r="9" fill="none" stroke="#fff2e2" strokeWidth="1.7" />
-        <path d="M6 16L18 8" stroke="#a9b8e8" strokeWidth="2" strokeLinecap="round" />
-      </V>
-      {/* settle: loose slips fluttering off the rack */}
-      {R3.map((i) => (
-        <L key={i} c="g44-grit" d={660 + i * 45} s={{ ...box(0.34, 0.24, [0.4, 1.2, 0.8][i], [0.8, 1, 1.3][i]), background: "#fff2e2", "--sx": ["140%", "-120%", "160%"][i], "--sy": "calc(var(--fx-side, 1) * -150%)" }} />
-      ))}
-    </AimLead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -1508,25 +1470,7 @@ function SandTable({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(216,181,106,0.26)" d={70} /><Rim tone="rgba(255,243,210,0.28)" d={150} /></>}>
-      {/* tell: the baton taps the edge of the table */}
-      <L c="g44-tell" d={90} s={{ ...box(1.6, 0.3, -1.8, 1.9), borderRadius: "999px", background: "#2b2210" }} />
-      {/* the sand bed itself */}
-      <L c="g44-sand-bed" d={190} s={{ ...box(6.4, 3.6, 0, 0.6), background: "linear-gradient(180deg, #d8b56a, #8a6f36)", border: "1px solid #2b2210" }} />
-      {/* strike: the cloth is dragged so the far end arrives under his hand */}
-      <L c="g44-sand-drag" d={320} s={{ ...box(6.4, 1, 0, -0.6), background: "repeating-linear-gradient(90deg, rgba(255,243,210,0.85) 0 6%, transparent 6% 18%)" }} />
-      {/* three flags lifted and replanted, in the real victim order */}
-      {R3.map((i) => (
-        <V key={i} c="g44-sand-flag" d={420 + i * 70} per={30} s={box(1.4, 2, -1.8 + i * 1.8, -0.4)}>{flag}</V>
-      ))}
-      {/* the baton sweeps the redrawn line */}
-      <L c="g44-sand-baton" d={600} s={{ ...box(4.4, 0.34, 0.4, 0.2), borderRadius: "999px", background: "linear-gradient(90deg, #2b2210, #fff3d2)" }} />
-      {/* the first piece is marked untouchable for a turn */}
-      <L c="g44-sand-mark" d={660} s={{ ...box(1.4, 1.4, -1.8, -0.4), borderRadius: "50%", border: "2px solid #fff3d2" }} />
-      <L c="g44-dust" d={730} s={{ ...box(5, 2.6, 0.4, 1.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,210,0.42), transparent 72%)" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -1621,29 +1565,7 @@ function Worldgate({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead d={delayMs} frame={<><Wash tone="rgba(143,216,255,0.28)" d={70} /><Rim tone="rgba(255,242,222,0.34)" d={150} /></>}>
-      {/* tell: the threshold is scribed across the run */}
-      <L c="g44-tellline" d={90} s={{ ...lane(0.14), background: "#fff2de" }} />
-      {/* the two leaves swing off the threshold */}
-      {R2.map((i) => (
-        <V key={i} c="g44-gate-leaf" d={200 + i * 60} s={{ ...box(2.4, 4.6, 0, i === 0 ? -2.3 : 2.3), scale: i === 0 ? "1 1" : "1 -1", "--gr": i === 0 ? "-64deg" : "64deg" }}>{leaf}</V>
-      ))}
-      {/* strike: what is behind the door is the far end of the board */}
-      <L c="g44-gate-beyond" d={360} s={{ ...box(3.2, 4.4), borderRadius: "2px", background: "radial-gradient(circle, #fff2de, rgba(16,26,51,0.95) 74%)" }} />
-      {/* the gap itself is walked out of the way */}
-      <L c="g44-fold" d={430} s={{ ...lane(0.5), background: "linear-gradient(90deg, rgba(143,216,255,0.9), rgba(255,242,222,0.15))" }} />
-      {/* three pieces cross the whole real distance at once */}
-      {R3.map((i) => (
-        <V key={i} c="g44-run1" d={500 + i * 60} per={30} s={{ ...box(1, 1.4, 0.5, [-1.2, 0, 1.2][i]) }}>
-          <path d={PAWN} fill="#8fd8ff" stroke="#101a33" strokeWidth="1.1" />
-        </V>
-      ))}
-      {/* the far side lights where they land */}
-      <L c="g44-gate-land" d={620} s={{ ...at(1, 2.4, 2.4), borderRadius: "50%", border: "2px solid #fff2de" }} />
-      <L c="g44-motes" d={720} s={{ ...box(4.6, 2.8, 1.4, 0.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,242,222,0.42), transparent 72%)" }} />
-    </AimLead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2557,25 +2479,7 @@ function ChainGang({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead centred d={delayMs} frame={<Wash tone="rgba(168,176,188,0.26)" d={70} />}>
-      <L c="g44-tell" d={90} s={{ ...box(1.2, 0.5, 0.6, 0.5), borderRadius: "999px", background: "#171c24" }} />
-      {/* the chain run out the whole real distance */}
-      <L c="g44-chain-run" d={200} s={{ ...lane(0.7), background: LINKS, border: "1px solid #171c24" }} />
-      {/* the leg irons snap on in the real victim order */}
-      {R3.map((i) => (
-        <V key={i} c="g44-chain-iron" d={290 + i * 60} per={28} s={at(0.2 + i * 0.24, 1.2, 1, 0.9)}>{iron}</V>
-      ))}
-      {/* strike: the whole run is taken in to exactly one cell */}
-      <L c="g44-cinch" d={450} s={{ ...lane(0.7), background: LINKS }} />
-      {/* the one link the chains spare stays out at full length */}
-      <L c="g44-chain-spared" d={560} s={{ ...at(1, 1.4, 1.4), borderRadius: "50%", border: "2px solid #fff0d6" }} />
-      {/* settle: rust off the irons */}
-      {R3.map((i) => (
-        <L key={i} c="g44-grit" d={660 + i * 45} s={{ ...box(0.3, 0.14, [0.4, 0.9, 1.4][i], [-0.4, 0.6, 0.2][i]), background: "#fff0d6", "--sx": ["140%", "-140%", "160%"][i], "--sy": "calc(var(--fx-side, 1) * -160%)" }} />
-      ))}
-    </AimLead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2611,25 +2515,7 @@ function LoopStair({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead centred d={delayMs} frame={<><Wash tone="rgba(185,162,216,0.26)" d={70} /><Rim tone="rgba(255,241,226,0.28)" d={150} /></>}>
-      {/* tell: the first tread lights, and the strings above go slack */}
-      <L c="g44-tell" d={90} s={{ ...box(1.6, 0.3, -1.6, 1.6), borderRadius: "999px", background: "#1d1630" }} />
-      {/* four flights round the dais, each one climbing, in victim order */}
-      {R4.map((i) => (
-        <V key={i} c="g44-stair-flight" d={190 + i * 70} per={30} s={{ ...box(3.4, 1.6, 2.2 * Math.cos((i / 4) * 6.283), 2.2 * Math.sin((i / 4) * 6.283)), rotate: `${i * 90}deg` }}>{flight}</V>
-      ))}
-      {/* strike: the climber walks all four and is back at the bottom */}
-      <V c="g44-stair-climb" d={470} s={{ ...box(1.2, 1.6), filter: "drop-shadow(0 0 5px #b9a2d8)" }}>
-        <path d={KING} fill="#fff1e2" stroke="#1d1630" strokeWidth="1.1" {...SJ} />
-      </V>
-      {/* the throne, level with the foot of its own stair */}
-      <L c="g44-stair-level" d={570} s={{ ...box(5.6, 0.24, 0, -0.2), borderRadius: "999px", background: "linear-gradient(90deg, rgba(255,241,226,0.1), #fff1e2, rgba(255,241,226,0.1))" }} />
-      {/* the cut string falls past it all */}
-      <L c="g44-stair-string" d={640} s={{ ...box(0.1, 3.4, -0.9, -1.4), background: "#fff1e2" }} />
-      <L c="g44-dust" d={720} s={{ ...box(5, 2.6, 0, 1.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,241,226,0.42), transparent 72%)" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2761,9 +2647,400 @@ function SecondController({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Puppet Court no longer lead with the
+   module's prop and the shared impact hit: each lead plays its own rule on the
+   real board (the squares, pieces and turn counts it touches). The old art
+   survives only as the small target and entrance cuts. Positions are board
+   percentages from the caster's side: rank 0 is the caster's back rank, 7 the
+   opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g44-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g44-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g44-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g44-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- hx4_puppet_court -------------------------------------------------------------
+   "Every officer's strings are cut: for your opponent's next 3 turns they may
+   move only pawns and their king. The first officer the strings would bind
+   may make one move, then it binds fully." A puppeteer's bar hangs in front
+   of their army with a string up to each officer on their back rank; the
+   strings are snipped and fall, and every officer's square goes dark, except
+   the knight that gets its one move to f6 first and then goes dark there;
+   their king and pawns stay lit; three turn pips. */
+const C_PCR = { core: "#b9a2d8", glow: "#fff1e2", deep: "#1d1630" };
+
+function PuppetCourtRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <LoopStair lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PCR;
+  const d = delayMs;
+  const officers = [0, 1, 2, 3, 5, 7];
+  return (
+    <Brd>
+      <Q x="50%" y={rk(4.6)} w={96} h={1.8} cls="g44-r-draw" delayMs={d + 40} v={{ "--gd": "1.4s" }} style={{ background: c.core }} />
+      {[...officers, 6].map((col, i) => (
+        <Q key={col} x={cl(col)} y={rk(5.8)} w={0.7} h={30} cls="g44-r-in" delayMs={d + 80 + i * 30} v={{ "--gd": "0.95s", "--s0": "1" }} style={{ background: c.glow }} />
+      ))}
+      {[...officers, 6].map((col, i) => (
+        <Q key={col} x={cl(col)} y={rk(5.1)} w={0.7} h={12} cls="g44-r-part" delayMs={d + 900 + i * 30} v={{ "--gd": "0.7s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 60%)", "--r1": `${(i % 2 ? 1 : -1) * 25}deg` }} style={{ background: c.glow }} />
+      ))}
+      <Q x="50%" y={rk(5.1)} w={9} h={6} cls="g44-r-go" delayMs={d + 620} v={{ "--gd": "0.7s", "--tx0": "-460%", "--ty0": "0%", "--tx1": "460%", "--ty1": "0%" }}>
+        <svg viewBox="0 0 24 16" className="block h-full w-full" aria-hidden="true">
+          <circle cx="4" cy="4" r="3" fill="none" stroke={c.glow} strokeWidth="1.6" />
+          <circle cx="4" cy="12" r="3" fill="none" stroke={c.glow} strokeWidth="1.6" />
+          <path d="M6.4 5.6L22 11M6.4 10.4L22 5" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      {officers.map((col, i) => (
+        <Tint key={col} x={cl(col)} y={rk(7)} color="rgba(29,22,48,0.7)" delayMs={d + 980 + i * 40} gd="1.3s" />
+      ))}
+      <Q x={cl(5)} y={rk(5)} w={11} h={11} cls="g44-r-go" delayMs={d + 1000} v={{ "--gd": "0.8s", "--tx0": `${fileIn(11)}%`, "--ty0": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Tint x={cl(5)} y={rk(5)} color="rgba(29,22,48,0.55)" delayMs={d + 1520} gd="0.9s" />
+      <Tint x={KING_X} y={rk(7)} color="rgba(255,241,226,0.3)" delayMs={d + 1000} gd="1.3s" />
+      <Tint x="50%" y={rk(6)} w={100} color="rgba(255,241,226,0.16)" delayMs={d + 1040} gd="1.2s" />
+      <Pips n={3} r={3.6} x0={45} x1={55} color={c.glow} delayMs={d + 1200} gd="1s" />
+    </Brd>
+  );
+}
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+/* --- hx4_crossbow_curfew -----------------------------------------------------------
+   "After your opponent's next move, for their following 4 turns they may only
+   capture from 1 square away. Long range kills are forbidden." An enemy
+   bishop on c5 with a crossbow at its shoulder lines up the long diagonal on
+   the caster's f2 pawn; the bolt flies, is stamped out two squares short and drops;
+   the eight squares round the bishop light as the only range it has left, and
+   the caster's pawn on d4, one square away, is the capture that still stands;
+   one open pip (their next move first) then four pips. */
+const C_CCR = { core: "#d98b4a", glow: "#fff0d4", deep: "#2a1508" };
+
+function CrossbowCurfewRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ArcheryButt lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CCR;
+  const d = delayMs;
+  const bolt = (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M3 3L15.4 15.4" stroke={c.glow} strokeWidth="2" {...SJ} />
+      <path d="M17.6 17.6l-6.4-1.6 4.8-4.8z" fill={c.core} stroke={c.deep} strokeWidth="0.8" {...SJ} />
+      <path d="M3 3l3.4 0.4M3 3l0.4 3.4" stroke={c.core} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+  return (
+    <Brd>
+      <Q x={fc(2)} y={rk(4)} w={11} h={11} cls="g44-r-in" delayMs={d + 40} v={{ "--gd": "2.1s" }}>
+        <Man kind="b" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={`calc(${fc(2)} + 4%)`} y={`calc(${rk(4)} + 3%)`} w={7} h={5} cls="g44-r-stamp" delayMs={d + 140} v={{ "--gd": "1.1s" }} style={{ rotate: FLIP }}>
+        <svg viewBox="0 0 24 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 8h16" stroke={c.deep} strokeWidth="2.6" {...SJ} />
+          <path d="M12 1.6q5 6.4 0 12.8" fill="none" stroke={c.core} strokeWidth="1.8" {...SJ} />
+          <path d="M12 1.6L7 8l5 6.4" fill="none" stroke={c.glow} strokeWidth="0.8" {...SJ} />
+          <path d="M18 8l4-2v4z" fill={c.glow} />
+        </svg>
+      </Q>
+      <Q x={fc(5)} y={rk(1)} w={10} h={10} cls="g44-r-pip" delayMs={d + 120} v={{ "--gd": "1.5s" }} style={{ border: `2px solid ${c.core}`, borderRadius: "50%" }} />
+      <Thread c0={2} r0={4} c1={5} r1={1} color={c.glow} delayMs={d + 200} gd="1.1s" />
+      <Q x={fc(4)} y={rk(2)} w={5} h={5} cls="g44-r-go" delayMs={d + 300} v={{ "--gd": "0.6s", "--tx0": "calc(var(--fx-side, 1) * -250%)", "--ty0": "calc(var(--fx-side, 1) * -250%)", "--tx1": "0%", "--ty1": "0%" }} style={{ rotate: FLIP }}>
+        {bolt}
+      </Q>
+      <Q x={fc(4)} y={rk(2)} w={5} h={5} cls="g44-r-part" delayMs={d + 740} v={{ "--gd": "0.7s", "--tx1": "30%", "--ty1": "calc(var(--fx-side, 1) * 90%)", "--r1": "70deg" }} style={{ rotate: FLIP }}>
+        {bolt}
+      </Q>
+      <Q x={fc(3.5)} y={rk(2.5)} w={8} h={8} cls="g44-r-stamp" delayMs={d + 640} v={{ "--gd": "1.1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.core} strokeWidth="3" {...SJ} />
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      <Tint x={fc(2)} y={rk(4)} w={37.5} h={37.5} color="rgba(217,139,74,0.26)" delayMs={d + 900} gd="1.5s" />
+      <Q x={fc(2)} y={rk(4)} w={37.5} h={37.5} cls="g44-r-in" delayMs={d + 900} v={{ "--gd": "1.5s", "--s0": "1.2" }} style={{ border: `2px dashed ${c.core}` }} />
+      <Q x={fc(3)} y={rk(3)} w={11} h={11} cls="g44-r-in" delayMs={d + 960} v={{ "--gd": "1.4s" }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Thread c0={2} r0={4} c1={3} r1={3} color={c.core} delayMs={d + 1100} gd="1.2s" />
+      <Q x="60%" y={rk(5.2)} w={3} h={3} cls="g44-r-pip" delayMs={d + 1040} v={{ "--gd": "1.3s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Pips n={4} r={5.2} x0={66} x1={84} color={c.core} delayMs={d + 1120} gd="1.3s" />
+      <Q x={fc(2)} y={rk(4.8)} w={24} h={2} cls="g44-r-lean" delayMs={d + 1600} v={{ "--gd": "0.9s" }} style={{ borderRadius: "999px", background: "rgba(217,139,74,0.5)" }} />
+    </Brd>
+  );
+}
+/* =============================================================================
    Registry. Two spaces of indent at object depth 1: the animation audit and
    check-sig-plugins.cjs parse this table as TEXT.
    ========================================================================== */
+
+/** A crossed-out mark: a move barred. */
+function Bar({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/** A number disc: the order a rule takes things in. */
+function Num({ n, c }: { n: number; c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <circle cx="5" cy="5" r="4.4" fill={c.core} stroke={c.deep} strokeWidth="0.8" />
+      <text x="5" y="7.2" textAnchor="middle" fontSize="6" fontWeight="700" fill={c.deep}>{n}</text>
+    </svg>
+  );
+}
+
+/* --- ov_heavenly_bureaucracy -------------------------------------------------------
+   "Once within your next 8 turns: when an enemy move puts your king in check,
+   the check is misfiled and your king is relocated to a random empty square
+   that is not attacked." Eight pips mark the window; an enemy rook's check
+   runs down the e-file at the caster's king; a filing clerk's stamp comes
+   down on it (misfiled); the king fades off e1 and reappears on a safe empty
+   square (b3 here), a dashed trail between; the window's pips go out (once). */
+const C_HBR = { core: "#a9b8e8", glow: "#fff2e2", deep: "#1a1c33" };
+
+function HeavenlyBureaucracyRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <Pigeonholes lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HBR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Pips n={8} r={2.4} x0={58} x1={90} color={c.core} delayMs={d + 20} gd="1.5s" />
+      <Q x={KING_X} y={rk(3.5)} w={11} h={11} cls="g44-r-in" delayMs={d + 120} v={{ "--gd": "1.4s", "--s0": "1" }}>
+        <Man kind="r" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={KING_X} y={rk(1.8)} w={1.6} h={24} cls="g44-r-shout" delayMs={d + 300} v={{ "--gd": "0.7s" }} style={{ background: `linear-gradient(180deg, transparent, ${c.glow})` }} />
+      <Q x={KING_X} y={rk(0.9)} w={10} h={6} cls="g44-r-stamp" delayMs={d + 620} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 30 16" className="block h-full w-full" aria-hidden="true">
+          <rect x="1" y="1" width="28" height="14" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.2" />
+          <path d="M5 5h14M5 8h18M5 11h10" stroke={c.core} strokeWidth="1" />
+          <path d="M20 4l6 8M26 4l-6 8" stroke="#c8506a" strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={KING_X} y={rk(0)} w={11} h={11} cls="g44-r-dim" delayMs={d + 760} v={{ "--gd": "0.7s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Thread c0={4} r0={0} c1={1} r1={2} color={c.core} delayMs={d + 900} gd="1s" />
+      <Q x={fc(1)} y={rk(2)} w={11} h={11} cls="g44-r-stamp" delayMs={d + 1020} v={{ "--gd": "1.2s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Tint x={fc(1)} y={rk(2)} color="rgba(169,184,232,0.34)" delayMs={d + 1040} gd="1.2s" />
+      <Pips n={8} r={2.4} x0={58} x1={90} color={c.deep} delayMs={d + 1300} gd="0.9s" />
+    </Brd>
+  );
+}
+
+/* --- bn4_marshals_baton ------------------------------------------------------------
+   "Redraw the whole line: move up to 3 of your pieces (your king excepted) to
+   empty squares anywhere on the board. The first piece you move cannot be
+   captured on your opponent's next turn." The marshal's baton sweeps over the
+   caster's side; one after another, numbered 1, 2, 3, the g1 knight lifts to
+   e5, the c1 bishop to b5 and the d1 queen to g4; the first to move, the
+   knight, is ringed with a ward and one pip. */
+const C_MBR = { core: "#d8b56a", glow: "#fff3d2", deep: "#2b2210" };
+const MB_MOVES: { k: "n" | "b" | "q"; c0: number; c1: number; r1: number; at: number }[] = [
+  { k: "n", c0: 6, c1: 4, r1: 4, at: 260 },
+  { k: "b", c0: 2, c1: 1, r1: 4, at: 520 },
+  { k: "q", c0: 3, c1: 6, r1: 3, at: 780 },
+];
+
+function MarshalsBatonRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SandTable lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_MBR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(1.2)} w={30} h={3} cls="g44-r-draw" delayMs={d + 30} v={{ "--gd": "1.3s" }} style={{ rotate: "-12deg", background: `linear-gradient(90deg, ${c.deep} 0 12%, ${c.core} 12% 88%, ${c.deep} 88%)`, borderRadius: "999px" }} />
+      {MB_MOVES.map((m) => (
+        <Thread key={`t${m.k}`} c0={m.c0} r0={0} c1={m.c1} r1={m.r1} color={c.core} delayMs={d + m.at - 60} gd="1s" />
+      ))}
+      {MB_MOVES.map((m) => (
+        <Q key={`m${m.k}`} x={fc(m.c1)} y={rk(m.r1)} w={11} h={11} cls="g44-r-go" delayMs={d + m.at} v={{ "--gd": "1.7s", "--tx0": `calc(var(--fx-side, 1) * ${(m.c0 - m.c1) * 100}%)`, "--ty0": `calc(var(--fx-side, 1) * ${m.r1 * 100}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {MB_MOVES.map((m, i) => (
+        <Q key={`n${m.k}`} x={`calc(${fc(m.c1)} + 4.4%)`} y={`calc(${rk(m.r1)} - 4.4%)`} w={4} h={4} cls="g44-r-pip" delayMs={d + m.at + 300} v={{ "--gd": "1.3s" }}>
+          <Num n={i + 1} c={c} />
+        </Q>
+      ))}
+      <Q x={fc(4)} y={rk(4)} w={14} h={14} cls="g44-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }} style={{ border: `2.5px solid ${c.core}`, borderRadius: "50%" }} />
+      <Q x={fc(4)} y={rk(5)} w={2.6} h={2.6} cls="g44-r-pip" delayMs={d + 1160} v={{ "--gd": "0.9s" }} style={{ background: c.glow, borderRadius: "50%" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_worldgate -----------------------------------------------------------------
+   "Open the great door: move up to 3 of your pieces (your king excepted) to
+   empty squares anywhere on the board, all at once." A great arched door
+   opens in the middle of the board; three of the caster's pieces (the b1
+   knight, the f1 bishop and the h1 rook) are drawn into it together and step
+   out of it together onto c6, f5 and h4, three squares lit in the same beat. */
+const C_WGR = { core: "#8fd8ff", glow: "#fff2de", deep: "#101a33" };
+const WG_MOVES: { k: "n" | "b" | "r"; c0: number; c1: number; r1: number }[] = [
+  { k: "n", c0: 1, c1: 2, r1: 5 },
+  { k: "b", c0: 5, c1: 5, r1: 4 },
+  { k: "r", c0: 7, c1: 7, r1: 3 },
+];
+
+function WorldgateRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <Worldgate lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_WGR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y="50%" w={16} h={22} cls="g44-r-up" delayMs={d + 20} v={{ "--gd": "2.1s" }} style={{ background: c.deep, border: `2px solid ${c.core}`, borderRadius: "999px 999px 2px 2px" }} />
+      <Q x="46%" y="50%" w={8} h={22} cls="g44-r-open" delayMs={d + 240} v={{ "--gd": "1.8s", "--ra": "-70deg" }} style={{ transformOrigin: "0% 50%", background: c.core, border: `1px solid ${c.deep}`, borderRadius: "999px 0 0 2px" }} />
+      <Q x="54%" y="50%" w={8} h={22} cls="g44-r-open" delayMs={d + 240} v={{ "--gd": "1.8s", "--ra": "70deg" }} style={{ transformOrigin: "100% 50%", background: c.core, border: `1px solid ${c.deep}`, borderRadius: "0 999px 2px 0" }} />
+      {WG_MOVES.map((m) => (
+        <Q key={`i${m.k}`} x="50%" y="50%" w={10} h={10} cls="g44-r-go" delayMs={d + 520} v={{ "--gd": "0.7s", "--tx0": `calc(var(--fx-side, 1) * ${(m.c0 - 3.5) * 125}%)`, "--ty0": "calc(var(--fx-side, 1) * 437%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {WG_MOVES.map((m) => (
+        <Q key={`o${m.k}`} x={fc(m.c1)} y={rk(m.r1)} w={11} h={11} cls="g44-r-go" delayMs={d + 960} v={{ "--gd": "1.2s", "--tx0": `calc(var(--fx-side, 1) * ${(3.5 - m.c1) * 114}%)`, "--ty0": `calc(var(--fx-side, 1) * ${(m.r1 - 3.5) * 114}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {WG_MOVES.map((m) => (
+        <Tint key={`t${m.k}`} x={fc(m.c1)} y={rk(m.r1)} color="rgba(143,216,255,0.34)" delayMs={d + 1260} gd="1s" />
+      ))}
+    </Brd>
+  );
+}
+
+/* --- hx4_chain_gang ----------------------------------------------------------------
+   "On your opponent's next turn, every piece they own may move at most 1
+   square, except their single most valuable piece, which the chains spare.
+   King captures are always allowed." The limit is Chebyshev distance, so a
+   knight (always two away) cannot move at all. A chain is run along their
+   army; their e6 rook's long slide to e3 is barred, and only the one-square
+   step to e5 is left lit (dashed); the chain's link at the queen (d8, their
+   most valuable) is struck open and she is ringed free; one pip. */
+const C_CGR = { core: "#a8b0bc", glow: "#fff0d6", deep: "#171c24" };
+
+function ChainGangRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ChainGang lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CGR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(6.5)} w={100} h={2.4} cls="g44-r-draw" delayMs={d + 20} v={{ "--gd": "2.1s" }} style={{ background: `repeating-linear-gradient(90deg, transparent 0 2px, ${c.core} 2px 12px, transparent 12px 14px)`, border: `1px solid ${c.deep}`, borderRadius: "999px" }} />
+      <Q x={fc(4)} y={rk(5)} w={11} h={11} cls="g44-r-in" delayMs={d + 200} v={{ "--gd": "1.9s", "--s0": "1" }}>
+        <Man kind="r" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Thread c0={4} r0={5} c1={4} r1={2} color={c.glow} delayMs={d + 360} gd="1s" />
+      <Q x={fc(4)} y={rk(2)} w={7} h={7} cls="g44-r-stamp" delayMs={d + 600} v={{ "--gd": "1.2s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(4)} w={12.5} h={12.5} cls="g44-r-in" delayMs={d + 700} v={{ "--gd": "1.3s", "--s0": "1.1" }} style={{ border: `2px dashed ${c.glow}`, background: "rgba(255,240,214,0.12)" }} />
+      <Q x={QUEEN_X} y={rk(6.5)} w={5} h={5} cls="g44-r-part" delayMs={d + 900} v={{ "--gd": "0.8s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 200%)", "--r1": "60deg" }} style={{ border: `2px solid ${c.core}`, borderRadius: "40%" }} />
+      <Q x={QUEEN_X} y={rk(7)} w={13} h={13} cls="g44-r-pip" delayMs={d + 960} v={{ "--gd": "1.1s" }} style={{ border: `2.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Q x="8%" y={rk(4.5)} w={3} h={3} cls="g44-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }} style={{ background: c.glow, borderRadius: "50%" }} />
+    </Brd>
+  );
+}
 
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_deja_vu: {
@@ -2832,7 +3109,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_crossbow_curfew: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "board" },
-    Render: ArcheryButt,
+    Render: CrossbowCurfewRule,
   },
   ov_portal_pair: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "board" },
@@ -2852,11 +3129,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   ov_heavenly_bureaucracy: {
     config: { ordering: "line", staggerMs: 55, victims: ["k"], hasLead: true, sound: "vault", anchor: "aim" },
-    Render: Pigeonholes,
+    Render: HeavenlyBureaucracyRule,
   },
   bn4_marshals_baton: {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
-    Render: SandTable,
+    Render: MarshalsBatonRule,
   },
   hx4_velvet_rope: {
     config: { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
@@ -2864,7 +3141,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   bn4_worldgate: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "nova", anchor: "aim" },
-    Render: Worldgate,
+    Render: WorldgateRule,
   },
   hx4_choke_point: {
     config: { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "cast" },
@@ -2932,11 +3209,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_chain_gang: {
     config: { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "board" },
-    Render: ChainGang,
+    Render: ChainGangRule,
   },
   hx4_puppet_court: {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
-    Render: LoopStair,
+    Render: PuppetCourtRule,
   },
   ov_antigravity_gala: {
     config: { ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "gacha", source: "empower", anchor: "cast" },
@@ -3082,7 +3359,6 @@ const IMPACTS: Record<string, Imp> = {
   // the shutter GUTTERS the lantern: darkness lands like a weight
   hx4_lantern_out: { at: 600, tint: "#f0c46a", laser: true, shock: true, y: 48, s: 6.2 },
   // the curfew bolt thuds into the butt at the marked hour
-  hx4_crossbow_curfew: { at: 560, tint: "#d98b4a", laser: true, shock: true, y: 50, s: 5.6 },
   // both mouths gulp at once: the twin portal slams its rim
   ov_portal_pair: { at: 560, tint: "#7fe0d0", laser: true, shock: true, y: 50, s: 7.4 },
   // the ghost steps land: the LAST print strikes at full reach
@@ -3091,14 +3367,8 @@ const IMPACTS: Record<string, Imp> = {
   bn4_faerie_door: { at: 520, tint: "#9ee0a6", laser: true, shock: true, aim: true, len: true, s: 6 },
   // the hammock drops its scholar: undignified full-weight thump
   ov_archmage_sabbatical: { at: 540, tint: "#e3c07f", laser: true, shock: true, aim: true, s: 7 },
-  // the heavenly stamp descends the pigeonhole rank and LANDS
-  ov_heavenly_bureaucracy: { at: 560, tint: "#a9b8e8", laser: true, shock: true, aim: true, s: 6.6 },
-  // the baton raps the sand table: the whole plan jolts
-  bn4_marshals_baton: { at: 600, tint: "#d8b56a", laser: true, shock: true, y: 52, s: 6.8 },
   // the velvet rope's brass post is SLAMMED into its socket
   hx4_velvet_rope: { at: 560, tint: "#d1607e", laser: true, shock: true, y: 54, s: 6.2 },
-  // the worldgate opens: an orbital lance grounds at the far mouth
-  bn4_worldgate: { at: 620, tint: "#8fd8ff", laser: true, shock: true, aim: true, len: true, s: 7 },
   // the hourglass waist CHOKES: the pinch strikes shut
   hx4_choke_point: { at: 640, tint: "#d9a15c", laser: true, shock: true, y: 50, s: 6 },
   // the zip teeth BITE shut: interlock boom down the seam
@@ -3131,10 +3401,6 @@ const IMPACTS: Record<string, Imp> = {
   hx4_hobble_strap: { at: 600, tint: "#b98a5a", laser: true, shock: true, y: 55, s: 6.2 },
   // the quartermaster's lock TURNS: the bolt drops like a girder
   bn4_quartermasters_lock: { at: 610, tint: "#cfd4dc", laser: true, shock: true, y: 52, s: 6.6 },
-  // the gang chain is TESTED and a link gives: it snaps in half
-  hx4_chain_gang: { at: 560, tint: "#a8b0bc", glyph: impGlyph(IG_LINK, "none", "#a8b0bc", 2.6), shock: true, y: 52 },
-  // the court is called to order: the puppet gavel from on high
-  hx4_puppet_court: { at: 640, tint: "#b9a2d8", laser: true, shock: true, y: 50, s: 6.8 },
   // the floor's grip is cut: the release ring booms out under the dancers
   ov_antigravity_gala: { at: 520, tint: "#b48fe8", shock: true, y: 54, s: 7.2 },
   // the pinch lands ON the borrowed piece, the full run away

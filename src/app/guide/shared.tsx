@@ -2,6 +2,8 @@ import Link from "next/link";
 import { GlossaryText } from "@/components/GlossaryText";
 import { InfoSection } from "@/components/InfoPageLayout";
 import { LinkButton } from "@/components/ui/Button";
+import { FaqJsonLd } from "@/components/seo/JsonLd";
+import { GuideJsonLd } from "@/components/seo/GuideJsonLd";
 
 // Shared plumbing for the /guide section: server-rendered evergreen pages
 // written for search engines and AI answer engines. Everything here renders
@@ -25,21 +27,9 @@ export type FaqItem = { question: string; answer: string };
 /** FAQPage structured data plus the visible Q&A section that backs it up.
  * Google requires the marked-up questions to be visible on the page. */
 export function FaqSection({ items }: { items: FaqItem[] }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: items.map((f) => ({
-      "@type": "Question",
-      name: f.question,
-      acceptedAnswer: { "@type": "Answer", text: f.answer },
-    })),
-  };
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <FaqJsonLd items={items} />
       <InfoSection title="Frequently asked questions">
         {items.map((f) => (
           <div key={f.question}>
@@ -56,23 +46,11 @@ export function FaqSection({ items }: { items: FaqItem[] }) {
   );
 }
 
-/** BreadcrumbList structured data for a guide subpage. */
+/** Structured data for a guide subpage: an Article by the Nerf Chess team
+ *  and its Home > Guide > page breadcrumb (src/components/seo/GuideJsonLd.tsx).
+ *  The name is kept so every guide page's call site stays as it was. */
 export function BreadcrumbJsonLd({ title, path }: { title: string; path: string }) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Nerf Chess", item: "https://nerfchess.com" },
-      { "@type": "ListItem", position: 2, name: "Guide", item: "https://nerfchess.com/guide" },
-      { "@type": "ListItem", position: 3, name: title, item: `https://nerfchess.com${path}` },
-    ],
-  };
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
-  );
+  return <GuideJsonLd title={title} path={path} />;
 }
 
 /** Cross-links to the rest of the guide plus the main play surfaces, so every

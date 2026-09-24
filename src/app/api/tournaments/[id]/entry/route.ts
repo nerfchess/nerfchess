@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { tournamentPhase } from "@/lib/tournaments";
+import { apiError, guardJsonWrite } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -11,18 +12,15 @@ export const dynamic = "force-dynamic";
 // weakens the auth model.
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const body = await guardJsonWrite(request);
+  if (body instanceof NextResponse) return body;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
-  if (!user) return NextResponse.json({ error: "Sign in to join tournaments." }, { status: 401 });
+  if (!user) return apiError(401, "Sign in to join tournaments.");
 
-  let body: { action?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Bad JSON." }, { status: 400 });
-  }
   const action = body.action === "join" || body.action === "withdraw" ? body.action : null;
-  if (!action) return NextResponse.json({ error: "Unknown action." }, { status: 400 });
+  if (!action) return apiError(400, "Unknown action.");
+  if (!/^[A-Za-z0-9-]{1,64}$/.test(params.id)) return apiError(404, "Tournament not found.");
 
   const tournament = await db
     .prepare("SELECT id, status, club_id, starts_at, duration_min, max_players FROM tournaments WHERE id = ?")
@@ -35,7 +33,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       duration_min: number;
       max_players: number;
     }>();
-  if (!tournament) return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
+  if (!tournament) return apiError(404, "Tournament not found.");
 
   const phase = tournamentPhase(tournament.starts_at, tournament.duration_min);
 
@@ -80,9 +78,14 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     return NextResponse.json({ entered: true });
   }
 
-  // Withdraw: remove the entry. Scores are not yet accrued (no pairing engine),
-  // so nothing is lost; a future engine can switch this to a soft flag to keep
-  // points on a rejoin.
+  // Withdraw. A finished event's entries ARE its final standings (the round
+  // engine writes scores into them), so leaving one used to erase the player
+  // from the results (F074). Refused once the event is over. While it runs,
+  // withdrawing still deletes the entry, so a rejoin starts from zero; keeping
+  // points needs a soft-withdraw column (proposal P-tourney-withdraw).
+  if (phase === "finished" || tournament.status === "finished") {
+    return apiError(400, "This tournament has finished; its standings are final.");
+  }
   await db
     .prepare("DELETE FROM tournament_entries WHERE tournament_id = ? AND user_id = ?")
     .bind(tournament.id, user.id)

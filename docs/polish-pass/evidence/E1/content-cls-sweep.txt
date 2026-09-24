@@ -1,0 +1,57 @@
+  /guide  390x844|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide  9ms
+  /guide  1280x800|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide  11ms
+  /guide/how-to-play  390x844|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/how-to-play  8ms
+  /guide/how-to-play  1280x800|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/how-to-play  22ms
+  /guide/glossary  390x844|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/glossary  7ms
+  /guide/glossary  1280x800|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/glossary  14ms
+  /tutorial  390x844|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial  12ms
+  /tutorial  1280x800|dark|full|signed-out|normal  ERROR page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial  10ms
+  /tutorial/walkthrough  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0198 (sum 0.0198, 1 >0.01)  43751ms
+  /tutorial/walkthrough  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0009 (sum 0.0009, 0 >0.01)  18247ms
+  /updates  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0107 (sum 0.0118, 1 >0.01)  15883ms
+  /updates  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0272 (sum 0.0305, 1 >0.01)  4205ms
+  /about  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0365 (sum 0.0376, 1 >0.01)  8501ms
+  /about  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0033 (sum 0.0064, 0 >0.01)  2850ms
+  /faq  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0822 (sum 0.0833, 1 >0.01)  6704ms
+  /faq  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.1657 (sum 0.1682, 1 >0.01)  3893ms
+  /contact  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.0013, 0 >0.01)  6103ms
+  /contact  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0049 (sum 0.0071, 0 >0.01)  2715ms
+  /guidelines  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.0012, 0 >0.01)  6413ms
+  /guidelines  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0028 (sum 0.0053, 0 >0.01)  2616ms
+  /terms-of-service  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0189 (sum 0.0199, 1 >0.01)  4901ms
+  /terms-of-service  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.1183 (sum 0.1212, 1 >0.01)  3801ms
+  /codex/buff/pawn_push  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.2078 (sum 0.2283, 2 >0.01)  44997ms
+  /codex/buff/pawn_push  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.2578 (sum 0.2799, 2 >0.01)  5761ms
+  /codex/suggest  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0016 (sum 0.0016, 0 >0.01)  17390ms
+  /codex/suggest  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0005 (sum 0.0005, 0 >0.01)  3763ms
+  /history  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.0021, 0 >0.01)  9679ms
+  /history  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0026 (sum 0.0052, 0 >0.01)  4111ms
+  /analysis  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.0015, 0 >0.01)  56767ms
+  /analysis  1280x800|dark|full|signed-out|normal  ERROR page.evaluate: Execution context was destroyed, most likely because of a navigation  72371ms
+  /stats  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4823ms
+  /stats  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0029 (sum 0.0029, 0 >0.01)  10613ms
+  /achievements  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0989 (sum 0.1204, 2 >0.01)  16921ms
+  /achievements  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.038 (sum 0.0393, 1 >0.01)  4148ms
+
+[cls] 34 cells, 12 above target 0.01, 20 over ceiling
+  FAIL  /tutorial/walkthrough|390x844|dark|full|signed-out|normal  CLS 0.0198  ceiling 0.01  top: main.min-h-screen.pb-20 > nav.flex.items-center.justify-between > a.font-display.text-2xl.tracking-tight > span.text-gold-leaf dy -2
+  debt  /updates|390x844|dark|full|signed-out|normal  CLS 0.0107  ceiling 0.01  top: li#new-look.plate > details.\[&_p+p\]\:mt-2 dy -18
+  FAIL  /updates|1280x800|dark|full|signed-out|normal  CLS 0.0272  ceiling 0.01  top: li#u-20260803-0958.plate dy -18
+  FAIL  /about|390x844|dark|full|signed-out|normal  CLS 0.0365  ceiling 0.01  top: main.min-h-screen.pb-20 > section.mx-auto.max-w-\[1100px\].px-6 > h1.page-title dy -3
+  FAIL  /faq|390x844|dark|full|signed-out|normal  CLS 0.0822  ceiling 0.01  top: section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy -26
+  FAIL  /faq|1280x800|dark|full|signed-out|normal  CLS 0.1657  ceiling 0.01  top: section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy -1
+  FAIL  /terms-of-service|390x844|dark|full|signed-out|normal  CLS 0.0189  ceiling 0.01  top: main.min-h-screen.pb-20 > section.mx-auto.max-w-\[1100px\].px-6 > h1.page-title dy -3
+  FAIL  /terms-of-service|1280x800|dark|full|signed-out|normal  CLS 0.1183  ceiling 0.01  top: nav.site-nav > div.site-nav-brand > a.\[@media(pointer\:fine)\]\:min-h-0 > span.font-display.text-\[22px\].font-medium dy -3
+  FAIL  /codex/buff/pawn_push|390x844|dark|full|signed-out|normal  CLS 0.2078  ceiling 0.01  top: section.mx-auto.max-w-\[1100px\].px-6 > div.mb-3 > nav.flex.flex-wrap.items-center > span.flex.items-center.gap-1\.5 dy 0
+  FAIL  /codex/buff/pawn_push|1280x800|dark|full|signed-out|normal  CLS 0.2578  ceiling 0.01  top: main.min-h-screen.pb-20 > section.mx-auto.max-w-\[1100px\].px-6 > div.mt-9.space-y-4 > details.plate dy 87
+  FAIL  /achievements|390x844|dark|full|signed-out|normal  CLS 0.0989  ceiling 0.01  top: main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9 dy 137
+  FAIL  /achievements|1280x800|dark|full|signed-out|normal  CLS 0.038  ceiling 0.01  top: main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9 dy 88
+  ERROR /guide|390x844|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide
+  ERROR /guide|1280x800|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide
+  ERROR /guide/how-to-play|390x844|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/how-to-play
+  ERROR /guide/how-to-play|1280x800|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/how-to-play
+  ERROR /guide/glossary|390x844|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/glossary
+  ERROR /guide/glossary|1280x800|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/glossary
+  ERROR /tutorial|390x844|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial
+  ERROR /tutorial|1280x800|dark|full|signed-out|normal: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial
+  ERROR /analysis|1280x800|dark|full|signed-out|normal: page.evaluate: Execution context was destroyed, most likely because of a navigation

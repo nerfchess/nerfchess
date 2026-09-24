@@ -137,3 +137,32 @@ export function releaseExpiredPause(match: PausableMatch, now: number): boolean 
   match.runningSince = now;
   return true;
 }
+
+/**
+ * A house bot's move hands the turn to a human seat that is away (REQUEST R4 in
+ * docs/polish-pass/slices/HB.md). The bot no longer waits for the absent human
+ * (holding it used to leave its own clock running until it flagged, handing the
+ * absent player a time win); instead the turn arrives with the same bounded
+ * pause a detach on that seat's own turn opens, from the moment it arrives.
+ *
+ * The caller has just banked the clocks, so nothing is lost by stopping the
+ * running clock here. Returns true when a pause opened (the caller arms the
+ * alarm for `pauseUntil`). No pause when the seat is present, is a bot, already
+ * has a pause, or has spent its budget: then the clock simply runs.
+ */
+export function openHandoverPause(
+  match: PausableMatch,
+  seat: Color,
+  now: number,
+  seatConnected: boolean,
+): boolean {
+  if (!match.startedAt || match.result || match.runningSince === null) return false;
+  if (match.bots?.[seat] || match.disconnectedAt[seat] == null || seatConnected) return false;
+  if (match.pauseUntil != null) return false;
+  const grant = pauseGrantMs(match, seat);
+  if (grant <= 0) return false;
+  match.runningSince = null;
+  match.pauseUntil = now + grant;
+  match.pausedSince = now;
+  return true;
+}

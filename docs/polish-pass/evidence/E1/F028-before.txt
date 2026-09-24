@@ -1,0 +1,8 @@
+/codex/hex/heavy_boots 200 h1=[]
+/codex/hex/toll_gate 200 h1=[]
+/codex/boon/extra_glance 200 h1=[]
+/codex/boon/pawn_shield 200 h1=[]
+/codex/buff/pawn_push 200 h1=[Pawn Push]
+/codex/nerf/lucky 200 h1=[Lucky]
+/codex/buff/bn4_gum_drop 200 h1=[Gum Drop]
+/codex/hex/not_a_card 200 h1=[]

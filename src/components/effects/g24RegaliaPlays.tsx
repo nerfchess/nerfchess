@@ -16,6 +16,11 @@
 // hinge, a crown put away in a hatbox, a chain of office clipped to a tower,
 // a sceptre grounded once on stone, a paste tiara off a props table.
 //
+// PER-CARD RULE SCENES (slice TC-g). Crown of the Undying, Coup d'Etat, Grim
+// Procession and Promotion Charter lead with a scene of their own rule on the real board (see
+// that section near the end); their regalia objects survive only as the small
+// target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g24RegaliaPlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx, only the SigPlugin/SigRole TYPES from sigPlugins.tsx.
@@ -269,20 +274,12 @@ const IMP: Record<string, ImpCue> = {
   bn4_crown_of_masks: { at: 1080, x: 50, y: 48, rgb: "207 107 184", laser: true, glyph: 0, boom: true },
   // Crown of Lead: THE LEAD WEIGHT - no beam, just mass: the crown lands and the floor complains twice
   hx4_crown_of_lead: { at: 1000, x: 50, y: 50, rgb: "154 162 172", glyph: 0, boom: true, size: 8.4 },
-  // Crown of the Undying: THE CROWN THAT WILL NOT DIE - struck apart under the column and still ringing
-  ov_crown_of_the_undying: { at: 1060, x: 50, y: 47, rgb: "224 89 106", laser: true, glyph: 0, boom: true },
   // Crown Commission: THE COMMISSION STAMP - the order lands as a red column with a double seal
   bn4_crown_commission: { at: 980, x: 51, y: 49, rgb: "212 85 60", laser: true, boom: true },
-  // Promotion Charter: THE SEAL STAMPED - the scepter of office is driven in and the old office splits
-  bn4_promotion_charter: { at: 960, x: 49, y: 48, rgb: "111 159 216", laser: true, glyph: 1 },
   // Crown Malaise: THE SICK CROWN SAGS - it falls apart under its own weight, twice over
   hx4_crown_malaise: { at: 940, x: 50, y: 49, rgb: "168 192 122", glyph: 0, boom: true },
-  // Grim Procession: THE SCEPTER GROUNDED - the procession halts and grounds the staff, hard
-  hx4_grim_procession: { at: 1000, x: 48, y: 52, rgb: "143 127 192", glyph: 1, boom: true },
   // Royal Quarantine: THE CORDON DROPPED - the quarantine bar beams down around the throne
   hx4_royal_quarantine: { at: 960, x: 52, y: 50, rgb: "224 138 60", laser: true, boom: true },
-  // Coup d'Etat: THE CROWN STRUCK OFF - lasered off the brow and split on the flags
-  ov_coup_detat: { at: 1000, x: 50, y: 49, rgb: "180 140 224", laser: true, glyph: 0, boom: true },
   // Promotion Jubilee: THE OLD CROWN RETIRED - it is dropped, breaks, and the crowd stamps
   ov_promotion_jubilee: { at: 940, x: 51, y: 47, rgb: "232 160 138", glyph: 0, boom: true },
   // Puppet Coronation: THE STRINGS PULLED TAUT - the puppet is slammed onto the far throne
@@ -511,7 +508,6 @@ function CrownOfLeadScene({ role, delayMs }: SceneProps) {
    the boards beside the king; the shock throws everything standing next to
    him off its feet, and the crown on the pommel keeps burning. Palette:
    #e0596a / #fff2d8 / #2a0f16. */
-const CU_SPOKES = [30, 110, 200, 290];
 
 function CrownOfTheUndyingScene({ role, delayMs }: SceneProps) {
   const sword = (
@@ -541,33 +537,7 @@ function CrownOfTheUndyingScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.ov_crown_of_the_undying}
-      d={delayMs}
-      frame={
-        <>
-          <Wash tone="rgba(224,89,106,0.3)" />
-          <Rim tone="rgba(255,242,216,0.32)" />
-        </>
-      }
-    >
-      <L c="g24-shaft" l={45.5} t={18} w={9} h={38} d={60} st={{ background: "linear-gradient(180deg, rgba(255,242,216,0.66), transparent)", transformOrigin: "50% 0%" }} />
-      <V c="g24-cu-turn" l={45} t={30} w={10} h={26} d={160} st={{ transformOrigin: "50% 46%" }}>{sword}</V>
-      <L c="g24-cu-shock" l={38} t={45} w={24} h={16} d={520} st={{ borderRadius: "50%", border: "2px solid #e0596a" }} />
-      {CU_SPOKES.map((a, i) => (
-        <P key={a} l={38} t={38} w={24} h={24} rot={`${a}deg`}>
-          <V c="g24-cu-sweep" w={100} h={100} d={560 + i * 70}><path d={PAWN} fill="#e0596a" opacity="0.9" /></V>
-        </P>
-      ))}
-      <V c="g24-cu-flame" l={46.5} t={28} w={7} h={7} d={640}>
-        <path d={CORONET} fill="#fff2d8" stroke="#2a0f16" strokeWidth="1.1" {...SJ} />
-      </V>
-      <L c="g24-leanshadow" l={42} t={56} w={18} h={3} d={700} st={{ borderRadius: "999px", background: "rgba(42,15,22,0.66)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g24-sift" l={44 + i * 6} t={50} w={1.5} h={1.5} d={780 + i * 90} st={{ borderRadius: "50%", background: "#fff2d8" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 5. Crown Commission (t7) — THE GREAT SEAL MATRIX -----------------------
@@ -656,22 +626,7 @@ function PromotionCharterScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.bn4_promotion_charter} d={delayMs} frame={<Wash tone="rgba(111,159,216,0.28)" />}>
-      <L c="g24-shaft" l={46} t={22} w={8} h={30} d={60} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.6), transparent)", transformOrigin: "50% 0%" }} />
-      <L c="g24-pc-unroll" l={36} t={42} w={28} h={12} d={160} st={{ background: "linear-gradient(180deg, #fff4d6, rgba(111,159,216,0.55))", transformOrigin: "0% 50%" }} />
-      <L c="g24-pc-lines" l={38} t={45} w={24} h={6} d={380} st={{ background: "repeating-linear-gradient(180deg, rgba(20,32,58,0.7) 0 1px, transparent 1px 3px)" }} />
-      <V c="g24-pc-quill" l={44} t={33} w={12} h={14} d={520}>{quill}</V>
-      <V c="g24-pc-pendant" l={57} t={50} w={7} h={10} d={680} st={{ transformOrigin: "50% 0%" }}>
-        <circle cx="12" cy="16" r="6.4" fill="#6f9fd8" stroke="#14203a" strokeWidth="1.2" />
-        <path d="M12 2v8" stroke="#fff4d6" strokeWidth="1.4" {...SJ} />
-      </V>
-      <L c="g24-leanshadow" l={40} t={56} w={22} h={3} d={740} st={{ borderRadius: "999px", background: "rgba(20,32,58,0.6)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g24-pc-ink" l={45 + i * 5} t={48} w={1.4} h={1.4} d={700 + i * 90} st={{ borderRadius: "50%", background: "#14203a" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 7. Crown Malaise (t7) — THE CLOTH OF ESTATE LOWERED --------------------
@@ -733,8 +688,6 @@ function CrownMalaiseScene({ role, delayMs }: SceneProps) {
    A passing bell, then the bier slides through carrying the crown on its
    velvet cushion, and the hooded ranks close in on it from every side rather
    than let it out of reach. Palette: #8f7fc0 / #fff2d8 / #1b1630. */
-const GP_MOURNERS = [20, 105, 195, 285];
-
 function GrimProcessionScene({ role, delayMs }: SceneProps) {
   const cushion = (
     <g {...SJ}>
@@ -762,33 +715,7 @@ function GrimProcessionScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.hx4_grim_procession}
-      d={delayMs}
-      frame={
-        <>
-          <L c="g24-veil" st={{ background: "rgba(10,8,20,0.44)" }} />
-          <Wash tone="rgba(143,127,192,0.28)" d={120} />
-        </>
-      }
-    >
-      <L c="g24-gp-toll" l={36} t={36} w={28} h={28} d={80} st={{ borderRadius: "50%", border: "2px solid #8f7fc0" }} />
-      <V c="g24-gp-bier" l={40} t={46} w={20} h={10} d={200}>{cushion}</V>
-      <V c="g24-gp-cushion" l={45} t={39} w={10} h={9} d={360}>
-        <path d={CORONET} fill="#fff2d8" stroke="#1b1630" strokeWidth="1.2" {...SJ} />
-        <path d={CORONET_BAND} fill="#8f7fc0" />
-      </V>
-      {GP_MOURNERS.map((a, i) => (
-        <P key={a} l={35} t={35} w={30} h={30} rot={`${a}deg`}>
-          <V c="g24-gp-mourn" w={100} h={100} d={480 + i * 80}><path d={HOOD} fill="#1b1630" stroke="#8f7fc0" strokeWidth="1.1" {...SJ} /></V>
-        </P>
-      ))}
-      <L c="g24-leanshadow" l={41} t={56} w={20} h={3} d={680} st={{ borderRadius: "999px", background: "rgba(27,22,48,0.68)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g24-sift" l={44 + i * 5} t={50} w={1.4} h={1.4} d={740 + i * 90} st={{ borderRadius: "50%", background: "#fff2d8" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 9. Royal Quarantine (t7) — STANCHIONS AND THE CORD ---------------------
@@ -874,28 +801,7 @@ function CoupDetatScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.ov_coup_detat}
-      d={delayMs}
-      frame={
-        <>
-          <Wash tone="rgba(180,140,224,0.3)" />
-          <Rim tone="rgba(255,244,214,0.3)" />
-        </>
-      }
-    >
-      <L c="g24-shaft" l={46} t={22} w={8} h={32} d={60} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.62), transparent)", transformOrigin: "50% 0%" }} />
-      <V c="g24-cd-give" l={38} t={44} w={9} h={12} d={180}><path d={CD_PALM} fill="#221338" stroke="#b48ce0" strokeWidth="1.2" {...SJ} /></V>
-      <V c="g24-cd-orb" l={43} t={36} w={9} h={11} d={340}>{orb}</V>
-      <V c="g24-borne" l={52} t={44} w={9} h={12} d={420} st={{ transform: "scaleX(-1)" }}><path d={CD_PALM} fill="#221338" stroke="#fff4d6" strokeWidth="1.2" {...SJ} /></V>
-      <L c="g24-cd-settle" l={52} t={40} w={9} h={9} d={620} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.85), transparent 68%)" }} />
-      <V c="g24-cd-sceptre" l={49} t={33} w={5} h={16} d={720}>
-        <path d="M12 22V8" stroke="#b48ce0" strokeWidth="2.2" {...SJ} />
-        <path d="M12 1.8l3.2 3.6L12 9 8.8 5.4z" fill="#fff4d6" stroke="#221338" strokeWidth="1" {...SJ} />
-      </V>
-      <L c="g24-glint" l={54} t={38} w={2.4} h={2.4} d={780} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 11. Promotion Jubilee (t7) — THREE LESSER CORONETS ---------------------
@@ -1405,6 +1311,300 @@ function OffBroadwayQueenScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The live tier 7 cards below no longer
+   lead with a regalia object and the shared impact column: each lead plays
+   its own rule on the real board (the pieces, squares and turn counts it
+   touches). The old art survives only as the small target and entrance
+   cuts. Positions are board percentages from the caster's side: rank 0 is
+   the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g24-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g24-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g24-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g24-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- ov_coup_detat -------------------------------------------------------------
+   "The queen takes the throne: she cannot be captured for your opponent's next
+   6 turns, and for 6 of your turns your king moves like a queen." A throne
+   rises behind the caster's queen and the crown leaves the king's head for
+   hers; a capture is loosed down her file and breaks on a ward in front of
+   her; then the king's queen-lines are ruled out along the ranks, files and
+   diagonals, and six turns are ticked. */
+const C_CD = { core: "#b48ce0", glow: "#fff4d6", deep: "#221338" };
+
+function CoupDetatRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <CoupDetatScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CD;
+  const d = delayMs;
+  const crownFrom = `calc(var(--fx-side, 1) * ${fileIn(7)}%)`;
+  return (
+    <Brd>
+      <Tint x={QUEEN_X} y={rk(0)} color="rgba(180,140,224,0.5)" delayMs={d} gd="2.2s" />
+      <Tint x={KING_X} y={rk(0)} color="rgba(255,244,214,0.34)" delayMs={d + 40} gd="2.2s" />
+      <Q x={QUEEN_X} y={rk(1)} w={12} h={13} cls="g24-r-stamp" delayMs={d} v={{ "--gd": "2.1s" }}>
+        <svg viewBox="0 0 20 24" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 22V6q0-4 4-4h6q4 0 4 4v16M3 13h14" fill="none" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+          <path d="M3 22V6q0-4 4-4h6q4 0 4 4v16M3 13h14" fill="none" stroke={c.core} strokeWidth="1.8" {...SJ} />
+          <path d="M6 5.2l4-2.2 4 2.2" fill="none" stroke={c.glow} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={QUEEN_X} y={rk(0)} w={12} h={12} cls="g24-r-up" delayMs={d + 80} v={{ "--gd": "2s" }}>
+        <Man kind="q" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Q x={KING_X} y={rk(0)} w={12} h={12} cls="g24-r-in" delayMs={d + 40} v={{ "--gd": "2.1s", "--s0": "1" }}>
+        <Man kind="k" fill={c.core} stroke={c.deep} />
+      </Q>
+      <Q x={QUEEN_X} y={rk(0.55)} w={7} h={5} cls="g24-r-go" delayMs={d + 220} v={{ "--gd": "1.8s", "--tx0": crownFrom, "--ty0": "0%", "--tx1": "0%", "--ty1": "0%" }}>
+        <svg viewBox="0 0 24 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 14L1 3l6 5 5-7 5 7 6-5-1 11z" fill={c.glow} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={QUEEN_X} y={rk(3.2)} w={2} h={30} cls="g24-r-shout" delayMs={d + 560} v={{ "--gd": "0.7s" }} style={{ background: `linear-gradient(180deg, transparent, ${c.glow})` }} />
+      <Q x={QUEEN_X} y={rk(1.75)} w={11} h={6} cls="g24-r-stamp" delayMs={d + 860} v={{ "--gd": "1.2s" }}>
+        <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 11q10-10 20 0" fill="none" stroke={c.glow} strokeWidth="2.4" {...SJ} />
+          <path d="M8 6l-3-4M16 6l3-4" stroke={c.core} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      {["0deg", "180deg", "calc(var(--fx-side, 1) * -90deg)", "calc(var(--fx-side, 1) * -45deg)", "calc(var(--fx-side, 1) * -135deg)"].map((a, i) => (
+        <Ray key={a} x={KING_X} y={rk(0)} len={i < 2 ? 36 : 40} angle={a} color={c.glow} delayMs={d + 1080 + i * 60} />
+      ))}
+      <Q x={KING_X} y={rk(0)} w={12} h={12} cls="g24-r-up" delayMs={d + 1040} v={{ "--gd": "1.2s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.core} />
+      </Q>
+      <Pips n={6} r={1.55} x0={30} x1={70} color={c.glow} delayMs={d + 1260} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_grim_procession -------------------------------------------------------
+   "For your opponent's next 3 turns, no piece of theirs may end a move farther
+   from their own king than it started. The army huddles toward the crown.
+   Their king walks free." Their king stands on his back rank; three of his
+   men shuffle one step in toward him; a bishop that tries to walk away toward
+   the caster is barred where it would land and shuffles in instead; three
+   turns are ticked beside the king, and the king alone steps out. */
+const C_GP = { core: "#8f7fc0", glow: "#fff2d8", deep: "#1b1630" };
+
+function GrimProcessionRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GrimProcessionScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GP;
+  const d = delayMs;
+  const sq = fileIn(11);
+  const huddle: Array<{ k: keyof typeof MEN; c: number; r: number; dx: number; dr: number }> = [
+    { k: "n", c: 2, r: 5, dx: -1, dr: -1 },
+    { k: "r", c: 6, r: 5, dx: 1, dr: -1 },
+    { k: "p", c: 3, r: 5, dx: 0, dr: -1 },
+  ];
+  return (
+    <Brd>
+      <Tint x={KING_X} y={rk(7)} color="rgba(143,127,192,0.55)" delayMs={d} gd="2.3s" />
+      {huddle.map((m, i) => (
+        <Tint key={m.k} x={cl(m.c)} y={rk(m.r)} color="rgba(143,127,192,0.4)" delayMs={d + 160 + i * 110} gd="1.9s" />
+      ))}
+      <Tint x={cl(5)} y={rk(2)} color="rgba(27,22,48,0.5)" delayMs={d + 700} gd="1.2s" />
+      <Q x={KING_X} y={rk(7)} w={11} h={11} cls="g24-r-in" delayMs={d} v={{ "--gd": "1.5s", "--s0": "1" }}>
+        <Man kind="k" fill={c.deep} stroke={c.glow} />
+      </Q>
+      {huddle.map((m, i) => (
+        <Q key={m.k} x={cl(m.c)} y={rk(m.r)} w={11} h={11} cls="g24-r-go" delayMs={d + 160 + i * 110} v={{ "--gd": "1.7s", "--tx0": `${m.dx * sq}%`, "--ty0": `calc(var(--fx-side, 1) * ${-m.dr * sq}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.core} stroke={c.glow} />
+        </Q>
+      ))}
+      <Q x={cl(5)} y={rk(4)} w={11} h={11} cls="g24-r-in" delayMs={d + 260} v={{ "--gd": "0.85s", "--s0": "1" }}>
+        <Man kind="b" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Q x={cl(5)} y={rk(3.05)} w={1.6} h={20} cls="g24-r-grow" delayMs={d + 520} v={{ "--gd": "0.9s" }} style={{ background: `repeating-linear-gradient(180deg, ${c.glow} 0 5px, transparent 5px 9px)`, transformOrigin: "50% calc(50% - var(--fx-side, 1) * 50%)" }} />
+      <Q x={cl(5)} y={rk(2)} w={10} h={10} cls="g24-r-stamp" delayMs={d + 760} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="2.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={cl(5)} y={rk(5)} w={11} h={11} cls="g24-r-go" delayMs={d + 1000} v={{ "--gd": "1.2s", "--tx0": "0%", "--ty0": `calc(var(--fx-side, 1) * ${sq}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="b" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Pips n={3} r={4.5} x0={44} x1={56} color={c.glow} delayMs={d + 900} gd="1.3s" />
+      <Q x={KING_X} y={rk(7)} w={11} h={11} cls="g24-r-go" delayMs={d + 1200} v={{ "--gd": "1.2s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-sq}%)`, "--ty1": `calc(var(--fx-side, 1) * ${sq}%)` }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_promotion_charter -----------------------------------------------------
+   "For your opponent's next 4 turns, any pawn move of yours that reaches your
+   opponent's second rank may promote to a queen on the spot, one rank early.
+   The charter ends early the moment one such move captures." The charter is
+   sealed at the caster's edge; the usual promotion rank (their back rank)
+   dims and the rank one short of it lights up instead; a pawn steps onto
+   that rank on the a-file (clear of the card's caption) and is crowned there;
+   four turns are ticked. */
+const C_PC = { core: "#6f9fd8", glow: "#fff4d6", deep: "#14203a" };
+
+function PromotionCharterRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <PromotionCharterScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PC;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(0.9)} w={22} h={7} cls="g24-r-draw" delayMs={d} v={{ "--gd": "1.8s" }} style={{ background: `linear-gradient(180deg, ${c.glow}, ${c.core})`, borderRadius: "1px" }} />
+      <Q x="61%" y={rk(0.9)} w={5} h={5} cls="g24-r-stamp" delayMs={d + 260} v={{ "--gd": "1.5s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true"><circle cx="10" cy="10" r="8" fill={c.core} stroke={c.deep} strokeWidth="1.6" /><path d="M6 12l4-5 4 5" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} /></svg>
+      </Q>
+      <Tint x="50%" y={rk(7)} w={100} color="rgba(20,32,58,0.5)" delayMs={d + 300} gd="1.9s" cls="g24-r-dim" />
+      <Tint x="50%" y={rk(6)} w={100} color="rgba(111,159,216,0.5)" delayMs={d + 480} gd="1.8s" />
+      <Q x={cl(0)} y={rk(6)} w={11} h={11} cls="g24-r-go" delayMs={d + 620} v={{ "--gd": "0.8s", "--tx0": "0%", "--ty0": `calc(var(--fx-side, 1) * ${fileIn(11)}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="p" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Q x={cl(0)} y={rk(6)} w={12} h={12} cls="g24-r-up" delayMs={d + 1080} v={{ "--gd": "1.3s" }}>
+        <Man kind="q" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Q x={cl(0)} y={rk(6.55)} w={7} h={4} cls="g24-r-toll" delayMs={d + 1120} v={{ "--gd": "0.8s" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true"><path d="M4 10l2-6M12 9V2M20 10l-2-6" stroke={c.glow} strokeWidth="1.6" {...SJ} /></svg>
+      </Q>
+      <Pips n={4} r={1.55} x0={43} x1={57} color={c.core} delayMs={d + 1200} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- ov_crown_of_the_undying ---------------------------------------------------
+   "Once, the moment an enemy move leaves your king under attack, the crown
+   answers: every enemy piece standing beside your king is destroyed. Enemy
+   kings survive it." Enemy men crowd the squares round the caster's king and
+   a rook's check runs down the file at him; the ring of squares beside him
+   lights, the sword of state is driven in point-down at his side, and every
+   enemy man in the ring is thrown off its square and gone; one pip (it
+   answers once). */
+const C_CU = { core: "#e0596a", glow: "#fff2d8", deep: "#2a0f16" };
+
+function CrownOfTheUndyingRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <CrownOfTheUndyingScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CU;
+  const d = delayMs;
+  const f = fileIn(11);
+  const ring: Array<{ k: keyof typeof MEN; dx: number; dr: number }> = [
+    { k: "n", dx: -1, dr: 1 },
+    { k: "p", dx: 0, dr: 1 },
+    { k: "b", dx: 1, dr: 1 },
+    { k: "q", dx: 1, dr: 0 },
+  ];
+  const at = (dx: number): string => `calc(${KING_X} + var(--fx-side, 1) * ${dx * 12.5}%)`;
+  return (
+    <Brd>
+      <Tint x={KING_X} y={rk(0.5)} w={37.5} h={25} color="rgba(224,89,106,0.3)" delayMs={d + 620} gd="1.5s" />
+      <Q x={KING_X} y={rk(0)} w={12} h={12} cls="g24-r-in" delayMs={d} v={{ "--gd": "2.2s", "--s0": "1" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      {ring.map((m, i) => (
+        <Q key={m.k} x={at(m.dx)} y={rk(m.dr)} w={11} h={11} cls="g24-r-in" delayMs={d + 60 + i * 60} v={{ "--gd": "0.95s", "--s0": "1" }}>
+          <Man kind={m.k} fill={c.deep} stroke={c.core} />
+        </Q>
+      ))}
+      <Q x={KING_X} y={rk(3.4)} w={2} h={36} cls="g24-r-shout" delayMs={d + 300} v={{ "--gd": "0.6s" }} style={{ background: `linear-gradient(180deg, transparent, ${c.core})` }} />
+      <Q x={`calc(${KING_X} - var(--fx-side, 1) * 6.25%)`} y={rk(0.35)} w={6} h={20} cls="g24-r-stamp" delayMs={d + 640} v={{ "--gd": "1.5s" }}>
+        <svg viewBox="0 0 10 34" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 33l-2-5V11h4v17z" fill={c.glow} stroke={c.deep} strokeWidth="1" {...SJ} />
+          <path d="M0.8 11h8.4" stroke={c.core} strokeWidth="2.2" {...SJ} />
+          <path d="M5 11V4" stroke={c.deep} strokeWidth="2" {...SJ} />
+          <path d="M2.4 3.4L3.4 1l1.6 1.6L6.6 1l1 2.4z" fill={c.core} stroke={c.deep} strokeWidth="0.6" {...SJ} />
+        </svg>
+      </Q>
+      {ring.map((m, i) => (
+        <Q key={m.k} x={at(m.dx)} y={rk(m.dr)} w={11} h={11} cls="g24-r-part" delayMs={d + 760 + i * 40} v={{ "--gd": "0.8s", "--tx1": `calc(var(--fx-side, 1) * ${m.dx * f}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-(m.dr + 0.6) * f}%)`, "--r1": `${m.dx * 60 + 20}deg` }}>
+          <Man kind={m.k} fill={c.deep} stroke={c.core} />
+        </Q>
+      ))}
+      <Q x={KING_X} y={rk(0)} w={12} h={12} cls="g24-r-up" delayMs={d + 900} v={{ "--gd": "1.2s" }}>
+        <Man kind="k" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Pips n={1} r={2.2} x0={50} x1={50} color={c.glow} delayMs={d + 1150} gd="1s" />
+    </Brd>
+  );
+}
+
+/* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these plays leave
    their persistent state to the card's own zone overlay, so the scene is the
@@ -1420,13 +1620,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_ascension_small: S(AscensionSmallScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "coronation", anchor: "cast" }),
   bn4_crown_of_masks: S(CrownOfMasksScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "crownrain", anchor: "board" }),
   hx4_crown_of_lead: S(CrownOfLeadScene, { ordering: "radial", staggerMs: 60, victims: ["k"], hasLead: true, sound: "colossus", anchor: "board" }),
-  ov_crown_of_the_undying: S(CrownOfTheUndyingScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
+  ov_crown_of_the_undying: S(CrownOfTheUndyingRule, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   bn4_crown_commission: S(CrownCommissionScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
-  bn4_promotion_charter: S(PromotionCharterScene, { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast" }),
+  bn4_promotion_charter: S(PromotionCharterRule, { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast" }),
   hx4_crown_malaise: S(CrownMalaiseScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "cathedral", anchor: "board" }),
-  hx4_grim_procession: S(GrimProcessionScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
+  hx4_grim_procession: S(GrimProcessionRule, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   hx4_royal_quarantine: S(RoyalQuarantineScene, { ordering: "octagon", staggerMs: 60, victims: ["k"], hasLead: true, sound: "wall", anchor: "board" }),
-  ov_coup_detat: S(CoupDetatScene, { ordering: "radial", staggerMs: 0, victims: ["k", "q"], hasLead: true, sound: "coronation", anchor: "cast" }),
+  ov_coup_detat: S(CoupDetatRule, { ordering: "radial", staggerMs: 0, victims: ["k", "q"], hasLead: true, sound: "coronation", anchor: "cast" }),
   ov_promotion_jubilee: S(PromotionJubileeScene, { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board" }),
   ov_puppet_coronation: S(PuppetCoronationScene, { ordering: "line", staggerMs: 60, victims: ["q"], hasLead: true, sound: "coronation", anchor: "aim" }),
   bn4_crowned_strider: S(CrownedStriderScene, { ordering: "line", staggerMs: 70, victims: ["k"], hasLead: true, sound: "colossus", anchor: "aim" }),

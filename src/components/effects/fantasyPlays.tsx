@@ -42,6 +42,10 @@
 //   AscendScene        : metamorphosis, dragon_form, apotheosis, god_king,
 //                        celestial_ascension
 //
+// MYTHIC LADDER (src/engine/buffs/fantasy/mythic.ts, the 24 live fm_* cards):
+//   one scene per card that draws its own rule (F223); see the section
+//   "Mythic ladder, per-card scenes" below.
+//
 // STAGING (docs/animation-design-brief.md section 0): every card declares an
 // anchor inside the set scripts/lib/anchor-rule.ts derives for it (the values
 // below are carried over from the cards' previous core SIGNATURES entries,
@@ -1110,275 +1114,1179 @@ function AscendScene({ palette, glyph, variant, delayMs }: SceneProps) {
    ========================================================================== */
 
 
-/* =============================================================================
-   Mythic ladder scenes (src/engine/buffs/fantasy/mythic.ts): three templates,
-   one per card kind, each bent by a per-card variant.
-   ========================================================================== */
-
-/* --- Runeforge: a power is hammered onto your own army --------------------- */
+/* Spark and petal rows shared by the mythic scenes below. */
 const FORGE_SPARKS = [
   { l: 46, t: 38, dx: "-120%", dy: "-160%", d: 0 },
   { l: 52, t: 40, dx: "140%", dy: "-120%", d: 60 },
   { l: 49, t: 36, dx: "20%", dy: "-200%", d: 120 },
   { l: 55, t: 44, dx: "180%", dy: "-40%", d: 180 },
 ];
-function RuneforgeScene({ palette, glyph, variant, delayMs }: SceneProps) {
-  const [core, glow, deep] = palette;
-  return (
-    <Stage quakeMs={delayMs + 980}>
-      <Wash color={tint(deep, 0.24)} delayMs={delayMs} />
-      <Rake tone={tint(core, 0.4)} delayMs={delayMs + 40} />
-      {/* the anvil ring heats up under the work */}
-      <span
-        className="ftp-anvilring absolute block rounded-full"
-        style={{ left: "33%", top: "50%", width: "34%", height: "14%", border: `2px solid ${tint(core, 0.85)}`, boxShadow: `inset 0 0 0 1px ${tint(glow, 0.35)}`, ...d(delayMs + 120) }}
-      />
-      {/* three hammer blows: the rune jumps on each strike */}
-      <span className="ftp-hammer absolute block" style={{ left: "40%", top: "28%", width: "20%", height: "24%", ...d(delayMs + 380) }}>
-        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">{glyph}</svg>
-      </span>
-      {[0, 300, 600].map((t, i) => (
-        <Flash key={i} color={tint(glow, 0.7)} delayMs={delayMs + 440 + t} />
-      ))}
-      {FORGE_SPARKS.map((v, i) => (
-        <span
-          key={i}
-          className="ftp-spark absolute block rounded-full"
-          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.4%", height: "2.4%", background: tint(glow, 0.95), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 460 + v.d) } as CSSProperties}
-        />
-      ))}
-      {variant === "storm" && (
-        <span
-          className="ftp-bolt absolute block"
-          style={{ left: "48%", top: "6%", width: "4%", height: "40%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.6)}, transparent)`, ...d(delayMs + 700) }}
-        />
-      )}
-      {variant === "eclipse" && (
-        <span
-          className="ftp-eclipse absolute block rounded-full"
-          style={{ left: "38%", top: "22%", width: "24%", height: "24%", background: deep, boxShadow: `0 0 0 3px ${tint(glow, 0.9)}, 0 0 28px 6px ${tint(core, 0.55)}`, ...d(delayMs + 760) }}
-        />
-      )}
-      {variant === "phoenix" && (
-        <span
-          className="ftp-wisp absolute block rounded-full"
-          style={{ left: "47%", top: "44%", width: "6%", height: "16%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.7)}, transparent)`, ...d(delayMs + 820) }}
-        />
-      )}
-      {variant === "moss" && (
-        <span
-          className="ftp-dome absolute block rounded-full"
-          style={{ left: "30%", top: "30%", width: "40%", height: "40%", border: `2px solid ${tint(glow, 0.7)}`, background: `radial-gradient(closest-side, ${tint(core, 0.18)}, transparent)`, ...d(delayMs + 760) }}
-        />
-      )}
-      {variant === "moon" && (
-        <span
-          className="ftp-halo absolute block rounded-full"
-          style={{ left: "58%", top: "14%", width: "14%", height: "14%", background: `radial-gradient(circle at 40% 40%, ${glow}, ${tint(core, 0.6)})`, boxShadow: `0 0 16px 4px ${tint(glow, 0.4)}`, ...d(delayMs + 700) }}
-        />
-      )}
-      {variant === "scale" &&
-        [0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="ftp-relic absolute block"
-            style={{ left: `${40 + i * 7}%`, top: `${58 - (i % 2) * 4}%`, width: "6%", height: "8%", background: `linear-gradient(180deg, ${tint(glow, 0.9)}, ${tint(core, 0.6)})`, borderRadius: "0 0 50% 50%", ...d(delayMs + 720 + i * 90) }}
-          />
-        ))}
-      {variant === "blood" &&
-        [0, 1].map((i) => (
-          <span
-            key={i}
-            className="ftp-drip absolute block"
-            style={{ left: `${45 + i * 8}%`, top: "50%", width: "2.2%", height: "9%", borderRadius: "999px", background: `linear-gradient(180deg, ${tint(core, 0.95)}, ${tint(glow, 0.6)}, transparent)`, ...d(delayMs + 780 + i * 140) }}
-          />
-        ))}
-      {variant === "sun" && (
-        <span
-          className="ftp-ray absolute block"
-          style={{ left: "20%", top: "20%", width: "60%", height: "40%", background: `conic-gradient(from 200deg at 50% 100%, transparent 0 38%, ${tint(glow, 0.35)} 42%, transparent 46%, ${tint(glow, 0.3)} 52%, transparent 56%, ${tint(glow, 0.35)} 60%, transparent 64%)`, ...d(delayMs + 800) }}
-        />
-      )}
-      <Ring color={tint(core, 0.85)} delayMs={delayMs + 1000} />
-      <Motes color={tint(glow, 0.8)} delayMs={delayMs + 1200} />
-      <Drift tone={core} delayMs={delayMs + 1550} />
-    </Stage>
-  );
-}
-
-/* --- Hexweave: threads draw in from the corners and knot on the victim ------ */
-const WEAVE_THREADS = [
-  { l: 6, t: 8, ang: 38 },
-  { l: 94, t: 8, ang: 142 },
-  { l: 6, t: 92, ang: -38 },
-  { l: 94, t: 92, ang: -142 },
-];
-function HexweaveScene({ palette, glyph, variant, delayMs }: SceneProps) {
-  const [core, glow, deep] = palette;
-  return (
-    <Stage>
-      <Wash color={tint(deep, 0.3)} delayMs={delayMs} />
-      {/* the omen: the ground darkens toward the victim before a thread moves */}
-      <Rake tone={tint(core, 0.4)} delayMs={delayMs + 40} />
-      {WEAVE_THREADS.map((v, i) => (
-        <span
-          key={i}
-          className="ftp-thread absolute block"
-          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "48%", height: "1.2%", background: `linear-gradient(90deg, transparent, ${tint(core, 0.9)} 30%, ${tint(glow, 0.95)})`, transformOrigin: "0 50%", "--ang": `${v.ang}deg`, ...d(delayMs + 120 + i * 90) } as CSSProperties}
-        />
-      ))}
-      {/* the knot pulls tight around the glyph */}
-      <span className="ftp-knot absolute block" style={{ left: "41%", top: "37%", width: "18%", height: "22%", ...d(delayMs + 640) }}>
-        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">{glyph}</svg>
-      </span>
-      <span
-        className="ftp-chain absolute block"
-        style={{ left: "31%", top: "47%", width: "38%", height: "2.6%", background: `repeating-linear-gradient(90deg, ${tint(core, 0.95)} 0 9%, transparent 9% 15%)`, borderRadius: "999px", ...d(delayMs + 760) }}
-      />
-      <Flash color={tint(glow, 0.75)} delayMs={delayMs + 820} />
-      {variant === "frost" &&
-        [0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="ftp-shard absolute block"
-            style={{ left: `${44 + i * 5}%`, top: `${40 + (i % 2) * 8}%`, width: "2.4%", height: "9%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.5)})`, ...d(delayMs + 900 + i * 70) }}
-          />
-        ))}
-      {variant === "moat" && (
-        <span
-          className="ftp-ripple absolute block rounded-full"
-          style={{ left: "28%", top: "44%", width: "44%", height: "18%", border: `2px solid ${tint(glow, 0.8)}`, ...d(delayMs + 900) }}
-        />
-      )}
-      {variant === "gaze" && (
-        <span className="ftp-eye absolute block" style={{ left: "43%", top: "24%", width: "14%", height: "9%", ...d(delayMs + 880) }}>
-          <svg viewBox="0 0 14 9" className="block h-full w-full" aria-hidden="true">
-            <path d="M0.8 4.5 Q7 -1 13.2 4.5 Q7 10 0.8 4.5 Z" fill={tint(deep, 0.9)} stroke={glow} strokeWidth="0.6" />
-            <circle cx="7" cy="4.5" r="2" fill={core} />
-          </svg>
-        </span>
-      )}
-      {variant === "stone" && (
-        <span
-          className="ftp-stonedust absolute block rounded-full"
-          style={{ left: "40%", top: "52%", width: "20%", height: "7%", background: `radial-gradient(closest-side, ${tint(core, 0.6)}, transparent)`, ...d(delayMs + 960) }}
-        />
-      )}
-      {variant === "burr" &&
-        [0, 1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className="ftp-spark absolute block rounded-full"
-            style={{ left: `${46 + (i % 2) * 8}%`, top: `${40 + Math.floor(i / 2) * 10}%`, width: "2%", height: "2%", background: tint(glow, 0.95), "--dx": i % 2 ? "120%" : "-120%", "--dy": i < 2 ? "-110%" : "90%", ...d(delayMs + 900 + i * 50) } as CSSProperties}
-          />
-        ))}
-      {variant === "fog" && (
-        <span
-          className="ftp-mist absolute block"
-          style={{ left: "22%", top: "50%", width: "56%", height: "12%", borderRadius: "999px", background: `linear-gradient(90deg, transparent, ${tint(core, 0.55)}, transparent)`, ...d(delayMs + 880) }}
-        />
-      )}
-      {variant === "thorn" &&
-        [0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="ftp-clawup absolute block"
-            style={{ left: `${40 + i * 8}%`, top: "50%", width: "2%", height: "12%", background: `linear-gradient(0deg, ${tint(core, 0.95)}, ${tint(glow, 0.7)})`, borderRadius: "999px 999px 0 0", ...d(delayMs + 860 + i * 80) }}
-          />
-        ))}
-      {variant === "song" &&
-        [0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="ftp-ripple absolute block rounded-full"
-            style={{ left: `${44 - i * 6}%`, top: `${46 - i * 4}%`, width: `${12 + i * 12}%`, height: `${8 + i * 8}%`, border: `1.5px solid ${tint(glow, 0.7 - i * 0.15)}`, ...d(delayMs + 860 + i * 140) }}
-          />
-        ))}
-      <Ring color={tint(core, 0.8)} delayMs={delayMs + 960} />
-      <Drift tone={core} delayMs={delayMs + 1500} />
-    </Stage>
-  );
-}
-
-/* --- Blessing: a small grace, given quietly --------------------------------- */
 const BLESS_PETALS = [
   { l: 44, t: 44, dx: "-90%", dy: "-110%", d: 0 },
   { l: 54, t: 46, dx: "110%", dy: "-90%", d: 100 },
   { l: 49, t: 40, dx: "10%", dy: "-150%", d: 200 },
 ];
-function BlessingScene({ palette, glyph, variant, delayMs }: SceneProps) {
+
+/* =============================================================================
+   Mythic ladder, per-card scenes (F223). Each fm_* card gets its own scene
+   that draws what its rule does: the squares it names, the pieces it touches,
+   the rule it bends. Scale grows with tier. Shared rings and motes are at
+   most an accent.
+
+   Coordinates: inside Stage (BoardWideStage) one cell is 100/14 % and the cast
+   square sits at 50% / 50%. Inside BoardFrame one cell is 12.5%. Layers that
+   name "your half" or "your back rank" sit in <Mine>, which flips the board
+   frame vertically when the caster plays from the top (--fx-side), so every
+   such layer is authored with the caster at the bottom.
+   ========================================================================== */
+
+/** Board-exact frame flipped so the caster's back rank is at the bottom. */
+function Mine({ children }: { children: ReactNode }) {
+  return (
+    <BoardFrame>
+      <span className="ftp-mine absolute inset-0 block">{children}</span>
+    </BoardFrame>
+  );
+}
+
+/** A 10x10 silhouette box: the pieces the mythic scenes transform and guard. */
+function Sil({ path, fill, stroke }: { path: string; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+const PAWN_D = "M5 1.5 A1.5 1.5 0 1 1 5 4.5 A1.5 1.5 0 1 1 5 1.5 Z M3.9 4.7 H6.1 Q6.3 6.6 7.2 8 H2.8 Q3.7 6.6 3.9 4.7 Z M2.4 8.2 H7.6 V9.2 H2.4 Z";
+const KNIGHT_D = "M3 9.2 L3.4 6.8 Q2 6 2.4 4.8 L4.4 2.4 L4.6 1.2 L5.4 1.9 Q7.8 2.4 7.8 5.6 L7.3 9.2 Z";
+const CROWN_D = "M1.4 7.4 L1 3 L3.2 4.8 L5 1.8 L6.8 4.8 L9 3 L8.6 7.4 Z M1.4 7.9 H8.6 V9 H1.4 Z";
+const HEART_D = "M5 8.8 Q1 5.9 1.6 3.3 Q2.5 1.1 5 2.6 Q7.5 1.1 8.4 3.3 Q9 5.9 5 8.8 Z";
+
+/* --- T8 Worldheart: two extra moves now, the army cannot be taken ----------
+   The heart of the world beats TWICE; each beat throws one gold move-arrow
+   (the two extra moves). Lifeblood veins then run out to the army and a
+   crimson bulwark rises over your half (nothing of yours can be captured). */
+const WH_MOVES = [
+  { dx: "-260%", dy: "-150%", rot: -30, d: 600 },
+  { dx: "260%", dy: "-150%", rot: -150, d: 1020 },
+];
+const WH_VEINS = [30, 62, 90, 118, 150];
+const WH_EMBERS = [
+  { l: 40, t: 58, d: 0 },
+  { l: 58, t: 60, d: 120 },
+  { l: 49, t: 62, d: 240 },
+];
+function WorldheartScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage quakeMs={delayMs + 1040}>
+      <Wash color={tint(deep, 0.22)} delayMs={delayMs} />
+      {/* settle first in paint order: the bulwark rises behind everything */}
+      <Mine>
+        <span
+          className="ftp-wh-ward absolute block"
+          style={{ left: 0, top: "50%", width: "100%", height: "50%", background: `linear-gradient(180deg, ${tint(glow, 0.5)} 0 1.4%, ${tint(core, 0.26)} 1.4%, ${tint(core, 0.08)} 70%, transparent)`, ...d(delayMs + 1120) }}
+        />
+      </Mine>
+      {WH_VEINS.map((a, i) => (
+        <span
+          key={a}
+          className="ftp-wh-vein absolute block"
+          style={{ left: "50%", top: "37.4%", width: "36%", height: "1.2%", borderRadius: "999px", background: `linear-gradient(90deg, ${tint(core, 0.95)}, ${tint(glow, 0.7)} 70%, transparent)`, "--ang": `${a}deg`, ...d(delayMs + 1060 + i * 40) } as CSSProperties}
+        />
+      ))}
+      {/* the heartbeat trace under the heart: two spikes, one per beat */}
+      <span className="ftp-wh-ecg absolute block" style={{ left: "36%", top: "55%", width: "28%", height: "6%", ...d(delayMs + 240) }}>
+        <svg viewBox="0 0 28 6" className="block h-full w-full" aria-hidden="true" preserveAspectRatio="none">
+          <path d="M0 3.6 H7 L8.4 0.6 L9.8 5.4 L11 3.6 H16 L17.4 0.4 L18.8 5.6 L20 3.6 H28" fill="none" stroke={tint(glow, 0.95)} strokeWidth="0.7" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-wh-heart absolute block" style={{ left: "41%", top: "27%", width: "18%", height: "18%", ...d(delayMs + 60) }}>
+        <Sil path={HEART_D} fill={core} stroke={glow} />
+      </span>
+      {WH_MOVES.map((m, i) => (
+        <span
+          key={i}
+          className="ftp-wh-move absolute block"
+          style={{ left: "46%", top: "33%", width: "8%", height: "6%", "--dx": m.dx, "--dy": m.dy, "--rot": `${m.rot}deg`, ...d(delayMs + m.d) } as CSSProperties}
+        >
+          <svg viewBox="0 0 8 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.6 3 H5.4 M3.8 0.8 L6.8 3 L3.8 5.2" fill="none" stroke={glow} strokeWidth="1.1" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <Thud tone={core} atMs={delayMs + 1040} left="38%" top="24%" size="24%" />
+      {WH_EMBERS.map((e, i) => (
+        <span
+          key={i}
+          className="ftp-wh-ember absolute block rounded-full"
+          style={{ left: `${e.l}%`, top: `${e.t}%`, width: "1.8%", height: "2.6%", background: tint(core, 0.9), ...d(delayMs + 1380 + e.d) }}
+        />
+      ))}
+      <Drift tone={core} delayMs={delayMs + 1600} />
+    </Stage>
+  );
+}
+
+/* --- T8 Eclipse Crown: the opponent's turn is skipped, your army is warded --
+   Night falls on the enemy half and two eyes there close (the board looks
+   away: their turn is skipped). Over the crown the moon slides across the sun,
+   the corona flares, the diamond-ring bead pops, and a silver horizon seals
+   your half until your next turn. */
+function EclipseCrownScene({ palette, delayMs }: SceneProps) {
   const [core, glow, deep] = palette;
   return (
     <Stage>
-      <Wash color={tint(deep, 0.16)} delayMs={delayMs} />
+      <Mine>
+        <span
+          className="ftp-ec-night absolute block"
+          style={{ left: 0, top: 0, width: "100%", height: "50%", background: `linear-gradient(180deg, ${tint(deep, 0.8)}, ${tint(deep, 0.55)} 80%, ${tint(deep, 0.2)})`, ...d(delayMs + 40) }}
+        />
+        {/* two watching eyes flank the sun and close: the board looks away */}
+        {[4, 72].map((l, i) => (
+          <span key={l} className="ftp-ec-eye absolute block" style={{ left: `${l}%`, top: "24%", width: "24%", height: "12%", ...d(delayMs + 180 + i * 60) }}>
+            <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 6 Q12 -3 23 6 Q12 15 1 6 Z" fill={tint(deep, 0.95)} stroke={tint(glow, 0.85)} strokeWidth="0.9" />
+              <circle cx="12" cy="6" r="3.2" fill={core} />
+            </svg>
+          </span>
+        ))}
+        <span
+          className="ftp-ec-ward absolute block"
+          style={{ left: 0, top: "50%", width: "100%", height: "30%", background: `linear-gradient(180deg, ${tint(glow, 0.8)} 0 1.2%, ${tint(glow, 0.14)} 1.2%, transparent)`, ...d(delayMs + 940) }}
+        />
+      </Mine>
+      <span className="ftp-ec-crown absolute block" style={{ left: "39%", top: "44%", width: "22%", height: "15%", ...d(delayMs + 200) }}>
+        <Sil path={CROWN_D} fill={tint(deep, 0.95)} stroke={core} />
+      </span>
       <span
-        className="ftp-featherfall absolute block rounded-full"
-        style={{ left: "47%", top: "10%", width: "5%", height: "12%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.6)})`, ...d(delayMs + 120) }}
+        className="ftp-ec-corona absolute block rounded-full"
+        style={{ left: "39%", top: "27%", width: "22%", height: "22%", background: `repeating-conic-gradient(${tint(glow, 0.55)} 0 5deg, transparent 5deg 22deg)`, ...d(delayMs + 760) }}
       />
       <span
-        className="ftp-halo absolute block rounded-full"
-        style={{ left: "38%", top: "34%", width: "24%", height: "24%", border: `2px solid ${tint(glow, 0.8)}`, boxShadow: `0 0 18px 2px ${tint(core, 0.35)}`, ...d(delayMs + 460) }}
+        className="ftp-ec-sun absolute block rounded-full"
+        style={{ left: "43%", top: "31%", width: "14%", height: "14%", background: `radial-gradient(circle, ${WARM}, ${core} 62%, ${tint(core, 0)} 72%)`, ...d(delayMs + 100) }}
       />
-      <span className="ftp-summon absolute block" style={{ left: "41%", top: "36%", width: "18%", height: "22%", ...d(delayMs + 520) }}>
-        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">{glyph}</svg>
+      <span
+        className="ftp-ec-moon absolute block rounded-full"
+        style={{ left: "44%", top: "32%", width: "12%", height: "12%", background: deep, border: `1.5px solid ${tint(glow, 0.7)}`, ...d(delayMs + 300) }}
+      />
+      <span
+        className="ftp-ec-bead absolute block rounded-full"
+        style={{ left: "54%", top: "32%", width: "3%", height: "3%", background: WARM, ...d(delayMs + 1140) }}
+      />
+      <Motes color={tint(glow, 0.8)} delayMs={delayMs + 1300} />
+      <Drift tone={core} delayMs={delayMs + 1550} />
+    </Stage>
+  );
+}
+
+/* --- T8 Winter Court: enemy pieces in your half are frozen -----------------
+   The season turns inside YOUR half only: frost creeps up from your back rank
+   to the midline, icicles fringe the border the invaders crossed, snow falls
+   on them, and the Court's ice crown rises. The enemy half stays untouched. */
+const WC_FLAKES = [
+  { l: 14, t: 60, d: 0 },
+  { l: 38, t: 70, d: 110 },
+  { l: 64, t: 58, d: 220 },
+  { l: 84, t: 72, d: 330 },
+];
+function WinterCourtScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <Mine>
+        <span
+          className="ftp-wc-breath absolute block"
+          style={{ left: 0, top: "96%", width: "100%", height: "4%", background: `linear-gradient(0deg, ${tint(glow, 0.9)}, transparent)`, ...d(delayMs + 30) }}
+        />
+        <span
+          className="ftp-wc-frost absolute block"
+          style={{ left: 0, top: "50%", width: "100%", height: "50%", background: `repeating-linear-gradient(60deg, ${tint(glow, 0.16)} 0 2px, transparent 2px 14px), linear-gradient(0deg, ${tint(core, 0.42)}, ${tint(glow, 0.22)} 85%, ${tint(glow, 0.5)})`, ...d(delayMs + 140) }}
+        />
+        <span
+          className="ftp-wc-icicle absolute block"
+          style={{ left: 0, top: "50%", width: "100%", height: "5%", background: `linear-gradient(180deg, ${WARM}, ${tint(core, 0.8)})`, clipPath: "polygon(0 0, 100% 0, 100% 20%, 96% 100%, 92% 20%, 87% 80%, 83% 20%, 77% 100%, 71% 20%, 66% 70%, 62% 20%, 56% 100%, 50% 20%, 45% 80%, 40% 20%, 34% 100%, 29% 20%, 24% 70%, 20% 20%, 14% 100%, 9% 20%, 5% 80%, 0 20%)", ...d(delayMs + 720) }}
+        />
+        {WC_FLAKES.map((f, i) => (
+          <span key={i} className="ftp-wc-flake absolute block" style={{ left: `${f.l}%`, top: `${f.t}%`, width: "5%", height: "5%", ...d(delayMs + 700 + f.d) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0.6 V9.4 M1.2 2.8 L8.8 7.2 M1.2 7.2 L8.8 2.8 M3.8 1.4 L5 2.6 L6.2 1.4 M3.8 8.6 L5 7.4 L6.2 8.6" fill="none" stroke={WARM} strokeWidth="0.8" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        <span
+          className="ftp-wc-glint absolute block"
+          style={{ left: "-20%", top: "50%", width: "18%", height: "50%", background: `linear-gradient(100deg, transparent, ${tint(glow, 0.45)}, transparent)`, ...d(delayMs + 1160) }}
+        />
+      </Mine>
+      <span className="ftp-wc-crown absolute block" style={{ left: "40%", top: "38%", width: "20%", height: "18%", ...d(delayMs + 420) }}>
+        <svg viewBox="0 0 20 18" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 16 L3 7 L6 11 L8 3 L10 9 L12 0.8 L14 9 L16 3 L17 11 L18 7 L18 16 Z" fill={tint(deep, 0.9)} stroke={glow} strokeWidth="0.8" {...SJ} />
+          <path d="M8 3 L8.6 12 M12 0.8 L12 12 M16 3 L15.4 12" stroke={tint(glow, 0.7)} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1550} />
+    </Stage>
+  );
+}
+
+/* --- T7 Sunforge: a pawn on your 5th rank or beyond becomes a knight --------
+   The sun rises over the chosen pawn and its rays focus down onto an anvil;
+   a hammer swings, the pawn squashes under the blow and a knight rises out of
+   the same square, quenched in a puff of steam. */
+const SF_STEAM = [
+  { l: 42, d: 0 },
+  { l: 53, d: 160 },
+];
+function SunforgeScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage quakeMs={delayMs + 880}>
+      {/* the sun hangs on the board-centre side of the pawn so it never
+          leaves the board on a 6th or 7th rank pawn */}
+      <span className="ftp-sf-sky absolute inset-0 block">
+        <span
+          className="ftp-sf-sun absolute block rounded-full"
+          style={{ left: "44.5%", top: "25%", width: "11%", height: "11%", background: `repeating-conic-gradient(${tint(glow, 0.9)} 0 8deg, ${tint(core, 0.9)} 8deg 30deg)`, clipPath: "circle(50%)", ...d(delayMs) }}
+        />
+        <span
+          className="ftp-sf-beam absolute block"
+          style={{ left: "43%", top: "32%", width: "14%", height: "14%", background: `linear-gradient(180deg, ${tint(glow, 0.1)}, ${tint(core, 0.55)})`, clipPath: "polygon(0 0, 100% 0, 58% 100%, 42% 100%)", ...d(delayMs + 180) }}
+        />
+      </span>
+      <span className="ftp-sf-anvil absolute block" style={{ left: "44%", top: "51%", width: "12%", height: "9%", ...d(delayMs + 120) }}>
+        <svg viewBox="0 0 10 7.5" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.6 0.6 H9.4 Q9.2 2 7.2 2.3 L6.7 4.8 H8 V6.9 H2 V4.8 H3.3 L2.8 2.3 Q0.8 2 0.6 0.6 Z" fill={tint(deep, 0.95)} stroke={core} strokeWidth="0.45" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-sf-pawn absolute block" style={{ left: "46.5%", top: "44%", width: "7%", height: "7.5%", ...d(delayMs + 150) }}>
+        <Sil path={PAWN_D} fill={tint(core, 0.9)} stroke={WARM} />
+      </span>
+      <span className="ftp-sf-hammer absolute block" style={{ left: "47%", top: "40.5%", width: "17%", height: "6.8%", ...d(delayMs + 300) }}>
+        <svg viewBox="0 0 10 4" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.2 0.2 H2.8 V3.8 H0.2 Z" fill={tint(deep, 0.95)} stroke={glow} strokeWidth="0.25" {...SJ} />
+          <path d="M2.8 1.6 H9.8 V2.4 H2.8 Z" fill={core} stroke={tint(deep, 0.9)} strokeWidth="0.15" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-sf-knight absolute block" style={{ left: "45%", top: "40%", width: "10%", height: "11%", ...d(delayMs + 880) }}>
+        <Sil path={KNIGHT_D} fill={tint(core, 0.95)} stroke={WARM} />
+      </span>
+      <Thud tone={core} atMs={delayMs + 880} left="41%" top="41%" size="18%" />
+      {FORGE_SPARKS.map((v, i) => (
+        <span
+          key={i}
+          className="ftp-spark absolute block rounded-full"
+          style={{ left: `${v.l + 1}%`, top: `${v.t + 8}%`, width: "1.8%", height: "1.8%", background: tint(glow, 0.95), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 900 + v.d) } as CSSProperties}
+        />
+      ))}
+      {SF_STEAM.map((s, i) => (
+        <span
+          key={i}
+          className="ftp-sf-steam absolute block rounded-full"
+          style={{ left: `${s.l}%`, top: "42%", width: "6%", height: "8%", background: `radial-gradient(closest-side, ${tint(glow, 0.55)}, transparent)`, ...d(delayMs + 1160 + s.d) }}
+        />
+      ))}
+      <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
+/* --- T7 King's Moat: no enemy piece may step next to your king -------------
+   The rule's own shape: black water fills the eight squares around your
+   king's crown, the drawbridge hauls up (no bridge), and four enemy advances
+   run at the water from every side and are turned back at its edge. */
+const KM_ARROWS = [0, 90, 180, 270];
+function KingsMoatScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  const ring = 3 * cell;
+  const lo = 50 - ring / 2;
+  return (
+    <Stage>
+      <Wash color={tint(deep, 0.2)} delayMs={delayMs} />
+      <span
+        className="ftp-km-seep absolute block rounded-full"
+        style={{ left: `${lo - 2}%`, top: `${lo - 2}%`, width: `${ring + 4}%`, height: `${ring + 4}%`, background: `radial-gradient(closest-side, ${tint(deep, 0.85)}, ${tint(deep, 0.4)} 70%, transparent)`, ...d(delayMs + 40) }}
+      />
+      <span className="ftp-km-moat absolute block" style={{ left: `${lo}%`, top: `${lo}%`, width: `${ring}%`, height: `${ring}%`, ...d(delayMs + 180) }}>
+        <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.5 0.5 H29.5 V29.5 H0.5 Z M10 10 V20 H20 V10 Z" fillRule="evenodd" fill={tint(deep, 0.92)} stroke={tint(core, 0.9)} strokeWidth="0.6" />
+          <path d="M2.5 4 Q5 3 7.5 4 T12.5 4 M17.5 4 Q20 3 22.5 4 T27.5 4 M2.5 26 Q5 25 7.5 26 T12.5 26 M17.5 26 Q20 25 22.5 26 T27.5 26 M4 13 Q3 15 4 17 M26 13 Q27 15 26 17" fill="none" stroke={tint(glow, 0.6)} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-km-crown absolute block" style={{ left: `${50 - cell * 0.45}%`, top: `${50 - cell * 0.45}%`, width: `${cell * 0.9}%`, height: `${cell * 0.9}%`, ...d(delayMs + 300) }}>
+        <Sil path={CROWN_D} fill={tint(glow, 0.95)} stroke={tint(deep, 0.9)} />
+      </span>
+      {/* the drawbridge across the near water hauls up on its keep-side hinge */}
+      <span
+        className="ftp-km-bridge absolute block"
+        style={{ left: `${50 - cell * 0.3}%`, top: `${50 + cell / 2}%`, width: `${cell * 0.6}%`, height: `${cell}%`, background: `repeating-linear-gradient(180deg, ${tint(core, 0.95)} 0 18%, ${tint(deep, 0.9)} 18% 24%)`, ...d(delayMs + 620) }}
+      />
+      {KM_ARROWS.map((a, i) => (
+        <span key={a} className="ftp-km-turn absolute block" style={{ left: "47%", top: "48%", width: "6%", height: "4%", "--ang": `${a}deg`, ...d(delayMs + 840 + i * 70) } as CSSProperties}>
+          <svg viewBox="0 0 6 4" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.4 2 H4.4 M3 0.5 L5.4 2 L3 3.5" fill="none" stroke={glow} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span
+        className="ftp-ripple absolute block rounded-full"
+        style={{ left: `${lo}%`, top: `${lo}%`, width: `${ring}%`, height: `${ring}%`, border: `1.5px solid ${tint(glow, 0.7)}`, ...d(delayMs + 1000) }}
+      />
+      <span
+        className="ftp-km-mist absolute block"
+        style={{ left: `${lo - 3}%`, top: `${50 + ring / 2 - 3}%`, width: `${ring + 6}%`, height: "6%", borderRadius: "999px", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.4)}, transparent)`, ...d(delayMs + 1200) }}
+      />
+      <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
+/* --- T7 Royal Road: your king steps to any empty back-rank square ----------
+   A gold carpet unrolls along YOUR back rank, outward from the square the king
+   chose; footprints lead in, the crown descends onto the square and two
+   pennants rise either side of it. */
+const RR_STEPS = [
+  { x: -2.6, d: 0 },
+  { x: -1.8, d: 110 },
+  { x: -1, d: 220 },
+];
+function RoyalRoadScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <Mine>
+        <span
+          className="ftp-rr-carpet absolute block"
+          style={{ left: 0, top: "87.5%", width: "100%", height: "12.5%", background: `linear-gradient(180deg, ${tint(glow, 0.9)} 0 7%, ${tint(core, 0.38)} 7% 93%, ${tint(glow, 0.9)} 93%)`, ...d(delayMs + 120) }}
+        />
+        <span
+          className="ftp-rr-edge absolute block"
+          style={{ left: 0, top: "86.6%", width: "100%", height: "1.8%", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.95)} 20%, ${tint(glow, 0.95)} 80%, transparent)`, ...d(delayMs + 30) }}
+        />
+      </Mine>
+      {RR_STEPS.map((s, i) => (
+        <span
+          key={i}
+          className="ftp-rr-step absolute block rounded-full"
+          style={{ left: `${50 + s.x * cell - 1}%`, top: `${50 + (i % 2 ? 0.6 : -0.6)}%`, width: "2%", height: "1.4%", background: tint(core, 0.95), ...d(delayMs + 300 + s.d) }}
+        />
+      ))}
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-rr-banner absolute block"
+          style={{ left: `${50 + s * cell * 0.95 - 1.2}%`, top: `${50 - cell * 0.55}%`, width: "2.4%", height: `${cell * 1.1}%`, ...d(delayMs + 640 + (s + 1) * 40) }}
+        >
+          <svg viewBox="0 0 3 11" className="block h-full w-full" aria-hidden="true" preserveAspectRatio="none">
+            <path d="M0.4 0.2 V10.8" stroke={tint(deep, 0.95)} strokeWidth="0.4" />
+            <path d="M0.5 0.4 H2.8 L2 1.8 L2.8 3.2 H0.5 Z" fill={core} stroke={glow} strokeWidth="0.15" />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-rr-crown absolute block" style={{ left: `${50 - cell * 0.5}%`, top: `${50 - cell * 0.62}%`, width: `${cell}%`, height: `${cell}%`, ...d(delayMs + 420) }}>
+        <Sil path={CROWN_D} fill={core} stroke={deep} />
       </span>
       {BLESS_PETALS.map((v, i) => (
         <span
           key={i}
           className="ftp-petal absolute block rounded-full"
-          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "3%", height: "4%", background: tint(glow, 0.9), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 780 + v.d) } as CSSProperties}
+          style={{ left: `${v.l + 1}%`, top: `${v.t + 4}%`, width: "1.8%", height: "2.4%", background: tint(glow, 0.9), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 960 + v.d) } as CSSProperties}
         />
       ))}
-      {variant === "bread" && (
-        <span
-          className="ftp-stonedust absolute block rounded-full"
-          style={{ left: "42%", top: "54%", width: "16%", height: "6%", background: `radial-gradient(closest-side, ${tint(core, 0.55)}, transparent)`, ...d(delayMs + 860) }}
-        />
-      )}
-      {variant === "road" && (
-        <span
-          className="ftp-legrun absolute block"
-          style={{ left: "22%", top: "56%", width: "56%", height: "1.4%", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.9)}, transparent)`, ...d(delayMs + 880) }}
-        />
-      )}
-      {variant === "heart" && <Ring color={tint(glow, 0.9)} delayMs={delayMs + 1080} />}
-      {variant === "lantern" && (
-        <span
-          className="ftp-gleam absolute block rounded-full"
-          style={{ left: "44%", top: "40%", width: "12%", height: "12%", background: `radial-gradient(circle, ${tint(glow, 0.95)}, ${tint(core, 0.4)} 60%, transparent)`, ...d(delayMs + 820) }}
-        />
-      )}
-      {variant === "drop" && (
-        <span
-          className="ftp-ripple absolute block rounded-full"
-          style={{ left: "36%", top: "56%", width: "28%", height: "10%", border: `1.5px solid ${tint(glow, 0.8)}`, ...d(delayMs + 900) }}
-        />
-      )}
-      {variant === "oath" && (
-        <span
-          className="ftp-relic absolute block"
-          style={{ left: "44%", top: "56%", width: "12%", height: "10%", background: `linear-gradient(180deg, ${tint(glow, 0.8)}, ${tint(core, 0.6)})`, clipPath: "polygon(10% 100%, 20% 20%, 50% 0, 80% 20%, 90% 100%)", ...d(delayMs + 880) }}
-        />
-      )}
-      {variant === "wind" &&
-        [0, 1].map((i) => (
-          <span
-            key={i}
-            className="ftp-gust absolute block rounded-full"
-            style={{ left: "30%", top: `${42 + i * 10}%`, width: "40%", height: "4%", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.7)}, transparent)`, ...d(delayMs + 840 + i * 120) }}
-          />
-        ))}
-      {variant === "bloom" &&
-        [0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="ftp-soil absolute block rounded-full"
-            style={{ left: `${43 + i * 5}%`, top: "56%", width: "3%", height: "3%", background: tint(core, 0.85), ...d(delayMs + 860 + i * 90) }}
-          />
-        ))}
-      <Ring color={tint(core, 0.75)} delayMs={delayMs + 940} />
-      <Motes color={tint(glow, 0.75)} delayMs={delayMs + 1150} />
       <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
+const BISHOP_D = "M5 0.9 A0.75 0.75 0 1 1 5 2.4 A0.75 0.75 0 1 1 5 0.9 Z M5 2.5 Q7.3 4.3 6.3 6.6 H3.7 Q2.7 4.3 5 2.5 Z M3.4 7 H6.6 L7.2 8.2 H2.8 Z M2.4 8.4 H7.6 V9.3 H2.4 Z";
+/** Stone grey, borrowed from this module's own fog and grave palettes. */
+const STONE = "#8a94a8";
+const QUEEN_D = "M1.2 7.2 L0.8 2.6 L2.6 5 L3.4 1.8 L5 4.6 L6.6 1.8 L7.4 5 L9.2 2.6 L8.8 7.2 Z M1.4 7.7 H8.6 V9 H1.4 Z";
+
+/** Flips its subtree about the cast square so "forward" is toward the enemy
+ * (static; the art is authored for a caster at the bottom). */
+function Forward({ children }: { children: ReactNode }) {
+  return <span className="ftp-mine absolute inset-0 block">{children}</span>;
+}
+
+/** Knight-leap arcs from the cast square to the forward knight squares, on a
+ * 5x5-cell box (10 units a cell, the square at 25,25). */
+const LEAP_ARCS = [
+  { d: "M25 25 Q37 17 35 5", x: 35, y: 5 },
+  { d: "M25 25 Q13 17 15 5", x: 15, y: 5 },
+  { d: "M25 25 Q41 26 45 15", x: 45, y: 15 },
+  { d: "M25 25 Q9 26 5 15", x: 5, y: 15 },
+];
+
+/* --- T6 Lifebloom: a captured pawn returns on your 4th rank, protected -----
+   A vine runs along YOUR 4th rank, a seed drops onto the chosen square,
+   sprouts, a flower opens and the pawn rises out of it inside a ring of
+   petals (it cannot be captured for two turns). */
+function LifebloomScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <Mine>
+        <span
+          className="ftp-lb-vine absolute block"
+          style={{ left: 0, top: "55.5%", width: "100%", height: "1.5%", background: `repeating-linear-gradient(90deg, ${tint(core, 0.9)} 0 3%, ${tint(glow, 0.8)} 3% 3.8%, ${tint(core, 0.9)} 3.8% 6.25%)`, borderRadius: "999px", ...d(delayMs + 60) }}
+        />
+      </Mine>
+      <span className="ftp-lb-seed absolute block rounded-full" style={{ left: "49%", top: "46%", width: "2%", height: "2.6%", background: tint(deep, 0.95), border: `1px solid ${tint(glow, 0.8)}`, ...d(delayMs) }} />
+      <span className="ftp-lb-stem absolute block" style={{ left: "49.5%", top: "44%", width: "1%", height: "9%", background: `linear-gradient(0deg, ${tint(deep, 0.9)}, ${core})`, borderRadius: "999px", ...d(delayMs + 300) }} />
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-lb-leaf absolute block"
+          style={{ left: s < 0 ? "46.4%" : "50.4%", top: "48.4%", width: "3.2%", height: "1.8%", background: core, borderRadius: s < 0 ? "100% 0" : "0 100%", "--rot": `${s * 24}deg`, transformOrigin: s < 0 ? "100% 50%" : "0 50%", ...d(delayMs + 460) } as CSSProperties}
+        />
+      ))}
+      <span className="ftp-lb-bloom absolute block" style={{ left: "45%", top: "39%", width: "10%", height: "10%", ...d(delayMs + 640) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          {[0, 72, 144, 216, 288].map((a) => (
+            <ellipse key={a} cx="5" cy="2.6" rx="1.4" ry="2.3" fill={tint(glow, 0.95)} stroke={tint(deep, 0.6)} strokeWidth="0.2" transform={`rotate(${a} 5 5)`} />
+          ))}
+          <circle cx="5" cy="5" r="1.2" fill={WARM} />
+        </svg>
+      </span>
+      <span className="ftp-lb-pawn absolute block" style={{ left: "46.4%", top: "45.4%", width: "7.2%", height: "7.2%", ...d(delayMs + 900) }}>
+        <Sil path={PAWN_D} fill={tint(core, 0.95)} stroke={WARM} />
+      </span>
+      <span className="ftp-lb-guard absolute block" style={{ left: "42%", top: "42%", width: "16%", height: "16%", ...d(delayMs + 1000) }}>
+        <svg viewBox="0 0 16 16" className="block h-full w-full" aria-hidden="true">
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+            <ellipse key={a} cx="8" cy="1.4" rx="0.9" ry="1.3" fill={tint(glow, 0.9)} transform={`rotate(${a} 8 8)`} />
+          ))}
+        </svg>
+      </span>
+      {BLESS_PETALS.map((v, i) => (
+        <span
+          key={i}
+          className="ftp-petal absolute block rounded-full"
+          style={{ left: `${v.l + 1}%`, top: `${v.t}%`, width: "1.6%", height: "2.2%", background: tint(glow, 0.9), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 1250 + v.d) } as CSSProperties}
+        />
+      ))}
+    </Stage>
+  );
+}
+
+/* --- T6 Dragonblood: your queen may also leap like a knight for 4 turns ----
+   A drop of dragon's blood falls on the queen, dragon wings unfurl from her
+   crown, the four forward knight leaps she has gained arc out and mark their
+   landing squares, and four scales tick in: one per turn of the gift. */
+function DragonbloodScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <span className="ftp-db-drop absolute block" style={{ left: "49%", top: "38%", width: "2%", height: "3.4%", background: core, borderRadius: "50% 50% 50% 50% / 30% 30% 70% 70%", ...d(delayMs) }} />
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-db-wing absolute block"
+          style={{ left: s < 0 ? `${50 - cell * 1.6}%` : "50%", top: `${50 - cell * 0.9}%`, width: `${cell * 1.6}%`, height: `${cell * 1.1}%`, transformOrigin: s < 0 ? "100% 70%" : "0 70%", ...d(delayMs + 300) }}
+        >
+          <svg viewBox="0 0 16 11" className="block h-full w-full" aria-hidden="true" style={{ transform: s < 0 ? "scaleX(-1)" : undefined }}>
+            <path d="M0 8 L6 1 L16 0.5 L13 4 L14.5 6.5 L11 6 L11.5 9 L7.5 7.5 L6 10.5 Z" fill={tint(deep, 0.9)} stroke={core} strokeWidth="0.5" {...SJ} />
+            <path d="M6 1 L7.5 7.5 M6 1 L11 6 M6 1 L13 4" stroke={tint(glow, 0.7)} strokeWidth="0.35" fill="none" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-db-queen absolute block" style={{ left: "46%", top: "45.6%", width: "8%", height: "8%", ...d(delayMs + 240) }}>
+        <Sil path={QUEEN_D} fill={core} stroke={glow} />
+      </span>
+      <Forward>
+        {LEAP_ARCS.map((a, i) => (
+          <span key={i} className="ftp-db-leap absolute block" style={{ left: `${50 - cell * 2.5}%`, top: `${50 - cell * 2.5}%`, width: `${cell * 5}%`, height: `${cell * 5}%`, ...d(delayMs + 640 + i * 90) }}>
+            <svg viewBox="0 0 50 50" className="block h-full w-full" aria-hidden="true">
+              <path d={a.d} fill="none" stroke={tint(glow, 0.9)} strokeWidth="1.1" strokeDasharray="2.2 1.6" {...SJ} />
+              <path d={`M${a.x} ${a.y - 3} L${a.x + 3} ${a.y} L${a.x} ${a.y + 3} L${a.x - 3} ${a.y} Z`} fill={tint(core, 0.55)} stroke={glow} strokeWidth="0.6" />
+            </svg>
+          </span>
+        ))}
+        {[0, 1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className="ftp-db-scale absolute block"
+            style={{ left: `${44 + i * 3.2}%`, top: `${50 - cell * 1.05}%`, width: "2.6%", height: "2.8%", background: `linear-gradient(180deg, ${core}, ${tint(deep, 0.9)})`, borderRadius: "0 0 50% 50%", border: `1px solid ${tint(glow, 0.8)}`, ...d(delayMs + 1050 + i * 110) }}
+          />
+        ))}
+      </Forward>
+      <Drift tone={core} delayMs={delayMs + 1550} />
+    </Stage>
+  );
+}
+
+/* --- T6 Iron Maiden: one enemy piece is locked in place for 4 turns --------
+   The cabinet's shadow falls over the chosen piece, two spiked iron doors
+   swing shut on it, a padlock drops on the seam, and four tally scratches
+   are cut into the iron: four turns locked. */
+function IronMaidenScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  const w = cell * 0.8;
+  return (
+    <Stage quakeMs={delayMs + 700}>
+      <span className="ftp-im-shadow absolute block" style={{ left: `${50 - cell * 0.9}%`, top: `${50 - cell * 1.1}%`, width: `${cell * 1.8}%`, height: `${cell * 2.2}%`, background: `linear-gradient(180deg, ${tint(deep, 0.85)}, ${tint(deep, 0.4)})`, borderRadius: "40% 40% 4% 4%", ...d(delayMs) }} />
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-im-door absolute block"
+          style={{ left: s < 0 ? `${50 - w}%` : "50%", top: `${50 - cell}%`, width: `${w}%`, height: `${cell * 2}%`, transformOrigin: s < 0 ? "0 50%" : "100% 50%", ...d(delayMs + 220) }}
+        >
+          <svg viewBox="0 0 6 16" className="block h-full w-full" aria-hidden="true" preserveAspectRatio="none" style={{ transform: s > 0 ? "scaleX(-1)" : undefined }}>
+            <path d="M0.3 3 Q0.3 0.3 6 0.3 V15.7 H0.3 Z" fill={tint(core, 0.95)} stroke={tint(deep, 0.9)} strokeWidth="0.3" />
+            <path d="M6 2 L4.6 2.8 L6 3.6 M6 5.2 L4.6 6 L6 6.8 M6 8.4 L4.6 9.2 L6 10 M6 11.6 L4.6 12.4 L6 13.2" fill="none" stroke={glow} strokeWidth="0.35" {...SJ} />
+            <circle cx="1.4" cy="4" r="0.35" fill={tint(deep, 0.9)} />
+            <circle cx="1.4" cy="12" r="0.35" fill={tint(deep, 0.9)} />
+          </svg>
+        </span>
+      ))}
+      <Thud tone={core} atMs={delayMs + 700} left="44%" top="44%" size="12%" />
+      <span className="ftp-im-lock absolute block" style={{ left: "48.2%", top: "48%", width: "3.6%", height: "4.4%", ...d(delayMs + 740) }}>
+        <svg viewBox="0 0 6 7" className="block h-full w-full" aria-hidden="true">
+          <path d="M1.6 3 V2 A1.4 1.4 0 0 1 4.4 2 V3" fill="none" stroke={glow} strokeWidth="0.7" />
+          <rect x="0.6" y="3" width="4.8" height="3.6" fill={glow} stroke={tint(deep, 0.9)} strokeWidth="0.3" />
+        </svg>
+      </span>
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className="ftp-im-tally absolute block"
+          style={{ left: `${50 - w + 0.9 + i * 0.9}%`, top: `${50 - cell * 0.55}%`, width: "0.5%", height: "3%", background: WARM, ...d(delayMs + 960 + i * 120) }}
+        />
+      ))}
+      <Drift tone={core} delayMs={delayMs + 1550} />
+    </Stage>
+  );
+}
+
+/* --- T5 Windrider: your bishops may also leap like a knight for 2 turns ----
+   Wind gusts over the bishop, feathered wings open on its mitre, and it hops
+   one forward knight leap through the air and back: the new move it has for
+   two turns, shown on its own square. */
+function WindriderScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="ftp-wr-gust absolute block rounded-full"
+          style={{ left: "30%", top: `${44 + i * 4}%`, width: "40%", height: "1.2%", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.8)}, transparent)`, ...d(delayMs + i * 80) }}
+        />
+      ))}
+      <Forward>
+        {LEAP_ARCS.slice(0, 2).map((a, i) => (
+          <span key={i} className="ftp-db-leap absolute block" style={{ left: `${50 - cell * 2.5}%`, top: `${50 - cell * 2.5}%`, width: `${cell * 5}%`, height: `${cell * 5}%`, ...d(delayMs + 520 + i * 120) }}>
+            <svg viewBox="0 0 50 50" className="block h-full w-full" aria-hidden="true">
+              <path d={a.d} fill="none" stroke={tint(glow, 0.9)} strokeWidth="1" strokeDasharray="1.4 1.8" {...SJ} />
+              <circle cx={a.x} cy={a.y} r="2.4" fill="none" stroke={core} strokeWidth="0.8" />
+            </svg>
+          </span>
+        ))}
+      </Forward>
+      {/* the bishop and its new wings hop one forward knight leap and land back */}
+      <span className="ftp-wr-hop absolute block" style={{ left: `${50 - cell / 2}%`, top: `${50 - cell / 2}%`, width: `${cell}%`, height: `${cell}%`, ...d(delayMs + 300) }}>
+        {[-1, 1].map((s) => (
+          <span key={s} className="ftp-wr-wing absolute block" style={{ left: s < 0 ? "-38%" : "58%", top: "8%", width: "80%", height: "56%", transformOrigin: s < 0 ? "100% 80%" : "0 80%", ...d(delayMs + 300) }}>
+            <svg viewBox="0 0 8 6" className="block h-full w-full" aria-hidden="true" style={{ transform: s < 0 ? "scaleX(-1)" : undefined }}>
+              <path d="M0.4 5 Q2 0.4 7.6 0.6 Q6.2 1.6 7 2.4 Q5.4 2.6 6 3.8 Q4.2 3.6 4.4 5 Q2.4 4.4 0.4 5 Z" fill={tint(glow, 0.95)} stroke={tint(deep, 0.6)} strokeWidth="0.25" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        <span className="absolute block" style={{ left: "6%", top: "4%", width: "88%", height: "92%" }}>
+          <Sil path={BISHOP_D} fill={tint(core, 0.95)} stroke={WARM} />
+        </span>
+      </span>
+      {[0, 1].map((i) => (
+        <span
+          key={i}
+          className="ftp-wr-feather absolute block"
+          style={{ left: `${46 + i * 6}%`, top: "44%", width: "1.4%", height: "3.4%", background: `linear-gradient(180deg, ${WARM}, ${tint(core, 0.7)})`, borderRadius: "50%", "--dx": i ? "160%" : "-180%", ...d(delayMs + 1000 + i * 140) } as CSSProperties}
+        />
+      ))}
+      <Drift tone={core} delayMs={delayMs + 1400} />
+    </Stage>
+  );
+}
+
+/* --- T5 Gorgon Gaze: every enemy knight and bishop turns to stone ----------
+   The gorgon's head rises on your side, its serpents writhe, its eyes open
+   and a stone-grey gaze sweeps the enemy half; a knight and a bishop caught
+   in it crack into stone. */
+const GG_CHIPS = [
+  { l: 39, dx: "-160%", dy: "-120%", d: 0 },
+  { l: 41, dx: "140%", dy: "-160%", d: 80 },
+  { l: 59, dx: "-120%", dy: "-150%", d: 120 },
+  { l: 61, dx: "170%", dy: "-110%", d: 200 },
+];
+function GorgonGazeScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <Mine>
+        <span
+          className="ftp-gg-cone absolute block"
+          style={{ left: "10%", top: "8%", width: "80%", height: "66%", background: `linear-gradient(0deg, ${tint(glow, 0.5)}, ${tint(core, 0.2)} 60%, ${tint(core, 0.06)})`, clipPath: "polygon(0 0, 100% 0, 56% 100%, 44% 100%)", ...d(delayMs + 560) }}
+        />
+        <span
+          className="ftp-gg-crack absolute block"
+          style={{ left: 0, top: 0, width: "100%", height: "50%", background: `repeating-linear-gradient(35deg, transparent 0 9%, ${tint(deep, 0.5)} 9% 9.6%), repeating-linear-gradient(-55deg, transparent 0 13%, ${tint(deep, 0.45)} 13% 13.5%), ${tint(STONE, 0.22)}`, ...d(delayMs + 820) }}
+        />
+      </Mine>
+      <span className="ftp-gg-seat absolute inset-0 block">
+        {[-1, 0, 1].map((s) => (
+          <span
+            key={s}
+            className="ftp-gg-snake absolute block"
+            style={{ left: `${47 + s * 5}%`, top: "40%", width: "6%", height: "8%", "--rot": `${s * 26}deg`, ...d(delayMs + 60 + (s + 1) * 60) } as CSSProperties}
+          >
+            <svg viewBox="0 0 6 8" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 8 Q0.6 6 3 4 Q5.4 2 3 0.8" fill="none" stroke={core} strokeWidth="1" {...SJ} />
+              <circle cx="3" cy="0.9" r="0.7" fill={core} />
+            </svg>
+          </span>
+        ))}
+        <span className="ftp-gg-head absolute block" style={{ left: "44%", top: "45%", width: "12%", height: "10%", ...d(delayMs + 40) }}>
+          <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M6 0.6 Q11.2 0.8 11 5.4 Q10.4 9.4 6 9.6 Q1.6 9.4 1 5.4 Q0.8 0.8 6 0.6 Z" fill={tint(deep, 0.95)} stroke={core} strokeWidth="0.5" />
+            <path d="M2.6 4.6 Q4 3.4 5.2 4.6 Q4 5.6 2.6 4.6 Z M6.8 4.6 Q8 3.4 9.4 4.6 Q8 5.6 6.8 4.6 Z" fill={glow} />
+            <path d="M4.4 7.6 Q6 8.4 7.6 7.6" fill="none" stroke={core} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </span>
+      </span>
+      <span className="ftp-gg-far absolute inset-0 block">
+        {[
+          { l: 36, path: KNIGHT_D },
+          { l: 56, path: BISHOP_D },
+        ].map((p, i) => (
+          <span key={i} className="ftp-gg-victim absolute block" style={{ left: `${p.l}%`, top: "46%", width: "8%", height: "8%", ...d(delayMs + 700 + i * 90) }}>
+            <Sil path={p.path} fill={tint(STONE, 0.95)} stroke={tint(deep, 0.9)} />
+          </span>
+        ))}
+      </span>
+      <span className="ftp-gg-far absolute inset-0 block">
+        {GG_CHIPS.map((c, i) => (
+          <span
+            key={i}
+            className="ftp-spark absolute block rounded-full"
+            style={{ left: `${c.l}%`, top: "49%", width: "1.4%", height: "1.4%", background: tint(STONE, 0.9), "--dx": c.dx, "--dy": c.dy, ...d(delayMs + 1000 + c.d) } as CSSProperties}
+          />
+        ))}
+      </span>
+    </Stage>
+  );
+}
+
+/* --- T5 Phoenix Feather: a captured knight, bishop or rook returns ---------
+   Ashes glow on an empty square of your half, flames lick up, the phoenix
+   rises out of them and climbs away, dropping one feather that spirals down
+   onto the square as the cinder egg there cracks open. */
+function PhoenixFeatherScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage quakeMs={delayMs + 1040}>
+      <span className="ftp-pf-ash absolute block rounded-full" style={{ left: "44%", top: "50%", width: "12%", height: "4%", background: `radial-gradient(closest-side, ${tint(core, 0.9)}, ${tint(deep, 0.8)} 70%, transparent)`, ...d(delayMs + 40) }} />
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="ftp-pf-flame absolute block"
+          style={{ left: `${45.5 + i * 3}%`, top: "42%", width: "3%", height: "9%", background: `linear-gradient(0deg, ${tint(core, 0.95)}, ${tint(glow, 0.8)} 60%, transparent)`, borderRadius: "50% 50% 40% 40% / 70% 70% 30% 30%", ...d(delayMs + 180 + i * 70) }}
+        />
+      ))}
+      <span className="ftp-pf-bird absolute block" style={{ left: "41%", top: "40%", width: "18%", height: "10%", ...d(delayMs + 360) }}>
+        <svg viewBox="0 0 18 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M9 4 Q5 0 0.4 1.6 Q4 3 3 5 Q6 4.6 8 6.6 L7.4 9.6 L9 8.2 L10.6 9.6 L10 6.6 Q12 4.6 15 5 Q14 3 17.6 1.6 Q13 0 9 4 Z" fill={core} stroke={glow} strokeWidth="0.35" {...SJ} />
+          <circle cx="9" cy="3.6" r="0.9" fill={glow} />
+        </svg>
+      </span>
+      <span className="ftp-pf-feather absolute block" style={{ left: "52%", top: "30%", width: "2.4%", height: "5%", ...d(delayMs + 820) }}>
+        <svg viewBox="0 0 3 6" className="block h-full w-full" aria-hidden="true">
+          <path d="M1.5 0.2 Q3 2 1.5 5.8 Q0 2 1.5 0.2 Z" fill={glow} stroke={core} strokeWidth="0.2" />
+          <path d="M1.5 1 V5.6" stroke={core} strokeWidth="0.2" />
+        </svg>
+      </span>
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-pf-egg absolute block"
+          style={{ left: s < 0 ? "46.4%" : "50%", top: "45%", width: "3.6%", height: "6.4%", background: `linear-gradient(180deg, ${tint(glow, 0.9)}, ${tint(core, 0.9)})`, borderRadius: s < 0 ? "100% 0 0 100% / 60% 0 0 40%" : "0 100% 100% 0 / 0 60% 40% 0", "--dx": `${s * 70}%`, "--rot": `${s * 30}deg`, ...d(delayMs + 700) } as CSSProperties}
+        />
+      ))}
+      <Thud tone={core} atMs={delayMs + 1040} left="43%" top="43%" size="14%" />
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="ftp-pf-ember absolute block rounded-full"
+          style={{ left: `${45 + i * 4.5}%`, top: "48%", width: "1.2%", height: "1.2%", background: glow, ...d(delayMs + 1150 + i * 110) }}
+        />
+      ))}
+    </Stage>
+  );
+}
+
+const ROOK_D = "M2.4 1.2 H3.6 V2.4 H4.4 V1.2 H5.6 V2.4 H6.4 V1.2 H7.6 V3.6 L6.6 4.4 V7 L7.4 7.8 H2.6 L3.4 7 V4.4 L2.4 3.6 Z M2 8.2 H8 V9.3 H2 Z";
+
+/* --- T4 Oathstone: none of your pawns can be captured for 2 turns ----------
+   A standing stone rises on your side and an oath rune kindles on it with two
+   notches (two turns); a gold chain of the oath then links along your pawn
+   rank from the middle out. */
+function OathstoneScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage quakeMs={delayMs + 420}>
+      <Mine>
+        <span
+          className="ftp-os-chain absolute block"
+          style={{ left: 0, top: "80.2%", width: "100%", height: "2.2%", background: `repeating-linear-gradient(90deg, ${tint(glow, 0.95)} 0 2.2%, transparent 2.2% 2.8%, ${tint(core, 0.9)} 2.8% 5.6%, transparent 5.6% 6.25%)`, ...d(delayMs + 700) }}
+        />
+      </Mine>
+      <span className="ftp-near absolute inset-0 block">
+        <span className="ftp-os-shadow absolute block rounded-full" style={{ left: "44%", top: "54%", width: "12%", height: "3%", background: `radial-gradient(closest-side, ${tint(deep, 0.8)}, transparent)`, ...d(delayMs + 40) }} />
+        <span className="ftp-os-stone absolute block" style={{ left: "46%", top: "40%", width: "8%", height: "15%", ...d(delayMs + 160) }}>
+          <svg viewBox="0 0 8 15" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 15 L0.6 4 Q1 0.6 4 0.4 Q7 0.6 7.4 4 L7 15 Z" fill={tint(core, 0.95)} stroke={tint(deep, 0.9)} strokeWidth="0.4" {...SJ} />
+            <path d="M2.4 4 L2.4 5.6 M5.6 4 L5.6 5.6" stroke={tint(deep, 0.9)} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        <span className="ftp-os-rune absolute block" style={{ left: "47.4%", top: "45%", width: "5.2%", height: "6%", ...d(delayMs + 480) }}>
+          <svg viewBox="0 0 5 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M2.5 0.4 V5.6 M0.6 1.6 L2.5 3 L4.4 1.6 M0.8 4.6 H4.2" fill="none" stroke={glow} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+        <span className="ftp-os-dust absolute block rounded-full" style={{ left: "42%", top: "53%", width: "16%", height: "4%", background: `radial-gradient(closest-side, ${tint(core, 0.55)}, transparent)`, ...d(delayMs + 420) }} />
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
+/* --- T4 Siren's Call: one enemy piece is entranced for 3 turns -------------
+   Notes of the siren's song ride a wave in from your side to the chosen
+   piece; a slow spiral turns over it and it sways, held where it stands. */
+const SC_NOTES = [
+  { x: -3.2, y: 2.6, d: 0 },
+  { x: -1.6, y: 3.2, d: 120 },
+  { x: 1.4, y: 3, d: 240 },
+  { x: 3, y: 2.4, d: 360 },
+];
+function SirensCallScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <Forward>
+        <span
+          className="ftp-sc-wave absolute block"
+          style={{ left: "20%", top: `${50 + cell * 1.9}%`, width: "60%", height: `${cell * 1.4}%`, ...d(delayMs + 40) }}
+        >
+          <svg viewBox="0 0 60 10" className="block h-full w-full" aria-hidden="true" preserveAspectRatio="none">
+            <path d="M0 6 Q7.5 1 15 6 T30 6 T45 6 T60 6" fill="none" stroke={tint(glow, 0.8)} strokeWidth="1" {...SJ} />
+            <path d="M0 9 Q7.5 4 15 9 T30 9 T45 9 T60 9" fill="none" stroke={tint(core, 0.6)} strokeWidth="0.8" {...SJ} />
+          </svg>
+        </span>
+        {SC_NOTES.map((n, i) => (
+          <span
+            key={i}
+            className="ftp-sc-note absolute block"
+            style={{ left: `${50 + n.x * cell - 1.6}%`, top: `${50 + n.y * cell - 2}%`, width: "3.2%", height: "4%", "--dx": `${-n.x * 100 / 3.2 * (cell / 1)}%`, "--dy": `${-n.y * 100 / 4 * (cell / 1)}%`, ...d(delayMs + 260 + n.d) } as CSSProperties}
+          >
+            <svg viewBox="0 0 4 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M2.6 0.4 V3.6 M2.6 0.4 L3.8 1" stroke={glow} strokeWidth="0.45" fill="none" {...SJ} />
+              <ellipse cx="1.8" cy="3.8" rx="1.1" ry="0.8" fill={glow} />
+            </svg>
+          </span>
+        ))}
+      </Forward>
+      <span className="ftp-sc-spiral absolute block" style={{ left: `${50 - cell * 0.75}%`, top: `${50 - cell * 0.75}%`, width: `${cell * 1.5}%`, height: `${cell * 1.5}%`, ...d(delayMs + 700) }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 10 Q10 8 12 8.4 Q14.4 9.4 13.4 12 Q12 15 8.4 14 Q4.6 12.4 5.6 8 Q7 3.6 12 4 Q17.4 5 16.6 11 Q15.6 17.6 9 17.6" fill="none" stroke={tint(glow, 0.9)} strokeWidth="0.9" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-sc-sway absolute block rounded-full" style={{ left: `${50 - cell * 0.6}%`, top: `${50 - cell * 0.6}%`, width: `${cell * 1.2}%`, height: `${cell * 1.2}%`, border: `1.5px solid ${tint(core, 0.8)}`, background: tint(deep, 0.2), ...d(delayMs + 760) }} />
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="ftp-sc-bubble absolute block rounded-full"
+          style={{ left: `${46 + i * 3.4}%`, top: "44%", width: "1.4%", height: "1.4%", border: `1px solid ${tint(glow, 0.9)}`, ...d(delayMs + 1150 + i * 120) }}
+        />
+      ))}
+    </Stage>
+  );
+}
+
+/* --- T4 Stormcaller: rooks move diagonally and bishops straight, 2 turns ---
+   A storm cloud gathers over the piece and a bolt strikes it; the rook's
+   straight cross of lines then twists a quarter turn into a diagonal cross
+   while a second cross twists the other way: the two movement rules trade. */
+function StormcallerScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage quakeMs={delayMs + 520}>
+      <span className="ftp-st-cloud absolute block" style={{ left: `${50 - cell * 1.3}%`, top: `${50 - cell * 2.2}%`, width: `${cell * 2.6}%`, height: `${cell * 1.1}%`, ...d(delayMs + 30) }}>
+        <svg viewBox="0 0 26 11" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 10 Q0.4 10 0.6 7.4 Q1 5 3.6 5.4 Q4 1.4 8.4 1.8 Q11 0 14 1.6 Q18 0.6 19.4 4 Q24.6 3.4 25.2 7.4 Q25.4 10 22.6 10 Z" fill={tint(deep, 0.95)} stroke={tint(core, 0.8)} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-st-bolt absolute block" style={{ left: `${50 - cell * 0.4}%`, top: `${50 - cell * 1.3}%`, width: `${cell * 0.8}%`, height: `${cell * 1.4}%`, ...d(delayMs + 420) }}>
+        <svg viewBox="0 0 8 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0 L1.6 6.4 H4.4 L2.2 14 L7 5 H4.2 L6.4 0 Z" fill={glow} stroke={WARM} strokeWidth="0.3" {...SJ} />
+        </svg>
+      </span>
+      {[
+        { from: 0, to: 45, color: core },
+        { from: 45, to: 0, color: glow },
+      ].map((x, i) => (
+        <span
+          key={i}
+          className="ftp-st-cross absolute block"
+          style={{ left: `${50 - cell * 2}%`, top: `${50 - cell * 2}%`, width: `${cell * 4}%`, height: `${cell * 4}%`, "--from": `${x.from}deg`, "--to": `${x.to}deg`, ...d(delayMs + 640 + i * 160) } as CSSProperties}
+        >
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <path d={i ? "M20 6 V34 M6 20 H34" : "M20 2 V38 M2 20 H38"} stroke={tint(x.color, 0.9)} strokeWidth={i ? 0.9 : 1.2} strokeDasharray={i ? "2 2" : undefined} fill="none" {...SJ} />
+            <path d={i ? "M17 6 L20 3 L23 6 M17 34 L20 37 L23 34 M6 17 L3 20 L6 23 M34 17 L37 20 L34 23" : "M17 5 L20 2 L23 5 M17 35 L20 38 L23 35 M5 17 L2 20 L5 23 M35 17 L38 20 L35 23"} stroke={tint(x.color, 0.9)} strokeWidth="1" fill="none" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-st-rook absolute block" style={{ left: `${50 - cell * 0.42}%`, top: `${50 - cell * 0.42}%`, width: `${cell * 0.84}%`, height: `${cell * 0.84}%`, ...d(delayMs + 500) }}>
+        <Sil path={ROOK_D} fill={tint(core, 0.95)} stroke={WARM} />
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1450} />
+    </Stage>
+  );
+}
+
+/* --- T3 Dewdrop: your most advanced pawn can never be captured -------------
+   One dewdrop falls from a leaf tip, splashes a little crown of water, and
+   settles as a clear dome over a pawn with a glint across it. */
+function DewdropScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <span className="ftp-dd-leaf absolute block" style={{ left: "46%", top: "30%", width: "9%", height: "4%", background: tint(core, 0.85), borderRadius: "0 100%", ...d(delayMs + 20) }} />
+      <span className="ftp-dd-drop absolute block" style={{ left: "49%", top: "33%", width: "2.4%", height: "3.2%", background: `radial-gradient(circle at 35% 35%, ${WARM}, ${tint(glow, 0.8)} 50%, ${tint(core, 0.8)})`, borderRadius: "50% 50% 50% 50% / 30% 30% 70% 70%", ...d(delayMs + 160) }} />
+      <span className="ftp-dd-splash absolute block" style={{ left: "44%", top: "50%", width: "12%", height: "5%", ...d(delayMs + 560) }}>
+        <svg viewBox="0 0 12 5" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 5 L2 1.6 L3 4 L4.6 0.4 L6 3.6 L7.4 0.4 L9 4 L10 1.6 L11 5" fill="none" stroke={tint(glow, 0.95)} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-dd-pawn absolute block" style={{ left: "46.6%", top: "44.6%", width: "6.8%", height: "7%", ...d(delayMs + 600) }}>
+        <Sil path={PAWN_D} fill={tint(deep, 0.8)} stroke={glow} />
+      </span>
+      <span className="ftp-dd-dome absolute block" style={{ left: "44%", top: "41%", width: "12%", height: "12%", background: `radial-gradient(circle at 36% 30%, ${tint(glow, 0.6)}, ${tint(core, 0.18)} 45%, ${tint(core, 0.4)} 70%, transparent 72%)`, borderRadius: "50% 50% 8% 8%", ...d(delayMs + 640) }} />
+      <span className="ftp-dd-glint absolute block rounded-full" style={{ left: "46.4%", top: "43%", width: "2%", height: "2%", background: WARM, ...d(delayMs + 1000) }} />
+      <span className="ftp-ripple absolute block rounded-full" style={{ left: "40%", top: "51%", width: "20%", height: "4%", border: `1.5px solid ${tint(glow, 0.7)}`, ...d(delayMs + 600) }} />
+      <Drift tone={core} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- T3 Brambleroot: enemy rooks cannot move sideways along a rank ---------
+   Bramble hedges shoot up on both sides of an enemy rook; its sideways runs
+   hit the thorns and stop, while its forward path stays open. */
+function BramblerootScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <span className="ftp-br-rook absolute block" style={{ left: `${50 - cell * 0.42}%`, top: `${50 - cell * 0.42}%`, width: `${cell * 0.84}%`, height: `${cell * 0.84}%`, ...d(delayMs + 40) }}>
+        <Sil path={ROOK_D} fill={tint(deep, 0.9)} stroke={glow} />
+      </span>
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-br-hedge absolute block"
+          style={{ left: `${50 + s * cell * 0.95 - cell * 0.3}%`, top: `${50 - cell * 0.7}%`, width: `${cell * 0.6}%`, height: `${cell * 1.4}%`, ...d(delayMs + 220 + (s + 1) * 60) }}
+        >
+          <svg viewBox="0 0 6 14" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 14 Q1.4 10 3 7 Q4.6 4 3 0.4" fill="none" stroke={tint(glow, 0.95)} strokeWidth="1.3" {...SJ} />
+            <path d="M2.4 11 L0.4 10.2 M3.6 8.4 L5.6 7.6 M2.4 5.6 L0.4 4.8 M3.4 2.6 L5.4 1.8" stroke={WARM} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-br-run absolute block"
+          style={{ left: `${50 - cell * 0.3}%`, top: `${50 - cell * 0.18}%`, width: `${cell * 0.6}%`, height: `${cell * 0.36}%`, "--dir": String(s), ...d(delayMs + 640 + (s + 1) * 50) } as CSSProperties}
+        >
+          <svg viewBox="0 0 6 4" className="block h-full w-full" aria-hidden="true" style={{ transform: s < 0 ? "scaleX(-1)" : undefined }}>
+            <path d="M0.4 2 H4.4 M3 0.5 L5.4 2 L3 3.5" fill="none" stroke={tint(glow, 0.95)} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <Forward>
+        <span className="ftp-br-open absolute block" style={{ left: `${50 - 0.4}%`, top: `${50 - cell * 2.6}%`, width: "0.8%", height: `${cell * 2}%`, background: `linear-gradient(0deg, ${tint(glow, 0.8)}, transparent)`, ...d(delayMs + 900) }} />
+      </Forward>
+      <Drift tone={core} delayMs={delayMs + 1400} />
+    </Stage>
+  );
+}
+
+/* --- T3 Wyrmscale Mail: one of your pieces cannot be captured for 4 turns --
+   A wyrm's coil circles the chosen piece, then four rows of dragon scales
+   lock on from the ground up (one row per turn of protection) and a sheen
+   runs over the finished mail. */
+function WyrmscaleScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <span className="ftp-ws-coil absolute block" style={{ left: `${50 - cell * 0.9}%`, top: `${50 - cell * 0.9}%`, width: `${cell * 1.8}%`, height: `${cell * 1.8}%`, ...d(delayMs + 30) }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 1.4 A8.6 8.6 0 1 1 1.6 12 L0.4 10.6 M1.6 12 L3.2 11.2" fill="none" stroke={tint(core, 0.9)} strokeWidth="1.4" {...SJ} />
+          <circle cx="10" cy="1.4" r="1.2" fill={tint(deep, 0.9)} stroke={glow} strokeWidth="0.4" />
+        </svg>
+      </span>
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className="ftp-ws-row absolute block"
+          style={{ left: `${50 - cell * 0.5}%`, top: `${50 + cell * (0.28 - i * 0.24)}%`, width: `${cell}%`, height: `${cell * 0.26}%`, background: `radial-gradient(circle at 50% 0, ${tint(glow, 0.95)} 0 30%, ${tint(core, 0.95)} 31% 58%, transparent 60%) 0 0 / 25% 100%`, ...d(delayMs + 300 + i * 150) }}
+        />
+      ))}
+      <span className="ftp-ws-sheen absolute block" style={{ left: `${50 - cell * 0.5}%`, top: `${50 - cell * 0.5}%`, width: `${cell * 0.3}%`, height: `${cell}%`, background: `linear-gradient(90deg, transparent, ${tint(WARM, 0.8)}, transparent)`, ...d(delayMs + 1000) }} />
+      <Drift tone={core} delayMs={delayMs + 1400} />
+    </Stage>
+  );
+}
+
+/* --- T2 Hearthbread: a new pawn appears on your first two ranks ------------
+   An ember bed glows on the chosen square, a loaf proves and rises on it,
+   steam curls up, and the loaf splits open into a fresh pawn. */
+function HearthbreadScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <span className="ftp-hb-hearth absolute block rounded-full" style={{ left: "43%", top: "50%", width: "14%", height: "4%", background: `radial-gradient(closest-side, ${tint(core, 0.9)}, ${tint(deep, 0.6)} 70%, transparent)`, ...d(delayMs + 30) }} />
+      <span className="ftp-hb-loaf absolute block" style={{ left: "45%", top: "46%", width: "10%", height: "6%", ...d(delayMs + 180) }}>
+        <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.6 5.6 Q0 1.2 5 0.6 Q10 1.2 9.4 5.6 Z" fill={core} stroke={tint(deep, 0.9)} strokeWidth="0.35" {...SJ} />
+          <path d="M3 2.2 L3.8 3.4 M5 1.8 L5.8 3 M7 2.2 L7.8 3.4" stroke={glow} strokeWidth="0.4" {...SJ} />
+        </svg>
+      </span>
+      {[0, 1].map((i) => (
+        <span
+          key={i}
+          className="ftp-hb-steam absolute block"
+          style={{ left: `${47 + i * 4}%`, top: "38%", width: "2.4%", height: "7%", ...d(delayMs + 420 + i * 140) }}
+        >
+          <svg viewBox="0 0 3 8" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.5 8 Q0.2 6 1.5 4 Q2.8 2 1.5 0.2" fill="none" stroke={tint(glow, 0.8)} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-hb-pawn absolute block" style={{ left: "46.4%", top: "44%", width: "7.2%", height: "7.6%", ...d(delayMs + 800) }}>
+        <Sil path={PAWN_D} fill={tint(glow, 0.95)} stroke={tint(deep, 0.9)} />
+      </span>
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-spark absolute block rounded-full"
+          style={{ left: "49%", top: "49%", width: "1.2%", height: "1.2%", background: core, "--dx": `${s * 180}%`, "--dy": "-120%", ...d(delayMs + 820) } as CSSProperties}
+        />
+      ))}
+      <Drift tone={core} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- T2 Fogbank: enemy bishops cannot move more than 2 squares -------------
+   Fog rolls over the enemy half; a bishop's four diagonals light up for two
+   squares each and then run into banks of fog that swallow the rest. */
+const FB_DIAG = [45, 135, 225, 315];
+function FogbankScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <Mine>
+        <span className="ftp-fb-roll absolute block" style={{ left: "-10%", top: "4%", width: "120%", height: "44%", background: `linear-gradient(180deg, transparent, ${tint(core, 0.4)} 30%, ${tint(glow, 0.3)} 70%, transparent)`, borderRadius: "50%", ...d(delayMs + 30) }} />
+      </Mine>
+      {FB_DIAG.map((a, i) => (
+        <span
+          key={a}
+          className="ftp-fb-ray absolute block"
+          style={{ left: "50%", top: "49.5%", width: `${cell * 2 * Math.SQRT2}%`, height: "1%", background: `linear-gradient(90deg, ${tint(glow, 0.95)}, ${tint(glow, 0.7)})`, borderRadius: "999px", "--ang": `${a}deg`, ...d(delayMs + 300 + i * 50) } as CSSProperties}
+        />
+      ))}
+      {FB_DIAG.map((a, i) => (
+        <span
+          key={a}
+          className="ftp-fb-bank absolute block rounded-full"
+          style={{ left: `${50 + Math.cos((a * Math.PI) / 180) * cell * 3 - cell * 0.8}%`, top: `${50 + Math.sin((a * Math.PI) / 180) * cell * 3 - cell * 0.6}%`, width: `${cell * 1.6}%`, height: `${cell * 1.2}%`, background: `radial-gradient(closest-side, ${tint(glow, 0.85)}, ${tint(core, 0.5)} 60%, transparent)`, ...d(delayMs + 620 + i * 60) }}
+        />
+      ))}
+      <span className="ftp-fb-bishop absolute block" style={{ left: `${50 - cell * 0.45}%`, top: `${50 - cell * 0.45}%`, width: `${cell * 0.9}%`, height: `${cell * 0.9}%`, ...d(delayMs + 160) }}>
+        <Sil path={BISHOP_D} fill={tint(deep, 0.9)} stroke={glow} />
+      </span>
+    </Stage>
+  );
+}
+
+/* --- T2 Moonlit Stride: knights may also step one square straight ----------
+   A crescent moon rises and lays a beam on the knight; four moonlit
+   footsteps then light one square up, down, left and right of it: the new
+   step it gets for three turns. */
+const MS_STEPS = [
+  { x: 0, y: -1 },
+  { x: 1, y: 0 },
+  { x: 0, y: 1 },
+  { x: -1, y: 0 },
+];
+function MoonlitStrideScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <Forward>
+        <span className="ftp-ms-moon absolute block" style={{ left: `${50 + cell * 0.6}%`, top: `${50 - cell * 2.3}%`, width: `${cell * 0.9}%`, height: `${cell * 0.9}%`, ...d(delayMs + 30) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M6.4 0.8 A4.4 4.4 0 1 0 9.2 7.4 A3.6 3.6 0 1 1 6.4 0.8 Z" fill={glow} stroke={core} strokeWidth="0.3" />
+          </svg>
+        </span>
+        <span className="ftp-ms-beam absolute block" style={{ left: `${50 - cell * 0.1}%`, top: `${50 - cell * 1.8}%`, width: `${cell * 1}%`, height: `${cell * 1.6}%`, background: `linear-gradient(180deg, ${tint(glow, 0.5)}, ${tint(glow, 0.1)})`, clipPath: "polygon(60% 0, 80% 0, 70% 100%, 0 100%)", ...d(delayMs + 200) }} />
+      </Forward>
+      <span className="ftp-ms-knight absolute block" style={{ left: `${50 - cell * 0.42}%`, top: `${50 - cell * 0.42}%`, width: `${cell * 0.84}%`, height: `${cell * 0.84}%`, ...d(delayMs + 260) }}>
+        <Sil path={KNIGHT_D} fill={tint(core, 0.9)} stroke={glow} />
+      </span>
+      {MS_STEPS.map((s, i) => (
+        <span
+          key={i}
+          className="ftp-ms-step absolute block"
+          style={{ left: `${50 + s.x * cell - cell * 0.3}%`, top: `${50 + s.y * cell - cell * 0.3}%`, width: `${cell * 0.6}%`, height: `${cell * 0.6}%`, ...d(delayMs + 620 + i * 110) }}
+        >
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.4" y="0.4" width="5.2" height="5.2" fill={tint(glow, 0.2)} stroke={tint(glow, 0.9)} strokeWidth="0.4" />
+            <path d="M3.6 1.4 A1.8 1.8 0 1 0 4.8 4.2 A1.4 1.4 0 1 1 3.6 1.4 Z" fill={glow} />
+          </svg>
+        </span>
+      ))}
+      <Drift tone={deep} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- T1 Lanternlight: your king may move two squares in a straight line ----
+   A lantern swings down over the king and its light throws eight straight
+   two-square paths out from the king's square, each ending in a lit mark. */
+function LanternlightScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <span className="ftp-ll-pool absolute block rounded-full" style={{ left: `${50 - cell * 2.5}%`, top: `${50 - cell * 2.5}%`, width: `${cell * 5}%`, height: `${cell * 5}%`, background: `radial-gradient(closest-side, ${tint(glow, 0.35)}, ${tint(core, 0.12)} 70%, transparent)`, ...d(delayMs + 300) }} />
+      <span className="ftp-ll-rays absolute block" style={{ left: `${50 - cell * 2.5}%`, top: `${50 - cell * 2.5}%`, width: `${cell * 5}%`, height: `${cell * 5}%`, ...d(delayMs + 440) }}>
+        <svg viewBox="0 0 50 50" className="block h-full w-full" aria-hidden="true">
+          <path d="M25 25 V5 M25 25 V45 M25 25 H5 M25 25 H45 M25 25 L5 5 M25 25 L45 5 M25 25 L5 45 M25 25 L45 45" stroke={tint(glow, 0.9)} strokeWidth="0.9" strokeDasharray="1.6 1.4" fill="none" />
+          <path d="M22 2 H28 V8 H22 Z M22 42 H28 V48 H22 Z M2 22 H8 V28 H2 Z M42 22 H48 V28 H42 Z M2 2 H8 V8 H2 Z M42 2 H48 V8 H42 Z M2 42 H8 V48 H2 Z M42 42 H48 V48 H42 Z" fill={tint(core, 0.3)} stroke={glow} strokeWidth="0.6" />
+        </svg>
+      </span>
+      <span className="ftp-ll-crown absolute block" style={{ left: `${50 - cell * 0.4}%`, top: `${50 - cell * 0.4}%`, width: `${cell * 0.8}%`, height: `${cell * 0.8}%`, ...d(delayMs + 380) }}>
+        <Sil path={CROWN_D} fill={core} stroke={tint(deep, 0.9)} />
+      </span>
+      <span className="ftp-ll-lantern absolute block" style={{ left: `${50 - cell * 0.3}%`, top: `${50 - cell * 1.5}%`, width: `${cell * 0.6}%`, height: `${cell * 0.9}%`, ...d(delayMs + 30) }}>
+        <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 0 V1.4 M1.4 2 H4.6 L5 3 V7 L4.4 8 H1.6 L1 7 V3 Z" fill={tint(deep, 0.9)} stroke={core} strokeWidth="0.35" {...SJ} />
+          <path d="M1.8 3.2 H4.2 V6.8 H1.8 Z" fill={glow} />
+        </svg>
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1200} />
+    </Stage>
+  );
+}
+
+/* --- T1 Glowmoss Ward: your king's square and the eight around it are safe -
+   Glowing moss creeps over the 3x3 patch centred on the king, tufts sprout
+   on its edge and fireflies rise from it. */
+const GM_FLIES = [
+  { l: 42, t: 44, d: 0 },
+  { l: 56, t: 42, d: 140 },
+  { l: 50, t: 56, d: 260 },
+];
+function GlowmossScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  const lo = 50 - cell * 1.5;
+  return (
+    <Stage>
+      <span className="ftp-gm-patch absolute block" style={{ left: `${lo}%`, top: `${lo}%`, width: `${cell * 3}%`, height: `${cell * 3}%`, ...d(delayMs + 40) }}>
+        <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 1 H29 V29 H1 Z" fill={tint(core, 0.36)} stroke={tint(glow, 0.9)} strokeWidth="0.6" strokeDasharray="3 1.4" />
+          <path d="M10 1 V29 M20 1 V29 M1 10 H29 M1 20 H29" stroke={tint(glow, 0.35)} strokeWidth="0.4" />
+          <circle cx="6" cy="6" r="1.6" fill={tint(glow, 0.5)} />
+          <circle cx="24" cy="8" r="1.2" fill={tint(glow, 0.5)} />
+          <circle cx="7" cy="24" r="1.3" fill={tint(glow, 0.5)} />
+          <circle cx="23" cy="23" r="1.7" fill={tint(glow, 0.5)} />
+        </svg>
+      </span>
+      <span className="ftp-gm-tuft absolute block" style={{ left: `${lo}%`, top: `${lo + cell * 3 - 2}%`, width: `${cell * 3}%`, height: "2.4%", background: `repeating-linear-gradient(90deg, ${tint(glow, 0.9)} 0 4%, transparent 4% 8%)`, clipPath: "polygon(0 100%, 4% 0, 8% 100%, 12% 0, 16% 100%, 20% 0, 24% 100%, 28% 0, 32% 100%, 36% 0, 40% 100%, 44% 0, 48% 100%, 52% 0, 56% 100%, 60% 0, 64% 100%, 68% 0, 72% 100%, 76% 0, 80% 100%, 84% 0, 88% 100%, 92% 0, 96% 100%, 100% 0, 100% 100%)", ...d(delayMs + 420) }} />
+      <span className="ftp-gm-crown absolute block" style={{ left: `${50 - cell * 0.4}%`, top: `${50 - cell * 0.4}%`, width: `${cell * 0.8}%`, height: `${cell * 0.8}%`, ...d(delayMs + 300) }}>
+        <Sil path={CROWN_D} fill={tint(glow, 0.95)} stroke={tint(deep, 0.9)} />
+      </span>
+      {GM_FLIES.map((f, i) => (
+        <span key={i} className="ftp-gm-fly absolute block rounded-full" style={{ left: `${f.l}%`, top: `${f.t}%`, width: "1.2%", height: "1.2%", background: WARM, ...d(delayMs + 700 + f.d) }} />
+      ))}
+      <Drift tone={core} delayMs={delayMs + 1250} />
+    </Stage>
+  );
+}
+
+/* --- T1 Thistledown: enemy knights may move but not take anything ----------
+   Thistledown drifts in on the wind and its burrs catch on an enemy knight;
+   the knight's capture mark is tangled and struck through. */
+const TD_DOWN = [
+  { t: 38, d: 0 },
+  { t: 46, d: 90 },
+  { t: 54, d: 180 },
+];
+const TD_BURRS = [
+  { l: 46.2, t: 45, d: 0 },
+  { l: 51.4, t: 47.6, d: 110 },
+  { l: 48, t: 51, d: 220 },
+];
+function ThistledownScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      {TD_DOWN.map((v, i) => (
+        <span
+          key={i}
+          className="ftp-td-down absolute block"
+          style={{ left: "26%", top: `${v.t}%`, width: "2.6%", height: "2.6%", ...d(delayMs + 20 + v.d) }}
+        >
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 3 L3 0.4 M3 3 L5.4 1.6 M3 3 L5.4 4.4 M3 3 L3 5.6 M3 3 L0.6 4.4 M3 3 L0.6 1.6" stroke={tint(glow, 0.9)} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-td-knight absolute block" style={{ left: `${50 - cell * 0.45}%`, top: `${50 - cell * 0.45}%`, width: `${cell * 0.9}%`, height: `${cell * 0.9}%`, ...d(delayMs + 200) }}>
+        <Sil path={KNIGHT_D} fill={tint(deep, 0.9)} stroke={glow} />
+      </span>
+      {TD_BURRS.map((b, i) => (
+        <span key={i} className="ftp-td-burr absolute block" style={{ left: `${b.l}%`, top: `${b.t}%`, width: "2.2%", height: "2.2%", ...d(delayMs + 560 + b.d) }}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <circle cx="3" cy="3" r="1.6" fill={core} />
+            <path d="M3 0.2 V1.4 M3 4.6 V5.8 M0.2 3 H1.4 M4.6 3 H5.8 M1 1 L1.8 1.8 M5 5 L4.2 4.2 M5 1 L4.2 1.8 M1 5 L1.8 4.2" stroke={core} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-td-nocap absolute block" style={{ left: `${50 + cell * 0.5}%`, top: `${50 - cell * 1.1}%`, width: `${cell * 0.7}%`, height: `${cell * 0.7}%`, ...d(delayMs + 880) }}>
+        <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+          <path d="M1.4 6.6 L6.6 1.4 M5.2 1.2 L6.8 2.8 M1.4 1.4 L6.6 6.6 M1.2 2.8 L2.8 1.2" stroke={glow} strokeWidth="0.7" {...SJ} />
+          <path d="M0.6 4 Q4 0.4 7.4 4 Q4 7.6 0.6 4" fill="none" stroke={tint(core, 0.95)} strokeWidth="0.6" />
+          <path d="M0.8 7.2 L7.2 0.8" stroke={WARM} strokeWidth="0.9" {...SJ} />
+        </svg>
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1300} />
     </Stage>
   );
 }
@@ -2065,80 +2973,80 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   /* --- mythic ladder: buffs (runeforge) ---------------------------------------- */
-  fm_glowmoss_ward: F(RuneforgeScene, ["#7fae5a", "#d6ffb0", "#1c4a2c"], GLYPH.fm_glowmoss_ward, {
+  fm_glowmoss_ward: F(GlowmossScene, ["#7fae5a", "#d6ffb0", "#1c4a2c"], GLYPH.fm_glowmoss_ward, {
     ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
-  }, "moss"),
-  fm_moonlit_stride: F(RuneforgeScene, ["#8faadc", "#cdd6ff", "#222c44"], GLYPH.fm_moonlit_stride, {
+  }),
+  fm_moonlit_stride: F(MoonlitStrideScene, ["#8faadc", "#cdd6ff", "#222c44"], GLYPH.fm_moonlit_stride, {
     ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
-  }, "moon"),
-  fm_wyrmscale_mail: F(RuneforgeScene, ["#7fae5a", "#a8e07f", "#2a3a22"], GLYPH.fm_wyrmscale_mail, {
+  }),
+  fm_wyrmscale_mail: F(WyrmscaleScene, ["#7fae5a", "#a8e07f", "#2a3a22"], GLYPH.fm_wyrmscale_mail, {
     ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
-  }, "scale"),
-  fm_stormcaller: F(RuneforgeScene, ["#8faadc", "#ffd76a", "#3a3f5e"], GLYPH.fm_stormcaller, {
+  }),
+  fm_stormcaller: F(StormcallerScene, ["#8faadc", "#ffd76a", "#3a3f5e"], GLYPH.fm_stormcaller, {
     ordering: "sweep", staggerMs: 70, victims: ["r", "b"], hasLead: true, sound: "lightning", source: "empower", anchor: "cast",
-  }, "storm"),
-  fm_phoenix_feather: F(RuneforgeScene, ["#e6432c", "#ffd76a", "#2b1218"], GLYPH.fm_phoenix_feather, {
+  }),
+  fm_phoenix_feather: F(PhoenixFeatherScene, ["#e6432c", "#ffd76a", "#2b1218"], GLYPH.fm_phoenix_feather, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
-  }, "phoenix"),
-  fm_dragonblood: F(RuneforgeScene, ["#a31d1d", "#ff8a3d", "#2b1218"], GLYPH.fm_dragonblood, {
+  }),
+  fm_dragonblood: F(DragonbloodScene, ["#a31d1d", "#ff8a3d", "#2b1218"], GLYPH.fm_dragonblood, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "colossus", source: "empower", anchor: "cast",
-  }, "blood"),
-  fm_sunforge: F(RuneforgeScene, ["#ffd76a", "#fff4d6", "#3a2c14"], GLYPH.fm_sunforge, {
+  }),
+  fm_sunforge: F(SunforgeScene, ["#ffd76a", "#fff4d6", "#3a2c14"], GLYPH.fm_sunforge, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
-  }, "sun"),
-  fm_eclipse_crown: F(RuneforgeScene, ["#ffd76a", "#fff4d6", "#141322"], GLYPH.fm_eclipse_crown, {
+  }),
+  fm_eclipse_crown: F(EclipseCrownScene, ["#ffd76a", "#fff4d6", "#141322"], GLYPH.fm_eclipse_crown, {
     ordering: "radial", staggerMs: 30, victims: "all", hasLead: true, sound: "snooze", source: "stun", anchor: "board",
-  }, "eclipse"),
+  }),
 
   /* --- mythic ladder: hexes (hexweave) ----------------------------------------- */
-  fm_hex_thistledown: F(HexweaveScene, ["#8f5fbf", "#c9a2ff", "#1e1430"], GLYPH.fm_hex_thistledown, {
+  fm_hex_thistledown: F(ThistledownScene, ["#8f5fbf", "#c9a2ff", "#1e1430"], GLYPH.fm_hex_thistledown, {
     ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "siege", anchor: "board",
-  }, "burr"),
-  fm_hex_fogbank: F(HexweaveScene, ["#8a94a8", "#d9d2c0", "#22262e"], GLYPH.fm_hex_fogbank, {
+  }),
+  fm_hex_fogbank: F(FogbankScene, ["#8a94a8", "#d9d2c0", "#22262e"], GLYPH.fm_hex_fogbank, {
     ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "shades", anchor: "board",
-  }, "fog"),
-  fm_hex_brambleroot: F(HexweaveScene, ["#4a5c2f", "#a8e07f", "#1c2418"], GLYPH.fm_hex_brambleroot, {
+  }),
+  fm_hex_brambleroot: F(BramblerootScene, ["#4a5c2f", "#a8e07f", "#1c2418"], GLYPH.fm_hex_brambleroot, {
     ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "wall", anchor: "cast",
-  }, "thorn"),
-  fm_hex_sirens_call: F(HexweaveScene, ["#5fc9b0", "#8fe8ff", "#1c3a5e"], GLYPH.fm_hex_sirens_call, {
+  }),
+  fm_hex_sirens_call: F(SirensCallScene, ["#5fc9b0", "#8fe8ff", "#1c3a5e"], GLYPH.fm_hex_sirens_call, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
-  }, "song"),
-  fm_hex_gorgon_gaze: F(HexweaveScene, ["#7fae5a", "#a8e07f", "#26262c"], GLYPH.fm_hex_gorgon_gaze, {
+  }),
+  fm_hex_gorgon_gaze: F(GorgonGazeScene, ["#7fae5a", "#a8e07f", "#26262c"], GLYPH.fm_hex_gorgon_gaze, {
     ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "board",
-  }, "gaze"),
-  fm_hex_iron_maiden: F(HexweaveScene, ["#c9cdd6", "#e05252", "#3a3a40"], GLYPH.fm_hex_iron_maiden, {
+  }),
+  fm_hex_iron_maiden: F(IronMaidenScene, ["#c9cdd6", "#e05252", "#3a3a40"], GLYPH.fm_hex_iron_maiden, {
     ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "clockcage", source: "frozen", anchor: "cast",
-  }, "stone"),
-  fm_hex_kings_moat: F(HexweaveScene, ["#3a5f8a", "#8faadc", "#0e1a2a"], GLYPH.fm_hex_kings_moat, {
+  }),
+  fm_hex_kings_moat: F(KingsMoatScene, ["#3a5f8a", "#8faadc", "#0e1a2a"], GLYPH.fm_hex_kings_moat, {
     ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "wall", source: "blindfold", anchor: "board",
-  }, "moat"),
-  fm_hex_winter_court: F(HexweaveScene, ["#9fd8ff", "#e8f8ff", "#1c3a5e"], GLYPH.fm_hex_winter_court, {
+  }),
+  fm_hex_winter_court: F(WinterCourtScene, ["#9fd8ff", "#e8f8ff", "#1c3a5e"], GLYPH.fm_hex_winter_court, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
-  }, "frost"),
+  }),
 
   /* --- mythic ladder: boons (blessing) ----------------------------------------- */
-  fm_boon_lanternlight: F(BlessingScene, ["#ffd76a", "#fff4d6", "#3a2c14"], GLYPH.fm_boon_lanternlight, {
+  fm_boon_lanternlight: F(LanternlightScene, ["#ffd76a", "#fff4d6", "#3a2c14"], GLYPH.fm_boon_lanternlight, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral", source: "empower", anchor: "cast",
-  }, "lantern"),
-  fm_boon_hearthbread: F(BlessingScene, ["#c98a4c", "#ffe9b0", "#3e2f1c"], GLYPH.fm_boon_hearthbread, {
+  }),
+  fm_boon_hearthbread: F(HearthbreadScene, ["#c98a4c", "#ffe9b0", "#3e2f1c"], GLYPH.fm_boon_hearthbread, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
-  }, "bread"),
-  fm_boon_dewdrop: F(BlessingScene, ["#5fc9b0", "#dff7ff", "#1c3a3a"], GLYPH.fm_boon_dewdrop, {
+  }),
+  fm_boon_dewdrop: F(DewdropScene, ["#5fc9b0", "#dff7ff", "#1c3a3a"], GLYPH.fm_boon_dewdrop, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
-  }, "drop"),
-  fm_boon_oathstone: F(BlessingScene, ["#d9d2c0", "#ffd76a", "#3a3026"], GLYPH.fm_boon_oathstone, {
+  }),
+  fm_boon_oathstone: F(OathstoneScene, ["#d9d2c0", "#ffd76a", "#3a3026"], GLYPH.fm_boon_oathstone, {
     ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "aegis", source: "shield", anchor: "board",
-  }, "oath"),
-  fm_boon_windrider: F(BlessingScene, ["#9fd8ff", "#fff4d6", "#1c3a5e"], GLYPH.fm_boon_windrider, {
+  }),
+  fm_boon_windrider: F(WindriderScene, ["#9fd8ff", "#fff4d6", "#1c3a5e"], GLYPH.fm_boon_windrider, {
     ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
-  }, "wind"),
-  fm_boon_lifebloom: F(BlessingScene, ["#7fae5a", "#ff9dd6", "#1c2418"], GLYPH.fm_boon_lifebloom, {
+  }),
+  fm_boon_lifebloom: F(LifebloomScene, ["#7fae5a", "#ff9dd6", "#1c2418"], GLYPH.fm_boon_lifebloom, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
-  }, "bloom"),
-  fm_boon_royal_road: F(BlessingScene, ["#ffd76a", "#fff2c9", "#3a2c14"], GLYPH.fm_boon_royal_road, {
+  }),
+  fm_boon_royal_road: F(RoyalRoadScene, ["#ffd76a", "#fff2c9", "#3a2c14"], GLYPH.fm_boon_royal_road, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral", source: "empower", anchor: "cast",
-  }, "road"),
-  fm_boon_worldheart: F(BlessingScene, ["#c9312b", "#ffd76a", "#2b1218"], GLYPH.fm_boon_worldheart, {
+  }),
+  fm_boon_worldheart: F(WorldheartScene, ["#c9312b", "#ffd76a", "#2b1218"], GLYPH.fm_boon_worldheart, {
     ordering: "radial", staggerMs: 30, victims: "all", hasLead: true, sound: "crownrain", source: "rally", anchor: "cast",
-  }, "heart"),
+  }),
 };

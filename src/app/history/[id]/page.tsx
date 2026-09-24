@@ -13,7 +13,10 @@ import { CompletedGame, loadGameHistory, timeControlLabel } from "@/lib/gameHist
 import { gameToPGN } from "@/lib/pgn";
 import { TIER_LABEL } from "@/lib/tiers";
 import { useZenHotkey } from "@/lib/useZenMode";
-import { Button, LinkButton } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
+import Loading from "./loading";
 
 type State =
   | { kind: "loading" }
@@ -47,37 +50,29 @@ export default function HistoryReplayPage() {
 
   if (state.kind === "replay") return <Replay game={state.game} />;
 
+  // Until the stored entry is read (one microtask after mount), the route
+  // skeleton holds the replay's geometry; a bare "Loading..." line used a
+  // different nav padding and swapped for a board (F024).
+  if (state.kind === "loading") return <Loading />;
+
+  // Both dead ends use the shared panel, so they read like every other
+  // missing-thing state on the site (F040).
+  if (state.kind === "missing") {
+    const copy = NOT_FOUND_COPY.historyGame;
+    return (
+      <NotFoundPanel title={copy.title} detail={copy.detail} action={copy.action} secondary={copy.secondary} />
+    );
+  }
+
+  const copy = NOT_FOUND_COPY.historyNoMoves;
   return (
-    <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
-        <Logo />
-        <Link href="/history" className="px-3 py-1.5 text-sm hover:bg-[color:var(--bg-raised)] text-parchment-100">
-          Back to history
-        </Link>
-      </nav>
-      <section className="max-w-xl mx-auto px-6 py-16 text-center">
-        {state.kind === "loading" ? (
-          <div className="text-[12px] text-parchment-400">Loading…</div>
-        ) : state.kind === "no-moves" ? (
-          <>
-            <h1 className="font-display text-3xl">No moves recorded</h1>
-            <p className="mt-3 text-parchment-200">
-              This game was saved before move replays existed, so only its summary is available.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="font-display text-3xl">Game not found</h1>
-            <p className="mt-3 text-parchment-200">
-              Game history is stored per device; this game isn&apos;t saved on this one.
-            </p>
-          </>
-        )}
-        <LinkButton tone="leaf" href="/history" className="inline-block mt-8 px-5 py-2 font-body">
-          Back to history
-        </LinkButton>
-      </section>
-    </main>
+    <NotFoundPanel
+      eyebrow="Replay unavailable"
+      title={copy.title}
+      detail={copy.detail}
+      action={copy.action}
+      secondary={copy.secondary}
+    />
   );
 }
 
@@ -162,6 +157,12 @@ function Replay({ game }: { game: CompletedGame }) {
         </Link>
       </nav>
       <div className="mx-auto w-full max-w-[1100px] px-3 pb-10 sm:px-6">
+        {/* The page had no h1 (F132). The visible summary line below already
+            says what this is, so the heading is for assistive tech and the
+            document outline only; the layout does not change. */}
+        <h1 className="sr-only">
+          Replay: {outcomeLabel} against {game.opponent}
+        </h1>
         <div className="zen-hide mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-parchment-400">
           <span>
             {outcomeLabel} · {game.reason} · {timeControlLabel(game.baseSec, game.incSec)} ·{" "}
@@ -229,7 +230,9 @@ function RuleLine({
     <div className="plate p-2 px-3">
       <span className="text-[12px] text-parchment-400">{label} </span>
       <span className={`font-display text-sm font-semibold tier-${nerf.tier}`}>{nerf.name}</span>
-      <span className="text-xs leading-snug text-parchment-300">
+      {/* Rule text is content, so the 13px body floor (text-xs is 10.5px on
+          the 14px root). */}
+      <span className="text-[13px] leading-snug text-parchment-300">
         : {nerf.description} <span className="text-parchment-400">({TIER_LABEL[nerf.tier] ?? ""})</span>
       </span>
     </div>

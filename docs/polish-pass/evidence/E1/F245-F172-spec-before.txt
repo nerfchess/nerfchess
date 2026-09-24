@@ -1,0 +1,14 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:250:7 › tutorial › every HowTo step fragment resolves to an element on the page (872ms)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:269:7 › tutorial › the tutorial and the guide agree on the number of house rules (20.9s)
+    - Expected  - 1
+    + Received  + 6
+    - Array []
+    + Array [
+    +   "modes",
+    +   "rules",
+    +   "cards",
+    +   "win",
+    + ]
+    Expected substring: "Six house rules"
+    Received string:    "<!DOCTYPE html><html lang=\"en\" data-theme=\"dark\" class=\"__variable_50a98f __variable_e896d9\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=devic [truncated]
+  2 failed

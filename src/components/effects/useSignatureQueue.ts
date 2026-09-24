@@ -15,11 +15,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Color, Square } from "@/engine/types";
+import { fxDurationScale } from "@/lib/settings";
+import { detectTempo, tempoScale } from "@/components/useMotionTempo";
 
 /** What a surface can tell the board about a play beyond the card id. Today
  *  that is who cast it: the effect geometry aims and leans away from the
  *  caster, and every surface already knows the answer, so it no longer has to
- *  be guessed from which side lost more pieces. Optional throughout — a
+ *  be guessed from which side lost more pieces. Optional throughout: a
  *  surface that has not been widened yet still fires with just an id. */
 export interface SigPlayMeta {
   caster?: Color;
@@ -44,8 +46,32 @@ export interface SigPlaySlot {
 }
 
 /** How long one cast spectacle owns the board before the next queued play
- *  steps out (the historic hold-and-replay spacing). */
+ *  steps out (the historic hold-and-replay spacing), at normal tempo and the
+ *  default effect duration. */
 const SPACING_MS = 2600;
+
+/** How the queue steps right now. `animMs` is how long a spectacle owns the
+ *  board: it follows the same two dials the spectacle itself follows, the
+ *  effect duration (--fx-dur) and the tempo (fast 0.6, off 0, which also
+ *  covers reduced motion and the low-time hold). Only that time counts as
+ *  busy: with animations off no spectacle plays, so the board and the draft
+ *  overlay's entrance are never held for it (F208, the draft used to lose up
+ *  to 2.6s per queued play from its decision window).
+ *  `stepMs` is how far apart queued plays step out. With animations off it
+ *  stays the historic reading hold (2600 x --fx-dur): the only card-play
+ *  feedback then is CastTextFallback, which is keyed to the single play slot,
+ *  so a shorter step would replace each announcement before it can be read
+ *  and a burst would leave only the last one on screen. The hold is below the
+ *  fallback's own 3600ms dismiss, so each chip is read, then replaced. */
+function stepping(): { animMs: number; stepMs: number } {
+  const base = SPACING_MS * fxDurationScale();
+  const animMs = Math.round(base * tempoScale(detectTempo()));
+  return { animMs, stepMs: animMs > 0 ? animMs : Math.round(base) };
+}
+/** A floor under the step: each play keeps its own frame: plays fired in one
+ *  tick would otherwise batch into one render and only the last would reach
+ *  the board (the R9 coalescing defect this queue exists to prevent). */
+const MIN_STEP_MS = 16;
 /** Newest plays kept when a burst outruns the queue (historic cap). */
 const MAX_QUEUED = 6;
 
@@ -87,15 +113,20 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
 
   const playNow = useCallback(
     (play: QueuedPlay) => {
-      busyUntilRef.current = Date.now() + SPACING_MS;
+      const { animMs, stepMs } = stepping();
+      busyUntilRef.current = Date.now() + Math.max(stepMs, MIN_STEP_MS);
       setSignatureCard({
         id: play.id,
         key: ++keyRef.current,
         caster: play.meta?.caster,
         sq: play.meta?.sq,
       });
-      setBusy(true);
-      scheduleBusyClear();
+      // Only a playing spectacle is busy: a text announcement never holds
+      // the board or the draft.
+      if (animMs > 0) {
+        setBusy(true);
+        scheduleBusyClear();
+      }
     },
     [scheduleBusyClear],
   );
@@ -113,7 +144,10 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
       if (play == null) return;
       playNow(play);
       if (queueRef.current.length > 0)
-        timerRef.current = window.setTimeout(() => drainRef.current(), SPACING_MS);
+        timerRef.current = window.setTimeout(
+          () => drainRef.current(),
+          Math.max(0, busyUntilRef.current - Date.now()),
+        );
     };
   }, [gateRef, playNow]);
 

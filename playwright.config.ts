@@ -88,10 +88,18 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  // Fleet runs share one supervised dev server on :3000. If it is mid-restart
+  // when a spec starts, `reuseExistingServer` finds nothing and Playwright
+  // would start a second `npm run dev` on the shared port, so skip the web
+  // server whenever the caller says one is already managed: PW_NO_WEBSERVER=1
+  // (scripts/polish/heavy.sh sets it) or POLISH_BASE.
+  webServer:
+    process.env.PW_NO_WEBSERVER === "1" || process.env.POLISH_BASE
+      ? undefined
+      : {
+          command: "npm run dev",
+          url: "http://localhost:3000",
+          reuseExistingServer: !process.env.CI,
+          timeout: 180_000,
+        },
 });

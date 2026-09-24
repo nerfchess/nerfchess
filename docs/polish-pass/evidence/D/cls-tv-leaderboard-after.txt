@@ -1,0 +1,10 @@
+  /tv  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3062ms
+  /tv  1280x800|dark|full|signed-out|normal  HTTP 404  CLS 0.0001 (sum 0.0001, 0 >0.01)  41941ms
+  /tv  390x844|dark|full|user|normal  HTTP 200  CLS 0.002 (sum 0.002, 0 >0.01)  18018ms
+  /tv  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0027, 0 >0.01)  38847ms
+  /leaderboard  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0001 (sum 0.0001, 0 >0.01)  28131ms
+  /leaderboard  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0025 (sum 0.0049, 0 >0.01)  9901ms
+  /leaderboard  390x844|dark|full|user|normal  HTTP 200  CLS 0.002 (sum 0.0021, 0 >0.01)  4239ms
+  /leaderboard  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0039, 0 >0.01)  2740ms
+
+[cls] 8 cells, 0 above target 0.01, 0 over ceiling

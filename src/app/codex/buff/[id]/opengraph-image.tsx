@@ -1,22 +1,22 @@
-// Per-card social preview for /codex/buff/[id]: the card's name, tier, family,
-// and rule text on the house dark background. Unknown ids fall back to the
-// generic site image instead of erroring.
+// Per-card preview for /codex/buff/[id]: the card's face icon and name in its
+// tier ink, its tier, mode and rule (src/lib/ogCard.tsx codexCard). The alt
+// text names the card (F249). An unknown id, or one requested under the wrong
+// family path, gets the brand card, never an error.
 
-import { BUFF_BY_ID, buffModes, buffType, modeLabel, tierName } from "@/lib/cardCodex";
-import { OG_CONTENT_TYPE, OG_SIZE, cardOgImage, siteOgImage } from "@/lib/ogCard";
+import { OG_CONTENT_TYPE, OG_SIZE } from "@/lib/ogCard";
+import { codexAlt, codexImage } from "@/lib/og/codexImage";
 
-export const size = OG_SIZE;
-export const contentType = OG_CONTENT_TYPE;
-export const alt = "Nerf Chess codex card preview";
+// Rendered on request and cached (Cache-Control plus the edge cache in
+// src/lib/og/render.ts), not prerendered: the page's generateStaticParams
+// would otherwise make the build render one PNG per card id, about 2,500 of
+// them, most of which are never shared.
+export const dynamic = "force-dynamic";
+
+export async function generateImageMetadata({ params }: { params: { id: string } }) {
+  return [{ id: "card", size: OG_SIZE, contentType: OG_CONTENT_TYPE, alt: codexAlt("buff", params.id) }];
+}
 
 export default async function OgImage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
-  const buff = BUFF_BY_ID[id];
-  if (!buff) return siteOgImage();
-  return cardOgImage({
-    eyebrow: `Nerf Chess codex · ${buffType(buff)}`,
-    title: buff.name,
-    meta: `Tier ${tierName(buff.tier)} · ${modeLabel(buffModes(buff))}`,
-    body: buff.description,
-  });
+  return codexImage("buff", id);
 }

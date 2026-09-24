@@ -1,4 +1,4 @@
-// Orchestrator — port of houseTick's filler path. It only handles SPAWNING;
+// Orchestrator, port of houseTick's filler path. It only handles SPAWNING;
 // each game drives its own actions via its own timer (see game.ts), so there is
 // no per-tick engine batch and none of the DO's single-thread caps.
 import { HOUSE_ROSTER, houseFillerSpawnDelayMs, pickHouseSeek, type HousePersona } from "../src/lib/server/bots";
@@ -9,6 +9,17 @@ import { randomInt } from "./pools";
 import type { ArenaSink } from "./sink";
 import type { ArenaGameSummary, ExternalGameMeta } from "./types";
 
+/** Personas the arena may seat in a new filler game: not already in one of
+ * its own games, and not seated by the DO (slice HB, P19: a profile's
+ * "Playing right now" must never point at two games). Pure, for the tests. */
+export function freeFillerPersonas(
+  roster: readonly HousePersona[],
+  busy: ReadonlySet<string>,
+  doSeated: ReadonlySet<string>,
+): HousePersona[] {
+  return roster.filter((p) => !busy.has(p.userId) && !doSeated.has(p.userId));
+}
+
 export class Arena {
   private readonly games = new Map<string, ArenaGame>();
   private readonly busy = new Set<string>(); // persona userIds currently seated
@@ -18,7 +29,7 @@ export class Arena {
   // With the DO wired, don't spawn until it confirms (ingest on + human present).
   // Standalone (M1, no ingest) follows the local enabled flag.
   private spawning: boolean;
-  // Tier 3: when a human was last seen directly — a /lobby fetch or a live
+  // Tier 3: when a human was last seen directly, a /lobby fetch or a live
   // spectator socket. With no DO configured this replaces the DO's stand-down
   // signal: spawn only while presence is fresh (see tick).
   private lastPresenceAt = 0;
@@ -27,6 +38,9 @@ export class Arena {
   // wstart) and then incremental move/draft frames. Cleared when the game leaves
   // the watch set or ends, so a re-watch re-bootstraps.
   private snapshotSent = new Set<string>();
+  // Persona ids the DO reports seated in its own games (the `seated` field of
+  // the /arena/games reply). Empty until the DO sends it (REQUEST R12).
+  private doSeated = new Set<string>();
 
   constructor(
     private readonly config: ArenaConfig,
@@ -88,6 +102,7 @@ export class Arena {
         .syncGames(this.liveMeta())
         .then((r) => {
           this.spawning = r.enabled;
+          this.doSeated = new Set(r.seated);
           this.reconcileWatch(r.watch);
         })
         .catch(() => {
@@ -97,7 +112,7 @@ export class Arena {
     if (!this.config.enabled || !this.spawning) return;
     // Spawn one filler game, capped and spaced (mirror worker.ts:2526).
     if (this.games.size < this.config.maxGames && now >= this.nextFillerAt) {
-      const free = HOUSE_ROSTER.filter((p) => !this.busy.has(p.userId));
+      const free = freeFillerPersonas(HOUSE_ROSTER, this.busy, this.doSeated);
       if (free.length >= 2) {
         const a = free.splice(randomInt(free.length), 1)[0];
         const b = free.splice(randomInt(free.length), 1)[0];
@@ -113,7 +128,7 @@ export class Arena {
     const { pool, mode } = pickHouseSeek(randomInt);
     const aWhite = randomInt(2) === 0;
     const [white, black] = aWhite ? [a, b] : [b, a];
-    const game = new ArenaGame(white, black, pool, mode, this.sink, this.config.replayVersion, (g) => this.onDone(g), this.config.fastMs, this.config.thinkMult, this.config.searchCeilingMs);
+    const game = new ArenaGame(white, black, pool, mode, this.sink, this.config.replayVersion, (g) => this.onDone(g), this.config.fastMs, this.config.thinkMult, this.config.searchCeilingMs, this.config.excludeFillerCards);
     this.games.set(game.id, game);
     this.busy.add(white.userId);
     this.busy.add(black.userId);
@@ -133,10 +148,10 @@ export class Arena {
       const g = this.games.get(id);
       if (!g || !g.started()) continue;
       this.snapshotSent.add(id);
-      // Snapshot first, THEN open the per-move stream — so no move frame can
-      // reach the DO before the replica it needs exists.
-      void this.ingest.postFrame({ kind: "snapshot", ...g.spectatorSnapshot() });
-      this.ingest.beginStreaming(id);
+      // The snapshot heads the game's ordered frame chain, so no move frame
+      // can reach the DO before the replica it needs exists. A snapshot that
+      // fails to land is retried on the next sync.
+      void this.ingest.beginStreaming({ kind: "snapshot", ...g.spectatorSnapshot() }, () => this.snapshotSent.delete(id));
     }
   }
 

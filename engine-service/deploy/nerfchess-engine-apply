@@ -5,7 +5,7 @@
 # fixed bundle paths, and a commit hash for the applied-commit stamp.
 #
 # A bundle that is byte-identical to the installed one is skipped (no restart),
-# so an update that only touches one service never bounces the other — and the
+# so an update that only touches one service never bounces the other, and the
 # arena's in-RAM games only die when the arena itself actually changed.
 set -euo pipefail
 VER="${1:?}"
@@ -26,8 +26,8 @@ fi
 apply_one() { # name bundle target env_file env_key unit port
   local name="$1" bundle="$2" target="$3" env_file="$4" env_key="$5" unit="$6" port="$7"
   if cmp -s "$bundle" "$target"; then
-    # Bundle unchanged; still stamp the env version (a version-only drift —
-    # same code, new number — needs the stamp + restart to take effect).
+    # Bundle unchanged; still stamp the env version (a version-only drift,
+    # same code, new number, needs the stamp + restart to take effect).
     if grep -q "^$env_key=$VER\$" "$env_file"; then
       echo "$name: unchanged, skipping restart"
       return 0

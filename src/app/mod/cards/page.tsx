@@ -9,11 +9,11 @@
 import type { Buff } from "@/engine/buff";
 import { isRetired } from "@/engine/retired";
 import type { Nerf } from "@/engine/nerf";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ModGateNotice, useModGate } from "@/components/mod/ModGate";
 import { ModShell } from "@/components/mod/ModShell";
 import { Button } from "@/components/ui/Button";
+import { useArmedPress } from "@/components/mod/ui";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 type Kind = "buff" | "nerf";
@@ -88,8 +88,13 @@ function draftFrom(card: CodeCard, o: OverrideRow | undefined): Draft {
 }
 
 export default function ModCardsPage() {
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  const gate = useModGate();
+  const { isMod } = gate;
   const [overrides, setOverrides] = useState<Map<string, OverrideRow>>(new Map());
+  // The editor stays closed until the saved overrides are known: a draft built
+  // from an empty map would overwrite an override the table failed to show
+  // (for example re-enabling a disabled card).
+  const [overridesState, setOverridesState] = useState<"loading" | "ok" | "failed">("loading");
   // The code-defined catalog, built from the lazily imported card libraries so
   // the ~26k-line engine stays out of the initial /mod/cards bundle. Null until
   // the import resolves (only fetched once the mod check passes).
@@ -102,24 +107,33 @@ export default function ModCardsPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchMe().then(setMe);
+  const loadOverrides = useCallback(async () => {
+    try {
+      const res = await fetch("/api/mod/cards");
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { overrides?: OverrideRow[] };
+      const map = new Map<string, OverrideRow>();
+      for (const o of data.overrides ?? []) map.set(`${o.kind}:${o.id}`, o);
+      setOverrides(map);
+      setOverridesState("ok");
+    } catch {
+      setOverridesState("failed");
+      setEditing(null);
+      setDraft(null);
+    }
   }, []);
 
-  const isMod = me && (me.role === "mod" || me.role === "admin");
-
-  const loadOverrides = async () => {
-    const res = await fetch("/api/mod/cards");
-    if (!res.ok) return;
-    const data = (await res.json()) as { overrides?: OverrideRow[] };
-    const map = new Map<string, OverrideRow>();
-    for (const o of data.overrides ?? []) map.set(`${o.kind}:${o.id}`, o);
-    setOverrides(map);
+  const retryOverrides = () => {
+    setOverridesState("loading");
+    void loadOverrides();
   };
 
   useEffect(() => {
-    if (isMod) void (async () => { await loadOverrides(); })();
-  }, [isMod]);
+    if (!isMod) return;
+    void (async () => {
+      await loadOverrides();
+    })();
+  }, [isMod, loadOverrides]);
 
   // Pull the card engine in its own async chunk once the mod check passes, then
   // assemble the code-defined catalog from it.
@@ -161,24 +175,30 @@ export default function ModCardsPage() {
     if (!draft) return;
     setBusy(true);
     const tier = draft.tier === "" ? null : Number(draft.tier);
-    const res = await fetch("/api/mod/cards", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: card.id,
-        kind: card.kind,
-        name: draft.name.trim() === "" ? null : draft.name.trim(),
-        description: draft.description.trim() === "" ? null : draft.description.trim(),
-        flavor: draft.flavor.trim() === "" ? null : draft.flavor.trim(),
-        tier,
-        enabled: draft.enabled,
-      }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { error?: string };
-    setBusy(false);
-    if (!res.ok) {
-      setNotice(data.error ?? "Save failed.");
+    try {
+      const res = await fetch("/api/mod/cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: card.id,
+          kind: card.kind,
+          name: draft.name.trim() === "" ? null : draft.name.trim(),
+          description: draft.description.trim() === "" ? null : draft.description.trim(),
+          flavor: draft.flavor.trim() === "" ? null : draft.flavor.trim(),
+          tier,
+          enabled: draft.enabled,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setNotice(data.error ?? "Save failed.");
+        return;
+      }
+    } catch {
+      setNotice("Save failed: the server did not answer. Your edit is still open.");
       return;
+    } finally {
+      setBusy(false);
     }
     setNotice(null);
     setEditing(null);
@@ -188,11 +208,17 @@ export default function ModCardsPage() {
 
   const reset = async (card: CodeCard) => {
     setBusy(true);
-    const res = await fetch(`/api/mod/cards?id=${encodeURIComponent(card.id)}`, { method: "DELETE" });
-    setBusy(false);
-    if (!res.ok) {
-      setNotice("Reset failed.");
+    try {
+      const res = await fetch(`/api/mod/cards?id=${encodeURIComponent(card.id)}&kind=${card.kind}`, { method: "DELETE" });
+      if (!res.ok) {
+        setNotice("Reset failed.");
+        return;
+      }
+    } catch {
+      setNotice("Reset failed: the server did not answer.");
       return;
+    } finally {
+      setBusy(false);
     }
     setNotice(null);
     setEditing(null);
@@ -201,19 +227,10 @@ export default function ModCardsPage() {
   };
 
   return (
-    <ModShell title="Card editor" isAdmin={me?.role === "admin"}>
+    <ModShell title="Card editor" isAdmin={gate.isAdmin}>
       <>
-        {me === undefined ? (
-          <div className="text-parchment-300">Loading…</div>
-        ) : !isMod ? (
-          <>
-                        <p className="mt-3 text-parchment-200">
-              This page is for moderators.{" "}
-              {!me && (
-                <Link href="/login" className="text-parchment-50 hover:underline">Sign in</Link>
-              )}
-            </p>
-          </>
+        {!isMod ? (
+          <ModGateNotice gate={gate} />
         ) : (
           <>
             
@@ -250,9 +267,23 @@ export default function ModCardsPage() {
               </label>
             </div>
 
-            {notice && <p className="mt-3 text-sm text-red-400">{notice}</p>}
+            {notice && (
+              <p role="alert" className="mt-3 text-sm text-red-400">
+                {notice}
+              </p>
+            )}
 
-            {!codeCards ? (
+            {overridesState === "failed" ? (
+              <div role="alert" className="mt-4 plate p-10 text-center text-sm text-parchment-200">
+                <p>
+                  Could not load the saved overrides. Editing is paused so a save cannot overwrite one
+                  that is not shown.
+                </p>
+                <Button size="sm" className="mt-3" onClick={retryOverrides}>
+                  Retry
+                </Button>
+              </div>
+            ) : !codeCards || overridesState === "loading" ? (
               <div className="mt-4 plate p-10 text-center text-parchment-400">
                 Loading the library…
               </div>
@@ -260,7 +291,7 @@ export default function ModCardsPage() {
             <div className="mt-4 plate p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[12px] text-parchment-400 border-b border-[color:var(--edge)]">
+                  <tr className="text-left text-[13px] text-parchment-400 border-b border-[color:var(--edge)]">
                     <th className="px-3 py-2 font-normal">Card</th>
                     <th className="px-3 py-2 font-normal">Kind</th>
                     <th className="px-3 py-2 font-normal">Tier</th>
@@ -304,7 +335,7 @@ export default function ModCardsPage() {
                 <p className="px-3 py-6 text-center text-parchment-400">No cards match.</p>
               )}
               {rows.length > LIST_CAP && (
-                <p className="px-3 py-3 text-xs text-parchment-400 border-t border-[color:var(--edge)]">
+                <p className="px-3 py-3 text-[13px] text-parchment-400 border-t border-[color:var(--edge)]">
                   Showing {LIST_CAP} of {rows.length} cards. Refine the search to see the rest.
                 </p>
               )}
@@ -347,6 +378,8 @@ function FragmentRow({
   onReset: () => void;
 }) {
   const patch = (p: Partial<Draft>) => draft && setDraft({ ...draft, ...p });
+  // Reset deletes the override: it asks twice (F121).
+  const resetPress = useArmedPress();
   return (
     <>
       <tr className="border-b border-[color:var(--edge)] align-top">
@@ -355,20 +388,20 @@ function FragmentRow({
             {effectiveName}
           </span>
           {overridden && (
-            <span className="ml-2 text-[12px] px-1.5 py-0.5 border border-[color:var(--edge-strong)] text-parchment-50 rounded-none">
+            <span className="ml-2 text-[13px] px-1.5 py-0.5 border border-[color:var(--edge-strong)] text-parchment-50 rounded-none">
               override
             </span>
           )}
           {!card.implemented && (
-            <span className="ml-2 text-[12px] text-parchment-400">stub</span>
+            <span className="ml-2 text-[13px] text-parchment-400">stub</span>
           )}
-          <div className="text-[12px] text-parchment-400">{card.id}</div>
+          <div className="text-[13px] text-parchment-400">{card.id}</div>
         </td>
         <td className="px-3 py-2 capitalize text-parchment-300">{card.kind}</td>
         <td className="px-3 py-2 text-parchment-300">
           {effectiveTier}
           {effectiveTier !== card.tier && (
-            <span className="ml-1 text-[12px] text-parchment-400">(code {card.tier})</span>
+            <span className="ml-1 text-[13px] text-parchment-400">(code {card.tier})</span>
           )}
         </td>
         <td className="px-3 py-2 text-parchment-300">
@@ -394,10 +427,11 @@ function FragmentRow({
               </Button>
               {overridden && (
                 <Button tone="ghost"
-                  onClick={onReset}
+                  onClick={() => resetPress.press(onReset)}
+                  onBlur={resetPress.disarm}
                   className="ml-2 px-3 py-1 text-[13px]" disabled={busy}
                   title="Delete the override and fall back to the code definition">
-                  Reset to code
+                  {resetPress.armed ? "Confirm reset" : "Reset to code"}
                 </Button>
               )}
             </>
@@ -409,7 +443,7 @@ function FragmentRow({
           <td colSpan={5} className="px-3 py-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="text-[12px] text-parchment-400">Name</span>
+                <span className="text-[13px] text-parchment-400">Name</span>
                 <input
                   value={draft.name}
                   onChange={(e) => patch({ name: e.target.value })}
@@ -418,7 +452,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[12px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
+                <span className="text-[13px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
                 <select
                   value={draft.tier}
                   onChange={(e) => patch({ tier: e.target.value })}
@@ -431,7 +465,7 @@ function FragmentRow({
                 </select>
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[12px] text-parchment-400">Description</span>
+                <span className="text-[13px] text-parchment-400">Description</span>
                 <textarea
                   value={draft.description}
                   onChange={(e) => patch({ description: e.target.value })}
@@ -441,7 +475,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[12px] text-parchment-400">Flavor</span>
+                <span className="text-[13px] text-parchment-400">Flavor</span>
                 <textarea
                   value={draft.flavor}
                   onChange={(e) => patch({ flavor: e.target.value })}

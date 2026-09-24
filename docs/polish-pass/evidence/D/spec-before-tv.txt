@@ -1,0 +1,40 @@
+      - Expect "toBeVisible" with timeout 15000ms
+      - waiting for getByRole('dialog')
+
+
+      118 |     await page.keyboard.press("Enter");
+      119 |     const dialog = page.getByRole("dialog");
+    > 120 |     await expect(dialog).toBeVisible();
+          |                          ^
+      121 |     await expect(dialog).toHaveAttribute("aria-modal", "true");
+      122 |     // Focus is inside, and Tab stays inside.
+      123 |     for (let i = 0; i < 12; i++) {
+        at /home/user/nerfchess/e2e/polish/social-routes.spec.ts:120:26
+
+    Error Context: test-results/polish-social-routes--tv-f-87555-hat-takes-and-returns-focus-chromium/error-context.md
+
+  5) [chromium] › e2e/polish/social-routes.spec.ts:133:7 › /tv › status chips are sentence case ────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: "none"
+    Received: "uppercase"
+
+      140 |       return { transform: s.textTransform, spacing: s.letterSpacing };
+      141 |     });
+    > 142 |     expect(style.transform).toBe("none");
+          |                             ^
+      143 |     expect(["normal", "0px"]).toContain(style.spacing);
+      144 |   });
+      145 | });
+        at /home/user/nerfchess/e2e/polish/social-routes.spec.ts:142:29
+
+    Error Context: test-results/polish-social-routes--tv-status-chips-are-sentence-case-chromium/error-context.md
+
+  5 failed
+    [chromium] › e2e/polish/social-routes.spec.ts:74:7 › /tv › keeps exactly one h1 once a game is on the board 
+    [chromium] › e2e/polish/social-routes.spec.ts:83:7 › /tv › live rows do not nest links inside the row button 
+    [chromium] › e2e/polish/social-routes.spec.ts:96:7 › /tv › board controls are 44px on a coarse pointer 
+    [chromium] › e2e/polish/social-routes.spec.ts:112:7 › /tv › fullscreen is a modal dialog that takes and returns focus 
+    [chromium] › e2e/polish/social-routes.spec.ts:133:7 › /tv › status chips are sentence case ─────
+  1 passed (2.1m)

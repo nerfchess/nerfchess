@@ -2,7 +2,8 @@
 
 import { ClubIcon } from "@/components/ClubIcon";
 import { SiteHeader } from "@/components/SiteHeader";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { FIELD_TEXT } from "@/components/social/fieldText";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -10,6 +11,7 @@ import { ChevronRight, Plus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 interface Club {
   id: string;
@@ -25,9 +27,19 @@ interface Club {
 
 export default function ClubsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // Who is looking, from the shared session (F014).
+  // `ensure` (wave 2): the header gives a first-time visitor a guest account,
+  // and guests can do everything this page offers. Without it the page read
+  // "signed out" while that mint ran and showed a sign-in prompt that turned
+  // into the guest view seconds later. Now the mint reads as unknown; only a
+  // failed mint (null) shows the sign-in prompt.
+  const { display } = useSession({ ensure: true });
   const [clubs, setClubs] = useState<Club[]>([]);
   const [query, setQuery] = useState("");
+  // Server matches for the current search (F038): the list above holds the 50
+  // biggest clubs plus the viewer's own, so a search also asks the server,
+  // which searches every club by name.
+  const [remote, setRemote] = useState<{ q: string; clubs: Club[] } | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,6 +49,8 @@ export default function ClubsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // The list skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(loading);
 
   const load = async () => {
     const res = await fetch("/api/clubs");
@@ -61,7 +75,6 @@ export default function ClubsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchMe().then((me) => !cancelled && setUser(me));
     void (async () => {
       try {
         await load();
@@ -101,16 +114,38 @@ export default function ClubsPage() {
   // Client-side filter over the already-fetched list, lichess-teams-style:
   // one search box narrows both "Your clubs" and the full directory. No new
   // API call; we just re-slice what we already have.
+  // Ask the server once typing pauses; the local filter answers at once.
+  useEffect(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return;
+    let cancelled = false;
+    const id = window.setTimeout(() => {
+      fetch(`/api/clubs?q=${encodeURIComponent(q)}`)
+        .then((res) => (res.ok ? (res.json() as Promise<{ clubs: Club[] }>) : null))
+        .then((data) => {
+          if (!cancelled && data) setRemote({ q, clubs: data.clubs });
+        })
+        .catch(() => {});
+    }, 250);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
+  }, [query]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return clubs;
-    return clubs.filter(
+    const local = clubs.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.description.toLowerCase().includes(q) ||
         c.owner_name.toLowerCase().includes(q),
     );
-  }, [clubs, query]);
+    if (remote?.q !== q) return local;
+    const seen = new Set(local.map((c) => c.id));
+    return [...local, ...remote.clubs.filter((c) => !seen.has(c.id))];
+  }, [clubs, query, remote]);
 
   const yourClubs = useMemo(() => filtered.filter((c) => !!c.joined), [filtered]);
 
@@ -133,7 +168,7 @@ export default function ClubsPage() {
               onClick={() => setShowCreate((v) => !v)}
               aria-expanded={showCreate}
               className="px-4 py-2 text-[13px] font-semibold">
-              {showCreate ? <X size={15} /> : <Plus size={15} />}
+              {showCreate ? <X size={15} aria-hidden /> : <Plus size={15} aria-hidden />}
               {showCreate ? "Close" : "New club"}
             </Button>
           </div>
@@ -145,15 +180,15 @@ export default function ClubsPage() {
           <form onSubmit={createClub} className="mt-5 plate p-5">
             <div className="font-display text-xl text-parchment">Create club</div>
             {error && (
-              <div className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
+              <div role="alert" className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
                 {error}
               </div>
             )}
-            {user === undefined ? (
-              <p className="mt-4 text-[13px] text-parchment-400">Checking account...</p>
-            ) : !user ? (
+            {display === undefined ? (
+              <p className="mt-4 text-[13px] text-parchment-400">Checking account…</p>
+            ) : !display ? (
               <p className="mt-4 text-[13px] text-parchment-400">
-                <Link href="/login?next=/clubs" className="text-gold-leaf hover:underline">
+                <Link href="/login?next=/clubs" className="text-gold-leaf underline underline-offset-2">
                   Sign in
                 </Link>{" "}
                 to create a club.
@@ -169,7 +204,7 @@ export default function ClubsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={60}
-                    className="mt-1 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-[13px] text-parchment"
+                    className={`mt-1 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 ${FIELD_TEXT} text-parchment`}
                   />
                 </div>
                 <div className="sm:row-span-2">
@@ -182,14 +217,15 @@ export default function ClubsPage() {
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={240}
                     rows={4}
-                    className="mt-1 w-full resize-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-[13px] text-parchment"
+                    className={`mt-1 w-full resize-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 ${FIELD_TEXT} text-parchment`}
                   />
                 </div>
                 <Button tone="leaf"
                   type="submit"
-                  disabled={busy || name.trim().length < 3}
+                  disabled={name.trim().length < 3}
+                  loading={busy}
                   className="h-fit w-full px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50">
-                  {busy ? "Creating..." : "Create club"}
+                  Create club
                 </Button>
               </div>
             )}
@@ -226,14 +262,15 @@ export default function ClubsPage() {
             <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
               {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
             </div>
-            {loading ? (
+            {(loading || held) && !loadError ? (
               <ul className="divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-4 px-5 py-4">
-                    <div className="h-[44px] w-[44px] shrink-0 bg-[color:var(--bg-raised)] animate-pulse" />
+                    {/* The shared .skeleton sweep (F026). */}
+                    <div className="skeleton h-[44px] w-[44px] shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <div className="h-3.5 w-40 bg-white/[0.07] animate-pulse" />
-                      <div className="mt-2 h-3 w-56 max-w-full bg-[color:var(--bg-raised)] animate-pulse" />
+                      <div className="skeleton h-3.5 w-40 max-w-full" />
+                      <div className="skeleton mt-2 h-3 w-56 max-w-full" />
                     </div>
                   </li>
                 ))}
@@ -264,7 +301,7 @@ export default function ClubsPage() {
                    
                     onClick={() => setShowCreate(true)}
                     className="mt-3 px-4 py-2 text-[13px] font-semibold">
-                    <Plus size={15} /> New club
+                    <Plus size={15} aria-hidden /> New club
                   </Button>
                 )}
               </div>
@@ -312,12 +349,13 @@ function ClubRow({ club }: { club: Club }) {
           <div className="mt-0.5 text-[13px] font-medium text-parchment-400">owner {club.owner_name}</div>
         </div>
         <span className="flex shrink-0 items-center gap-1.5 font-mono text-[12px] text-parchment-400 tabular-nums">
-          <Users size={13} />
+          <Users size={13} aria-hidden />
           {club.members}
+          <span className="sr-only"> members</span>
         </span>
         <ChevronRight
           size={16}
-          className="shrink-0 text-parchment-500 transition-all group-hover:translate-x-0.5 group-hover:text-parchment-200"
+          className="shrink-0 text-parchment-500 transition-transform group-hover:translate-x-0.5 group-hover:text-parchment-200"
           aria-hidden
         />
       </Link>

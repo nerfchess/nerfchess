@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Trophy, X } from "lucide-react";
-import { fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { RARITY_THEME } from "@/lib/achievementTheme";
 import type { AchievementRarity } from "@/lib/achievements";
 import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
+import { useExitPresence } from "@/lib/useExitPresence";
 
 // Desktop-only unlock toast: when an achievement lands (they are awarded
 // server-side after a game archives, silently), a small card slides into the
@@ -48,12 +49,18 @@ export function setAchievementToastsDisabled(off: boolean) {
 export function AchievementToast() {
   const [queue, setQueue] = useState<Unlock[]>([]);
   const [disabled, setDisabled] = useState(true);
+  // Follows the shared session (F010): it used to ask /me once on mount, so a
+  // guest minted by the header a moment later was never polled at all.
+  const { user } = useSession();
+  const username = user ? user.username : null;
 
   useEffect(() => {
     queueMicrotask(() => setDisabled(achievementToastsDisabled()));
+  }, []);
+
+  useEffect(() => {
+    if (!username) return;
     let cancelled = false;
-    let timer: number | null = null;
-    let username: string | null = null;
 
     const check = async () => {
       if (!username || achievementToastsDisabled()) return;
@@ -85,20 +92,16 @@ export function AchievementToast() {
       } catch {}
     };
 
-    fetchMe().then((me) => {
-      if (cancelled || !me) return;
-      username = me.username;
-      check();
-      timer = window.setInterval(check, POLL_MS);
-    });
+    void check();
+    const timer = window.setInterval(check, POLL_MS);
     const onFocus = () => check();
     window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, []);
+  }, [username]);
 
   // Presentation goes through the shared UI interrupt queue: an unlock that
   // lands mid-draft (games archive and award while the next one is already
@@ -137,15 +140,33 @@ export function AchievementToast() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id]);
 
-  if (disabled || !current) return null;
-  const theme = RARITY_THEME[current.rarity] ?? RARITY_THEME.common;
+  // A persistent live region (F144): a region that mounts together with its
+  // text is not reliably announced, so the slot is always present and only
+  // its content changes.
+  const announcement = !disabled && current ? `Achievement unlocked: ${current.name}. ${current.description}` : "";
+  const live = (
+    <div role="status" aria-live="polite" className="sr-only">
+      {announcement}
+    </div>
+  );
+  const [shown, setShown] = useState<Unlock | null>(null);
+  if (current && shown?.id !== current.id) setShown(current);
+  const pop = useExitPresence(!disabled && !!current);
+  if (!pop.mounted || !shown) return live;
+  // `shown` outlives `current` by the exit (.m-toast[data-leaving]), so the
+  // card leaves with its own text instead of vanishing on dismiss (F195).
+  const card = shown;
+  const theme = RARITY_THEME[card.rarity] ?? RARITY_THEME.common;
+  // Desktop only (hidden below sm): on phones this corner is busy with
+  // drawers and the moment can wait for the achievements page. Safe-area
+  // aware and width-capped so the card and its action row can never clip
+  // past the viewport edge.
   return (
-    // Desktop only (hidden below sm): on phones this corner is busy with
-    // drawers and the moment can wait for the achievements page. Safe-area
-    // aware and width-capped so the card and its action row can never clip
-    // past the viewport edge.
+    <>
+    {live}
     <div
-      className="fixed z-40 hidden w-72 max-w-[calc(100vw-2rem)] sm:block"
+      data-leaving={pop.leaving ? "" : undefined}
+      className="m-toast fixed z-40 hidden w-72 max-w-[calc(100vw-2rem)] sm:block"
       style={{
         right: "max(env(safe-area-inset-right), 1rem)",
         bottom: "max(env(safe-area-inset-bottom), 1rem)",
@@ -154,7 +175,7 @@ export function AchievementToast() {
       <button
         type="button"
         onClick={dismiss}
-        className="plate block w-full border p-3 text-left shadow-plate"
+        className="plate block w-full border p-3 text-left"
         style={{ borderColor: theme.border }}
         title="Dismiss"
       >
@@ -167,17 +188,17 @@ export function AchievementToast() {
           </span>
           <span className="min-w-0">
             <span className="block text-[12px] text-parchment-400">
-              Achievement unlocked · {current.rarity}
+              Achievement unlocked · {card.rarity}
             </span>
             <span className="block truncate font-display text-sm font-bold" style={{ color: theme.color }}>
-              {current.name}
+              {card.name}
             </span>
           </span>
           <X size={13} className="ml-auto shrink-0 text-parchment-500" aria-hidden />
         </span>
         {/* The achievement description is body copy, not a caption on the name. */}
         <span className="mt-1.5 block text-[13px] leading-snug text-parchment-300">
-          {current.description}
+          {card.description}
         </span>
       </button>
       {/* Secondary actions: 13px interactive text (section 3), and a 44px hit
@@ -203,5 +224,6 @@ export function AchievementToast() {
         </button>
       </div>
     </div>
+    </>
   );
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getEnvVar, requestIsSecure } from "@/lib/server/db";
 import { OAUTH_STATE_COOKIE } from "@/lib/server/auth";
+import { safeNextPath } from "@/lib/safeNext";
+import { OAUTH_ERRORS } from "@/app/login/oauthErrors";
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +15,14 @@ export async function GET(request: Request) {
   const clientId = getEnvVar("GOOGLE_CLIENT_ID");
   if (!clientId || !getEnvVar("GOOGLE_CLIENT_SECRET")) {
     return NextResponse.redirect(
-      new URL(`/login?oauthError=${encodeURIComponent("Google sign-in is not set up on this server.")}`, url.origin),
+      new URL(`/login?oauthError=${encodeURIComponent(OAUTH_ERRORS.notSetUp)}`, url.origin),
     );
   }
 
   // Where to land after sign-in: same-site paths only (no open redirects).
-  const nextParam = url.searchParams.get("next") ?? "/";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/";
+  // safeNextPath resolves the value the way a browser would, so "/\evil.com"
+  // (which a prefix check let through, F042) falls back to "/".
+  const next = safeNextPath(url.searchParams.get("next"));
 
   const stateBytes = new Uint8Array(16);
   crypto.getRandomValues(stateBytes);

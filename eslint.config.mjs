@@ -6,6 +6,8 @@ const eslintConfig = [
     // Node services keep their own console logging and build output.
     ignores: [
       ".next/**",
+      ".next-wp/**",
+      ".next-fx/**",
       "dist-server/**",
       ".open-next/**",
       "node_modules/**",

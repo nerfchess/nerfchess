@@ -2,68 +2,71 @@ import { NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { apiError, clientIp, guardJsonWrite, rateLimit, tooManyRequests } from "@/lib/server/request";
+import { cleanText, codePointLength, TEXT_POLICIES } from "@/lib/textInput";
+import { sendSuggestionEmail, type SuggestionEmailEnv } from "@/lib/server/suggestEmail";
 
 export const dynamic = "force-dynamic";
 
+// Every submitter, signed in or not, is metered per client IP first (F057):
+// the per-account daily cap below never applied to anonymous posts, so a loop
+// could fill rule_suggestions without limit.
+const IP_WINDOW_MS = 60 * 60 * 1000;
+const IP_WINDOW_MAX = 10;
+const ACCOUNT_DAILY_MAX = 12;
+
 // Accepts a nerf or buff suggestion, stores it in D1, and, when an email
-// provider is configured, forwards it to the site owner. Set two worker
-// secrets/vars to enable email delivery:
+// provider is configured, forwards it to the site owner through the shared
+// email module (src/lib/server/suggestEmail.ts). Set two worker secrets/vars
+// to enable email delivery:
 //   RESEND_API_KEY     an API key from https://resend.com
 //   SUGGESTIONS_EMAIL  the inbox that should receive suggestions
+// EMAIL_FROM, when set, is the sender; otherwise Resend's sandbox sender.
 // Without them the suggestion is still saved in the rule_suggestions table.
 export async function POST(request: Request) {
-  let body: {
-    name?: unknown;
-    description?: unknown;
-    contact?: unknown;
-    kind?: unknown;
-    pool?: unknown;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  const body = await guardJsonWrite(request);
+  if (body instanceof NextResponse) return body;
 
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
-  const description = typeof body.description === "string" ? body.description.trim() : "";
-  const contact = typeof body.contact === "string" ? body.contact.trim().slice(0, 120) : "";
+  const name = cleanText(body.name, TEXT_POLICIES.suggestionName);
+  // Cleaned one character past the cap so an over-long description is
+  // refused with a message rather than silently cut.
+  const description = cleanText(body.description, {
+    ...TEXT_POLICIES.suggestionDescription,
+    maxChars: TEXT_POLICIES.suggestionDescription.maxChars + 1,
+  });
+  const contact = cleanText(body.contact, TEXT_POLICIES.suggestionContact);
   // What kind of card the idea is. Legacy clients that send no kind are nerf
   // suggestions; the pool only means something for buff ideas ('buff' = Buff
   // mode draft card, 'boon' = Nerf-mode relief boon). Hexes (Nerf-mode curses)
   // are their own kind and carry no pool.
   const kind = body.kind === "buff" ? "buff" : body.kind === "hex" ? "hex" : "nerf";
   const pool = kind === "buff" ? (body.pool === "boon" ? "boon" : "buff") : null;
-  if (description.length < 10) {
-    return NextResponse.json(
-      { error: "Describe the rule in at least a sentence." },
-      { status: 400 },
-    );
+  const descriptionLength = codePointLength(description);
+  if (descriptionLength < 10) {
+    return apiError(400, "Describe the rule in at least a sentence.");
   }
-  if (description.length > 1000) {
-    return NextResponse.json({ error: "Keep the description under 1000 characters." }, { status: 400 });
+  if (descriptionLength > TEXT_POLICIES.suggestionDescription.maxChars) {
+    return apiError(400, "Keep the description under 1000 characters.");
   }
 
   const db = await getDb();
+  const ip = clientIp(request);
+  const perIp = await rateLimit(db, `suggest:ip:${ip ?? "unknown"}`, IP_WINDOW_MAX, IP_WINDOW_MS);
+  if (!perIp.ok) {
+    return tooManyRequests("You have sent a lot of suggestions. Please try again later.", perIp.retryAfterSec);
+  }
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("Cookie")));
 
-  // Throttle: without this the endpoint can be flooded, spamming the
-  // rule_suggestions table and burning the outbound email quota (unlike
-  // /api/report, which caps 5/day). Cap any session-bearing submitter at a
-  // sane daily rate. Anonymous submissions are still accepted and saved, but
-  // (below) they do not trigger an outbound email, so the Resend quota cannot
-  // be burned by a loop of anonymous POSTs.
+  // Per-account daily cap on top of the IP meter, so one account cannot
+  // spread a flood across addresses.
   if (user) {
     const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
     const recent = await db
       .prepare("SELECT COUNT(*) AS n FROM rule_suggestions WHERE user_id = ? AND created_at > ?")
       .bind(user.id, dayAgo)
       .first<{ n: number }>();
-    if ((recent?.n ?? 0) >= 12) {
-      return NextResponse.json(
-        { error: "You have sent a lot of suggestions today. Please try again tomorrow." },
-        { status: 429 },
-      );
+    if ((recent?.n ?? 0) >= ACCOUNT_DAILY_MAX) {
+      return apiError(429, "You have sent a lot of suggestions today. Please try again tomorrow.");
     }
   }
 
@@ -94,46 +97,26 @@ export async function POST(request: Request) {
     )
     .run();
 
-  // Best-effort email; a provider outage must not lose the suggestion.
+  // Best-effort email; a provider outage must not lose the suggestion. Only
+  // registered accounts trigger an email (F057). Anonymous and guest
+  // submissions are saved to the table but never send mail: a guest is one
+  // POST away (30 per 15 minutes per IP), so counting guests as accounts
+  // would let a loop burn the Resend quota.
   let emailed = false;
-  try {
-    const { env } = getCloudflareContext();
-    const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
-    const to = (env as { SUGGESTIONS_EMAIL?: string }).SUGGESTIONS_EMAIL;
-    // Only email for session-bearing submitters (throttled above). Anonymous
-    // submissions are saved to the table but never trigger outbound email, so a
-    // loop of anonymous POSTs cannot burn the Resend quota.
-    if (apiKey && to && user) {
-      const kindLabel =
-        kind === "buff"
-          ? pool === "boon"
-            ? "Boon (Nerf-mode relief)"
-            : "Buff (Buff mode card)"
-          : kind === "hex"
-            ? "Hex (Nerf-mode curse)"
-            : "Nerf";
-      const lines = [
-        `${kindLabel}: ${name || fallbackName}`,
-        "",
+  if (user && !user.is_guest) {
+    try {
+      const { env } = getCloudflareContext();
+      const res = await sendSuggestionEmail(env as SuggestionEmailEnv, {
+        kind,
+        pool,
+        name: name || fallbackName,
         description,
-        "",
-        `From: ${user?.username ?? "anonymous"}${contact ? ` (${contact})` : ""}`,
-      ];
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: "NerfChess <onboarding@resend.dev>",
-          to: [to],
-          subject: `${
-            kind === "buff" ? (pool === "boon" ? "Boon" : "Buff") : kind === "hex" ? "Hex" : "Nerf"
-          } suggestion: ${name || fallbackName}`,
-          text: lines.join("\n"),
-        }),
+        contact,
+        username: user.username,
       });
       emailed = res.ok;
-    }
-  } catch {}
+    } catch {}
+  }
 
   return NextResponse.json({ ok: true, emailed });
 }

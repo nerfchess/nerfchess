@@ -4,9 +4,10 @@
 // existing nerf/buff filter helpers. Kept React-free so it stays trivially
 // testable and the row components import only what they render.
 
-import type { Buff } from "@/engine/buff";
+import { isBoon, type Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
-import { cardPath, nerfPath } from "@/lib/cardCodex";
+import { cardPath, nerfPath } from "@/lib/cardPaths";
+import { filtersFromQueryString, type CodexFilters } from "@/lib/nerfFilter";
 
 // The four browsable families, matching the existing detail routes and the
 // codex tabs. Internal ids are kept ("rules" = nerfs) so saved links and the
@@ -53,6 +54,24 @@ export const BEHAVIOUR_LABEL: Record<Behaviour, string> = {
   instant: "Instant",
   activated: "Activated",
 };
+
+// How the buff library splits into the Buff, Hex and Boon tabs. Shared by the
+// browser and the server counts so the two can never disagree.
+export const isHexCard = (b: Buff) => b.category === "hex";
+export const isBoonCard = (b: Buff) => isBoon(b) && !isHexCard(b);
+
+/** The browser state a /codex URL asks for (tab, behaviour, filters), read the
+ *  same way on the server (first paint) and in the browser. */
+export function codexStateFromQuery(qs: string): { tab: Library; behaviour: Behaviour; filters: CodexFilters } {
+  const p = new URLSearchParams(qs);
+  const tabParam = p.get("tab") as Library | null;
+  const behaviourParam = p.get("behaviour") as Behaviour | null;
+  return {
+    tab: tabParam && LIBRARY_TABS.includes(tabParam) ? tabParam : DEFAULT_TAB,
+    behaviour: behaviourParam && behaviourParam !== "all" && BEHAVIOURS.includes(behaviourParam) ? behaviourParam : "all",
+    filters: filtersFromQueryString(qs),
+  };
+}
 
 // One shape the list rows and the expand view can both consume, so the grid
 // does not branch on card kind at every turn.

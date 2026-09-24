@@ -17,9 +17,8 @@
 // Server-side authorization happens in the /api/mod routes; this page just hides
 // itself from non-mods.
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { ModGateNotice, useModGate } from "@/components/mod/ModGate";
 import { isGodPanelUser } from "@/lib/godPanel";
 import { AuditLogSection } from "@/components/mod/AuditLogSection";
 import { ChatFlagsSection } from "@/components/mod/ChatFlagsSection";
@@ -29,13 +28,15 @@ import { BuffFeedbackSection, NerfFeedbackSection } from "@/components/mod/Feedb
 import { GamesSection } from "@/components/mod/GamesSection";
 import { IdeasSection } from "@/components/mod/IdeasSection";
 import { PlayersSection } from "@/components/mod/PlayersSection";
+import { detectReduced } from "@/lib/useReducedMotion";
 import { ReportsSection } from "@/components/mod/ReportsSection";
 import { SECTION_TITLE, isSectionId, type SectionId } from "@/components/mod/nav";
 import type { Overview } from "@/components/mod/types";
 import { ModShell } from "@/components/mod/ModShell";
 
 export default function ModPage() {
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  const gate = useModGate();
+  const { me, isMod, isAdmin } = gate;
   // Opens on the dashboard, not the report queue: a moderator arriving cold
   // needs "is anything wrong" before "here is the oldest report".
   const [section, setSection] = useState<SectionId>("dashboard");
@@ -44,12 +45,6 @@ export default function ModPage() {
   // A username handed from one section to another (chat flag → player lookup).
   const [pendingPlayer, setPendingPlayer] = useState<string | undefined>();
 
-  useEffect(() => {
-    fetchMe().then(setMe);
-  }, []);
-
-  const isMod = me && (me.role === "mod" || me.role === "admin");
-  const isAdmin = me?.role === "admin";
   // The god panel is the owners' personal tool, so its toggle only shows for a
   // god-panel account (matched case-insensitively, like the game server).
   const isOwner = !!me && isGodPanelUser(me.username);
@@ -83,7 +78,8 @@ export default function ModPage() {
   const go = useCallback((next: SectionId) => {
     setSection(next);
     if (window.location.hash.replace(/^#/, "") !== next) window.location.hash = next;
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // A smooth scroll is motion: it follows the Animations setting (F200).
+    window.scrollTo({ top: 0, behavior: detectReduced() ? "auto" : "smooth" });
   }, []);
 
   const inspectPlayer = useCallback(
@@ -94,24 +90,10 @@ export default function ModPage() {
     [go],
   );
 
-  if (me === undefined) {
-    return (
-      <ModShell title="Moderation" isAdmin={false}>
-        <p className="text-sm text-parchment-400">Loading…</p>
-      </ModShell>
-    );
-  }
   if (!isMod) {
     return (
       <ModShell title="Moderation" isAdmin={false}>
-        <p className="text-parchment-200">
-          This page is for moderators.{" "}
-          {!me && (
-            <Link href="/login" className="text-parchment-50 hover:underline">
-              Sign in
-            </Link>
-          )}
-        </p>
+        <ModGateNotice gate={gate} />
       </ModShell>
     );
   }
@@ -127,7 +109,7 @@ export default function ModPage() {
       onInspectPlayer={inspectPlayer}
     >
       {section === "dashboard" && <DashboardSection data={overview} failed={overviewFailed} onGo={go} />}
-      {section === "reports" && <ReportsSection onHandled={loadOverview} />}
+      {section === "reports" && <ReportsSection onHandled={loadOverview} onInspectPlayer={inspectPlayer} />}
       {section === "chat" && <ChatFlagsSection onHandled={loadOverview} onInspectPlayer={inspectPlayer} />}
       {/* Keyed on the handed-over player so each handoff mounts a fresh lookup
           rather than editing the open one. */}
@@ -144,7 +126,7 @@ export default function ModPage() {
       {section === "nerfs" && <NerfFeedbackSection />}
       {section === "buffs" && <BuffFeedbackSection />}
       {section === "ideas" && <IdeasSection />}
-      {section === "controls" && <ControlsSection isOwner={isOwner} isAdmin={!!isAdmin} />}
+      {section === "controls" && <ControlsSection isOwner={isOwner} />}
     </ModShell>
   );
 }

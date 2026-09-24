@@ -1,0 +1,28 @@
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › e2e/content-states.spec.ts:372:7 › suggest form focus › every field shows the focus ring when reached by keyboard (5.3s)
+
+
+  1) [chromium] › e2e/content-states.spec.ts:372:7 › suggest form focus › every field shows the focus ring when reached by keyboard 
+
+    Error: rule-name rgba(0, 0, 0, 0)
+
+    expect(received).toBeGreaterThan(expected)
+
+    Expected: > 0.5
+    Received:   0
+
+      385 |       });
+      386 |       expect(ring.style, id).not.toBe("none");
+    > 387 |       expect(ring.alpha, `${id} ${ring.color}`).toBeGreaterThan(0.5);
+          |                                                 ^
+      388 |       expect(ring.width, id).toBeGreaterThanOrEqual(2);
+      389 |     }
+      390 |   });
+        at /home/user/nerfchess/e2e/content-states.spec.ts:387:49
+
+    Error Context: test-results/content-states-suggest-for-0a8f5-ng-when-reached-by-keyboard-chromium/error-context.md
+
+  1 failed
+    [chromium] › e2e/content-states.spec.ts:372:7 › suggest form focus › every field shows the focus ring when reached by keyboard 

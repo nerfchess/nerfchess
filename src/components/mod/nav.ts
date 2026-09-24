@@ -97,7 +97,9 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Site",
     items: [
       { kind: "section", id: "controls", label: "Controls", glyph: "⚙" },
-      { kind: "link", href: "/mod/house", label: "House personas", glyph: "☖", adminOnly: true },
+      // Any moderator: the page and /api/mod/house/personas already admit every
+      // moderator (F129 aligned the entry with the server's rule).
+      { kind: "link", href: "/mod/house", label: "House personas", glyph: "☖" },
     ],
   },
 ];

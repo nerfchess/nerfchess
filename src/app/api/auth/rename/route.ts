@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/server/db";
+import { guardJsonWrite } from "@/lib/server/request";
+import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   recordUsernameChange,
-  RESERVED_USERNAMES,
   sessionTokenFromCookieHeader,
   userForSession,
   validUsername,
 } from "@/lib/server/auth";
 import { containsProfanity } from "@/lib/profanity";
+import { whoCookieHeader } from "@/lib/session/who";
+import { hintFromRow } from "../_lib/who";
+import { isReservedUsername } from "../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -18,12 +22,12 @@ export const dynamic = "force-dynamic";
 // design: the flag and validation both live in the database, never in the
 // client.
 export async function POST(request: Request) {
-  let body: { username?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  // Refuses cross-site browser requests (F046, login CSRF) and anything but
+  // a JSON object body under 16 KB (F047: `null` used to crash the field
+  // reads below with a 500). Shared with slice F: src/lib/server/request.ts.
+  const parsed = await guardJsonWrite(request);
+  if (parsed instanceof NextResponse) return parsed;
+  const body = parsed as { username?: unknown };
 
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+  if (isReservedUsername(username) || claimsPowerUsername(username, user.username)) {
     return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
   }
   if (containsProfanity(username)) {
@@ -72,5 +76,7 @@ export async function POST(request: Request) {
     await recordUsernameChange(db, user.id, user.username.toLowerCase(), username.toLowerCase());
   } catch {}
 
-  return NextResponse.json({ ok: true, username });
+  const response = NextResponse.json({ ok: true, username });
+  response.headers.append("Set-Cookie", whoCookieHeader(hintFromRow({ ...user, username }), requestIsSecure(request)));
+  return response;
 }

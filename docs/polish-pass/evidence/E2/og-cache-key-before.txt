@@ -1,0 +1,47 @@
+FAIL  profile("../game/ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/game/abcde, https://og-cache.nerfchess.com/v1/game/abcde)
+FAIL  profile("..%2Fgame%2FABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/u/..%2fgame%2fabcde, https://og-cache.nerfchess.com/v1/u/..%2fgame%2fabcde)
+FAIL  profile("abc#x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/u/abc#x, https://og-cache.nerfchess.com/v1/u/abc#x)
+FAIL  profile("abc?x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/u/abc?x, https://og-cache.nerfchess.com/v1/u/abc?x)
+FAIL  profile("a/b"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/u/a/b, https://og-cache.nerfchess.com/v1/u/a/b)
+FAIL  profile("..\\game\\ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/game/abcde, https://og-cache.nerfchess.com/v1/game/abcde)
+FAIL  profile("%2e%2e/puzzles/x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/puzzles/x, https://og-cache.nerfchess.com/v1/puzzles/x)
+FAIL  profile(" ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/u/%20abcde, https://og-cache.nerfchess.com/v1/u/%20abcde)
+FAIL  club("../game/ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/game/abcde, https://og-cache.nerfchess.com/v1/game/abcde)
+FAIL  club("..%2Fgame%2FABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/clubs/..%2fgame%2fabcde, https://og-cache.nerfchess.com/v1/clubs/..%2fgame%2fabcde)
+FAIL  club("abc#x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/clubs/abc#x, https://og-cache.nerfchess.com/v1/clubs/abc#x)
+FAIL  club("abc?x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/clubs/abc?x, https://og-cache.nerfchess.com/v1/clubs/abc?x)
+FAIL  club("a/b"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/clubs/a/b, https://og-cache.nerfchess.com/v1/clubs/a/b)
+FAIL  club("..\\game\\ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/game/abcde, https://og-cache.nerfchess.com/v1/game/abcde)
+FAIL  club("%2e%2e/puzzles/x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/puzzles/x, https://og-cache.nerfchess.com/v1/puzzles/x)
+FAIL  club(" ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/clubs/%20abcde, https://og-cache.nerfchess.com/v1/clubs/%20abcde)
+FAIL  tournament("../game/ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/game/ABCDE, https://og-cache.nerfchess.com/v1/game/ABCDE)
+FAIL  tournament("..%2Fgame%2FABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/tournaments/..%2Fgame%2FABCDE, https://og-cache.nerfchess.com/v1/tournaments/..%2Fgame%2FABCDE)
+FAIL  tournament("abc#x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/tournaments/abc#x, https://og-cache.nerfchess.com/v1/tournaments/abc#x)
+FAIL  tournament("abc?x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/tournaments/abc?x, https://og-cache.nerfchess.com/v1/tournaments/abc?x)
+FAIL  tournament("a/b"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/tournaments/a/b, https://og-cache.nerfchess.com/v1/tournaments/a/b)
+FAIL  tournament("..\\game\\ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/game/ABCDE, https://og-cache.nerfchess.com/v1/game/ABCDE)
+FAIL  tournament("%2e%2e/puzzles/x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/puzzles/x, https://og-cache.nerfchess.com/v1/puzzles/x)
+FAIL  tournament(" ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/tournaments/%20ABCDE, https://og-cache.nerfchess.com/v1/tournaments/%20ABCDE)
+FAIL  invite("../game/ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/GAME/ABCDE, https://og-cache.nerfchess.com/v1/GAME/ABCDE)
+FAIL  invite("..%2Fgame%2FABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/c/..%2FGAME%2FABCDE, https://og-cache.nerfchess.com/v1/c/..%2FGAME%2FABCDE)
+FAIL  invite("abc#x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/c/ABC#X, https://og-cache.nerfchess.com/v1/c/ABC#X)
+FAIL  invite("abc?x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/c/ABC?X, https://og-cache.nerfchess.com/v1/c/ABC?X)
+FAIL  invite("a/b"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/c/A/B, https://og-cache.nerfchess.com/v1/c/A/B)
+FAIL  invite("..\\game\\ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/GAME/ABCDE, https://og-cache.nerfchess.com/v1/GAME/ABCDE)
+FAIL  invite("%2e%2e/puzzles/x"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/PUZZLES/X, https://og-cache.nerfchess.com/v1/PUZZLES/X)
+FAIL  invite(" ABCDE"): no edge-cache key (touched https://og-cache.nerfchess.com/v1/c/%20ABCDE, https://og-cache.nerfchess.com/v1/c/%20ABCDE)
+FAIL  profile("nobody_here_zz") miss: no edge-cache key (touched https://og-cache.nerfchess.com/v1/u/nobody_here_zz, https://og-cache.nerfchess.com/v1/u/nobody_here_zz)
+FAIL  club("no-such-club-zz") miss: no edge-cache key (touched https://og-cache.nerfchess.com/v1/clubs/no-such-club-zz, https://og-cache.nerfchess.com/v1/clubs/no-such-club-zz)
+FAIL  tournament("no-such-tournament-zz") miss: no edge-cache key (touched https://og-cache.nerfchess.com/v1/tournaments/no-such-tournament-zz, https://og-cache.nerfchess.com/v1/tournaments/no-such-tournament-zz)
+FAIL  invite("ZZZZZZ") miss: no edge-cache key (touched https://og-cache.nerfchess.com/v1/c/ZZZZZZ, https://og-cache.nerfchess.com/v1/c/ZZZZZZ)
+FAIL  render.ts exports ogCacheRequest, the one place a cache key becomes a URL
+FAIL  ogCacheRequest("u/../game/ABCDE") refused
+FAIL  ogCacheRequest("clubs/..") refused
+FAIL  ogCacheRequest("tournaments/./x") refused
+FAIL  ogCacheRequest("c//X") refused
+FAIL  ogCacheRequest("") refused
+FAIL  ogCacheRequest("../x") refused
+FAIL  ogCacheRequest("u/abc#x") stays in u/ (got https://og-cache.nerfchess.com/v1/u/abc#x)
+FAIL  ogCacheRequest("clubs/abc?x") stays in clubs/ (got https://og-cache.nerfchess.com/v1/clubs/abc?x)
+FAIL  ogCacheRequest("tournaments/%2e%2e") stays in tournaments/ (got https://og-cache.nerfchess.com/v1/)
+101/147 checks passed

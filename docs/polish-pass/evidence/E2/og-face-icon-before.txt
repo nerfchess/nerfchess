@@ -1,0 +1,2 @@
+FAIL  every live card has a face icon (573 fall back to a letter, e.g. /codex/buff/pawn_push, /codex/buff/wazir_rook, /codex/boon/pawn_shield)
+49/50 checks passed

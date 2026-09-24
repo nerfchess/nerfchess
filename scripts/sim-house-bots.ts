@@ -1,13 +1,15 @@
 // Focused engine-side simulation for the house-player roster. Run with:
 //
-//   npx -y tsx scripts/sim-house-bots.ts
+//   ./node_modules/.bin/tsx scripts/sim-house-bots.ts
 //
 // Proves, off the server, the three properties the Durable Object relies on:
 // 1. Every skill tier produces a LEGAL move within its hard-capped budget
 //    across full Draft games (both modes), including offer resolves and buff
 //    activations.
-// 2. The move-pacing distribution matches the spec: 1-4s base, ~1 in 10
-//    moves 6-10s, clamped when the clock runs low.
+// 2. The move-pacing distribution matches the spec: shaped by time control
+//    (1-4s base and about 1 in 10 moves 6-10s from 5+0 up, short thinks in
+//    bullet and 3-minute blitz), fast opening and forced moves, clamped when the
+//    clock runs low.
 // 3. The draft pacing stays inside the 15s lock-in window.
 
 import {
@@ -160,24 +162,51 @@ for (const skill of [1350, 1550, 1750] as HouseSkill[]) {
 // 2. Pacing distributions.
 // ---------------------------------------------------------------------------
 
+// Human games (thinkMultiplier 1) are paced by time control, own-move index and
+// how forced the move is (slice HB, track HB1, 2026-09-23). The old spec, a flat
+// 1-3s in every game of 3 minutes or less, flagged bots in 1+0 around move 35;
+// its assertions were rewritten to the new one in the same commit. Filler pacing
+// (thinkMultiplier > 1) is frozen and checked seed for seed against a copy of
+// the old function by scripts/sim-house-clock.ts, and for flag safety below.
 const N = 100_000;
 let long = 0;
 for (let i = 0; i < N; i++) {
-  const d = houseThinkMs(random, 120_000, 600); // slow control (10+0): full pacing
+  const d = houseThinkMs(random, 600_000, 600); // 10+0 with a full clock: 1-4s, sometimes 6-10s
   check(d >= 1000 && d <= 10_000, `think ${d}ms out of range`);
   if (d > 4001) long++;
 }
 const longShare = long / N;
 check(longShare > 0.07 && longShare < 0.13, `long-think share ${longShare}`);
-console.log(`pacing: base 1-4s, long 6-10s share ${(longShare * 100).toFixed(1)}% (target ~10%)`);
+console.log(`pacing: 10+0 base 1-4s, long 6-10s share ${(longShare * 100).toFixed(1)}% (target ~10%)`);
 
-// Fast time controls (base <= 180s: 1+0, 2+1, 3+0): snappy 1-3s, never the
-// 6-10s long think, so a bullet/blitz game against a bot stays live.
-for (let i = 0; i < 20_000; i++) {
-  const f = houseThinkMs(random, 120_000, 180);
-  check(f >= 1000 && f <= 3000, `fast-TC think ${f}ms out of range`);
+// Fast time controls: short thinks sized to the control, and never the 6-10s
+// long think below 5+0, so a bullet or blitz game against a bot stays live.
+const fastCells: Array<[string, number, number, number, number]> = [
+  // label, base seconds, increment, min ms, max ms
+  ["1+0", 60, 0, 150, 1000],
+  ["2+1", 120, 1, 150, 1400],
+  ["3+0", 180, 0, 150, 2200],
+  ["3+2", 180, 2, 150, 2200],
+];
+for (const [label, base, inc, lo, hi] of fastCells) {
+  for (let i = 0; i < 20_000; i++) {
+    const f = houseThinkMs(random, base * 1000, base, 1, 1, { incrementSec: inc, ownMoveIndex: 10 });
+    check(f >= lo && f <= hi, `${label} think ${f}ms out of ${lo}-${hi}ms`);
+  }
 }
-console.log("pacing: fast TC (<=180s) stays within 1-3s");
+console.log("pacing: 1+0 within 0.15-1.0s, 2+1 within 1.4s, 3+0 and 3+2 within 2.2s, no long think below 5+0");
+
+// The opening comes fast, a forced move comes fast, and the expected search is
+// taken out of the visible wait (never below the 150ms floor).
+for (let i = 0; i < 20_000; i++) {
+  const open = houseThinkMs(random, 600_000, 600, 1, 1, { ownMoveIndex: i % 5 });
+  check(open <= 1100, `opening think ${open}ms over 1.1s`);
+  const forced = houseThinkMs(random, 600_000, 600, 1, 1, { ownMoveIndex: 20, kingSafeMoves: 1 });
+  check(forced <= 700, `forced-move think ${forced}ms over 0.7s`);
+  const withSearch = houseThinkMs(random, 600_000, 600, 1, 1, { ownMoveIndex: 20, expectedSearchMs: 900 });
+  check(withSearch >= 150 && withSearch <= 10_000 - 900, `think with search ${withSearch}ms out of range`);
+}
+console.log("pacing: opening moves within 1.1s, forced moves within 0.7s, search time taken out of the wait");
 
 for (let i = 0; i < 10_000; i++) {
   const low = houseThinkMs(random, 6_000, 600); // 6s left on the clock
@@ -249,7 +278,7 @@ check(houseNerfPickIndex([2, 5], random) === 0, "nerf pick lower tier first");
 check(houseNerfPickIndex([6, 3], random) === 1, "nerf pick lower tier second");
 
 // ---------------------------------------------------------------------------
-// 4. Skill resolution & clamping (pure — the /mod override path).
+// 4. Skill resolution & clamping (pure, the /mod override path).
 // ---------------------------------------------------------------------------
 
 // No overrides == baked. Baked is the un-weakened search (topK 1, no noise) for
@@ -306,7 +335,7 @@ console.log("skill resolution: overrides merge/clamp, sanitize degrades to baked
 // 5. Strength round-robin (opt-in: `--roundrobin`). Plays weakened profiles
 //    against the un-weakened top tier over plain games and reports the score
 //    matrix, asserting the spec's acceptance bands. Slow, so it is gated off
-//    the default fast run. See docs/bot-weakening-spec.md §7.
+//    the default fast run. See docs/house-bots.md, "Playing strength".
 // ---------------------------------------------------------------------------
 
 if (process.argv.includes("--roundrobin")) {
@@ -377,10 +406,10 @@ if (process.argv.includes("--roundrobin")) {
     const target = band === "significantly" ? "target <=20%" : "target 25-40%";
     const inBand = band === "significantly" ? s <= 0.22 : s >= 0.2 && s <= 0.45;
     console.log(
-      `  tier ${skill} (${band}): ${(s * 100).toFixed(1)}% vs ${refSkill} — ${target} ${inBand ? "OK" : "OUT"}`,
+      `  tier ${skill} (${band}): ${(s * 100).toFixed(1)}% vs ${refSkill}, ${target} ${inBand ? "OK" : "OUT"}`,
     );
   }
-  console.log("  (indicative — small sample; raise RR_GAMES to tighten)");
+  console.log("  (indicative, small sample; raise RR_GAMES to tighten)");
 }
 
 // ---------------------------------------------------------------------------
@@ -388,13 +417,13 @@ if (process.argv.includes("--roundrobin")) {
 //
 // The lobby/TV filler pairs bots to play each other. Weighting selection toward
 // the fewest games played must (a) spread games across the roster so no bot
-// lingers at zero, and (b) reach EVERY persona over time — including ones
-// outside any single day's active window — which relies on the daily window
+// lingers at zero, and (b) reach EVERY persona over time, including ones
+// outside any single day's active window, which relies on the daily window
 // rotation visiting every start offset. Both are asserted here.
 // ---------------------------------------------------------------------------
 
 // (a) Rotation coverage: the window step is coprime with the roster, so over a
-// full rotation every start offset — and therefore every persona — is visited.
+// full rotation every start offset, and therefore every persona, is visited.
 function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
 }
@@ -478,7 +507,7 @@ check(wMax - wMin <= uMax - uMin, "weighted spread no wider than uniform control
 // busy), with natural variance in a 40-55 band and never a dip below the floor
 // while the house is enabled. The worker spawns at most ONE filler game per
 // tick, paced by houseFillerSpawnDelayMs (brisk ~1.5-3s stagger below the
-// floor+buffer, lazy 8-15s at steady state) — asserted here over a simulated
+// floor+buffer, lazy 8-15s at steady state), asserted here over a simulated
 // scheduling run using the production constants.
 // ---------------------------------------------------------------------------
 
@@ -503,7 +532,7 @@ for (let i = 0; i < 5_000; i++) {
 // is always bounded by the same ceiling a non-filler bot obeys: at most 800ms
 // under 10s left, and at most clock/5 with more time. The old code multiplied
 // AFTER the clamp, so a filler move could reach ~1.6x the remaining clock (8 x
-// clock/5) and flag the bot within a handful of moves — the root cause of
+// clock/5) and flag the bot within a handful of moves, the root cause of
 // steady-state concurrency collapsing far below the floor. Under that bug this
 // bound is violated for any healthy clock; the fix satisfies it everywhere.
 for (let i = 0; i < 50_000; i++) {
@@ -521,7 +550,7 @@ console.log(
 // than a hand-picked number: simulate a bot-vs-bot game's clocks move by move
 // using houseThinkMs at the filler multiplier, deduct each think from the mover's
 // clock (adding the increment), and end the game at a flag OR a natural result
-// (a plausible ply cap — real games end by mate/resignation, not only on time).
+// (a plausible ply cap, real games end by mate/resignation, not only on time).
 // The wall-clock lifetime is the sum of both sides' thinks. Deliberately
 // conservative (shorter lifetime => higher turnover => a stricter concurrency
 // test): if the pacing ever regressed to flag games early, lifetimes would
@@ -644,7 +673,7 @@ console.log(
 //
 // The tier is read from the card rather than hardcoded: it used to be pinned at
 // 6 here, the card was later rebalanced to tier 4, and the control silently
-// stopped being able to produce it at all — so the exclusion assertion below was
+// stopped being able to produce it at all, so the exclusion assertion below was
 // passing vacuously, which is the one thing a control exists to prevent.
 // ---------------------------------------------------------------------------
 

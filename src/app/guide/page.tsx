@@ -4,13 +4,10 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { FaqSection, GuideFooter } from "./shared";
+import { GuideJsonLd } from "@/components/seo/GuideJsonLd";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "What is Nerf Chess? The complete guide",
-  description:
-    "Nerf Chess is a free online chess variant where every player carries a secret handicap (Nerf mode) or drafts power-up cards (Buff mode), and the game ends by capturing the king. Start here.",
-  alternates: { canonical: "/guide" },
-};
+export const metadata: Metadata = staticMeta("/guide", { image: "segment" });
 
 export default function GuideIndexPage() {
   return (
@@ -19,6 +16,8 @@ export default function GuideIndexPage() {
       title="What is Nerf Chess?"
       intro="Nerf Chess is a free chess variant you play in your browser. It keeps the normal board and pieces, then changes one thing per mode: in Nerf mode every player carries a secret handicap, and in Buff mode both players draft power-up cards. In both, the game only ends when a king is actually captured."
     >
+      <GuideJsonLd title="Guide" path="/guide" />
+
       <InfoSection title="The short answer">
         <p>
           <GlossaryText text="Nerf Chess is an online chess variant with two game modes and a shared twist: there is no checkmate and no stalemate. You win by physically capturing the enemy king, which means the king can walk into attacked squares, castle through check, and generally live dangerously in ways standard chess forbids. Both kings can even be in check at the same time; whoever actually lands the capture first wins." />

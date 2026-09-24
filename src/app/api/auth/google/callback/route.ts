@@ -4,7 +4,6 @@ import {
   createSession,
   hashPassword,
   OAUTH_STATE_COOKIE,
-  RESERVED_USERNAMES,
   sessionCookie,
   sessionTokenFromCookieHeader,
   userForSession,
@@ -13,13 +12,18 @@ import {
 import { RD_START, VOL_START } from "@/lib/glicko";
 import { containsProfanity } from "@/lib/profanity";
 import { cryptoRand, randomGuestNameNumbered } from "@/lib/guestNames";
+import { safeNextPath } from "@/lib/safeNext";
+import { OAUTH_ERRORS } from "@/app/login/oauthErrors";
+import { isReservedUsername } from "../../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
+import { whoCookieFor } from "../../_lib/who";
 
 export const dynamic = "force-dynamic";
 
 // Completes Google sign-in. Account rules, in order:
 //   1. A user already linked to this Google account signs straight in.
 //   2. A signed-in caller (guest or registered) links this Google account to
-//      their existing account — guests upgrade in place, keeping their
+//      their existing account; guests upgrade in place, keeping their
 //      rating and history, exactly like password registration.
 //   3. Otherwise a fresh account is created.
 // If Google's (verified) email already belongs to a *different* account we
@@ -47,12 +51,13 @@ function failRedirect(origin: string, message: string): NextResponse {
 async function pickUsername(db: D1Database, email: string | null): Promise<string> {
   const base = (email ? email.split("@")[0] : "").replace(/[^A-Za-z0-9_]/g, "").slice(0, 16);
   const candidates: string[] = [];
-  if (validUsername(base) && !RESERVED_USERNAMES.includes(base.toLowerCase()) && !containsProfanity(base)) {
+  if (validUsername(base) && !isReservedUsername(base) && !claimsPowerUsername(base) && !containsProfanity(base)) {
     candidates.push(base);
     for (let i = 0; i < 5; i++) candidates.push(`${base}${Math.floor(cryptoRand() * 9000) + 1000}`);
   }
   for (let i = 0; i < 6; i++) candidates.push(randomGuestNameNumbered());
   for (const candidate of candidates) {
+    if (isReservedUsername(candidate) || claimsPowerUsername(candidate)) continue;
     const taken = await db
       .prepare("SELECT id FROM users WHERE username_lower = ?")
       .bind(candidate.toLowerCase())
@@ -67,7 +72,7 @@ export async function GET(request: Request) {
   const clientId = getEnvVar("GOOGLE_CLIENT_ID");
   const clientSecret = getEnvVar("GOOGLE_CLIENT_SECRET");
   if (!clientId || !clientSecret) {
-    return failRedirect(url.origin, "Google sign-in is not set up on this server.");
+    return failRedirect(url.origin, OAUTH_ERRORS.notSetUp);
   }
 
   // The state cookie holds "<random>:<next path>"; both halves must check out.
@@ -75,13 +80,19 @@ export async function GET(request: Request) {
   const [expectedState, encodedNext] = stateCookie ? stateCookie.split(/:(.*)/s) : [null, null];
   const state = url.searchParams.get("state");
   if (!state || !expectedState || state !== expectedState) {
-    return failRedirect(url.origin, "Google sign-in expired. Please try again.");
+    return failRedirect(url.origin, OAUTH_ERRORS.expired);
   }
-  const decodedNext = decodeURIComponent(encodedNext ?? "/");
-  const next = decodedNext.startsWith("/") && !decodedNext.startsWith("//") ? decodedNext : "/";
+  // The cookie was written by /api/auth/google from a validated path, but it
+  // is re-checked here: "/\evil.com" passed the old prefix test and the
+  // redirect below resolved it to https://evil.com/ (F042).
+  let decodedNext: string | null = null;
+  try {
+    decodedNext = decodeURIComponent(encodedNext ?? "/");
+  } catch {}
+  const next = safeNextPath(decodedNext);
 
   const code = url.searchParams.get("code");
-  if (!code) return failRedirect(url.origin, "Google sign-in was cancelled.");
+  if (!code) return failRedirect(url.origin, OAUTH_ERRORS.cancelled);
 
   // Exchange the code server-side. The id_token arrives directly from Google
   // over TLS, so decoding its payload without a signature check is safe.
@@ -96,7 +107,7 @@ export async function GET(request: Request) {
       grant_type: "authorization_code",
     }),
   });
-  if (!tokenRes.ok) return failRedirect(url.origin, "Google sign-in failed. Please try again.");
+  if (!tokenRes.ok) return failRedirect(url.origin, OAUTH_ERRORS.failed);
   const tokenData = (await tokenRes.json()) as { id_token?: string };
   let sub: string | null = null;
   let email: string | null = null;
@@ -110,7 +121,7 @@ export async function GET(request: Request) {
     sub = typeof payload.sub === "string" && payload.sub ? payload.sub : null;
     email = payload.email_verified && typeof payload.email === "string" ? payload.email.toLowerCase() : null;
   } catch {}
-  if (!sub) return failRedirect(url.origin, "Google sign-in failed. Please try again.");
+  if (!sub) return failRedirect(url.origin, OAUTH_ERRORS.failed);
 
   const db = await getDb();
 
@@ -127,7 +138,7 @@ export async function GET(request: Request) {
     if (emailOwner && emailOwner.id !== caller?.id) {
       return failRedirect(
         url.origin,
-        "That Google email already belongs to an account. Sign in with its password, then use Google sign-in to link it.",
+        OAUTH_ERRORS.emailTaken,
       );
     }
     // Both writes can still trip the UNIQUE indexes (google_sub / email /
@@ -158,17 +169,19 @@ export async function GET(request: Request) {
         account = { id, username, banned_until: null };
       }
     } catch {
-      return failRedirect(url.origin, "Google sign-in hit a conflict. Please try again.");
+      return failRedirect(url.origin, OAUTH_ERRORS.conflict);
     }
   }
 
   if (account.banned_until && account.banned_until > Date.now()) {
-    return failRedirect(url.origin, "This account has been closed by moderation.");
+    return failRedirect(url.origin, OAUTH_ERRORS.closed);
   }
 
   const token = await createSession(db, account.id);
+  const secure = requestIsSecure(request);
   const response = NextResponse.redirect(new URL(next, url.origin));
-  response.headers.append("Set-Cookie", sessionCookie(token, requestIsSecure(request)));
+  response.headers.append("Set-Cookie", sessionCookie(token, secure));
+  response.headers.append("Set-Cookie", await whoCookieFor(db, account.id, secure));
   response.headers.append("Set-Cookie", `${OAUTH_STATE_COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
   return response;
 }

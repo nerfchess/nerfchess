@@ -52,11 +52,13 @@ test("public profile: header, tabs switch and drive ?tab=, clean empty states", 
   expect(new URL(page.url()).searchParams.get("tab")).toBeNull();
 
   // Switch to Games: URL updates to ?tab=games and the archive-empty state shows
-  // cleanly (PG absent locally).
+  // cleanly (PG absent locally). Both panels stay mounted (the Activity one
+  // hidden), and both say "No games yet." for a new account, so scope to the
+  // Games panel.
   await gamesTab.click();
   await expect(gamesTab).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(/\?tab=games$/);
-  await expect(page.getByText("No games yet.")).toBeVisible();
+  await expect(page.getByRole("tabpanel", { name: "Games" }).getByText("No games yet.")).toBeVisible();
 
   // Switch back to Activity: ?tab= is dropped again.
   await activityTab.click();
@@ -125,8 +127,10 @@ test("desktop navigation: sections present, History/Achievements only in the acc
   await expect(nav.getByRole("link", { name: "History", exact: true })).toHaveCount(0);
   await expect(nav.getByRole("link", { name: "Achievements", exact: true })).toHaveCount(0);
 
-  // They live in the account menu instead (rendered as menu buttons).
-  await nav.locator('button[aria-haspopup="menu"]').click();
+  // They live in the account menu instead (a disclosure of plain buttons, so
+  // the trigger carries aria-expanded and aria-controls, not aria-haspopup).
+  await nav.getByRole("button", { name: /account menu/i }).click();
+  await expect(nav.getByRole("button", { name: /account menu/i })).toHaveAttribute("aria-expanded", "true");
   await expect(nav.getByRole("button", { name: "Game history" })).toBeVisible();
   await expect(nav.getByRole("button", { name: "Achievements" })).toBeVisible();
 });

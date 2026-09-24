@@ -220,7 +220,7 @@ export function AdminGodPanel({
         title={recording ? "Recording. Open god panel to stop" : "Open god panel"}
       >
         {recording && (
-          <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-coral-glow animate-pulse" />
+          <span aria-hidden className="dot-live h-1.5 w-1.5 shrink-0 rounded-full bg-coral-glow" />
         )}
         god panel
       </button>

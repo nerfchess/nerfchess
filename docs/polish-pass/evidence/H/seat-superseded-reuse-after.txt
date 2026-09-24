@@ -1,0 +1,22 @@
+  ok  multiplayer exports SEAT_SUPERSEDED_CLOSE = 4001
+  ok  resume sends a reconnect frame
+  ok  an ordinary drop (1006) reconnects on its own
+  ok  the reconnect re-sends the seat claim
+  ok  a superseded close does not auto-reconnect (no steal-back loop)
+  ok  a superseded close emits a superseded event
+  ok  a superseded close does not report reconnecting
+  ok  an unfocused wake (online, pageshow) does not reclaim the seat
+  ok  a hidden visibilitychange does not reclaim the seat
+  ok  focusing the tab reclaims the seat once
+  ok  the reclaim sends the seat claim
+  ok  a second superseded close stays quiet
+  ok  MPSession exposes reclaim()
+  ok  reclaim() returns true while holding a seat
+  ok  reclaim() opens a new socket and claims the seat
+  ok  the session is superseded again before the new game
+  ok  join opens a socket for the new game
+  ok  a new seat (start frame) clears the superseded state
+  ok  an ordinary drop in the new game reconnects on its own
+  ok  the reconnect claims the new seat
+
+all seat-superseded checks passed

@@ -1,0 +1,24 @@
+== /login 1280 cookies: dc_session
+  t=22803 cluster x=951 w=302 kids=5
+  t=25874 cluster x=942 w=310 kids=5
+  shift t=25874 0.0001
+  cls=0.0001
+== /achievements 1280 cookies: dc_session
+  t=6366 cluster x=951 w=302 kids=5
+  t=7702 cluster x=942 w=310 kids=5
+  shift t=7702 0.0001
+  cls=0.0001
+== /faq 1280 cookies: dc_session
+  t=1891 cluster x=951 w=302 kids=5
+  t=3285 cluster x=942 w=310 kids=5
+  shift t=3285 0.0001
+  cls=0.0001
+== /login 390 cookies: dc_session
+  t=234 cluster x=147 w=227 kids=5
+  cls=0.0000
+== /achievements 390 cookies: dc_session
+  t=7910 cluster x=147 w=227 kids=5
+  cls=0.0000
+== /community 360 cookies: dc_session
+  t=5008 cluster x=117 w=227 kids=5
+  cls=0.0063 (0.0062 of it at t=13670 is page content, not the header)

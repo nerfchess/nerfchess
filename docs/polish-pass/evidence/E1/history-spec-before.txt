@@ -1,0 +1,14 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:176:7 › history › a replay id not saved on this device uses the shared not-found panel (31.8s)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:183:7 › history › a saved game without moves explains why and links back (16.2s)
+  ✘  3 [chromium] › e2e/content-states.spec.ts:192:7 › history › the replay has exactly one h1 (16.3s)
+  ✘  4 [chromium] › e2e/content-states.spec.ts:201:7 › history › the empty list offers sentence-case actions (15.8s)
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: expect(locator).toHaveCount(expected) failed
+    Expected: 1
+    Received: 0
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+  4 failed

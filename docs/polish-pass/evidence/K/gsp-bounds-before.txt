@@ -1,0 +1,9 @@
+scripts/polish/k/gsp-tag-bounds.ts, run against the tree with only the first Tag clamp (before the board mapping), 2026-09-24:
+ok   gm_the_house: 3 visible texts
+FAIL gm_martingale: 6 visible texts
+     "DOUBLE UNTIL YOU MISS" leaves the board by 153px
+FAIL gm_the_last_bet: 2 visible texts
+     "NOBODY AT THE TABLE BREATHED" leaves the board by 252px
+FAIL gm_gacha_banner: 2 visible texts
+     "THREE PULLS" leaves the board by 58px
+On the original tree every outcome Tag (58 of them, authored at y 90 to 94 of a 14-cell canvas) sat below the board as well: see before/gm_the_house.unclipped-2100ms.png (no "RAKE CASHED" tag, caption cut at both edges, felt rail over rank 1).

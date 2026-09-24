@@ -1,0 +1,132 @@
+# arena-service m3-spectate x10 on c383949 (unmodified arena bundle)
+=== run 1
+  "watched": "BEF68769",
+  "moves": 17,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: FAIL
+=== run 2
+  "watched": "783EEE59",
+  "moves": 31,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: FAIL
+=== run 3
+  "watched": "0488D98A",
+  "moves": 5,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+PASS  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: PASS
+=== run 4
+  "watched": "537E9929",
+  "moves": 64,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: FAIL
+=== run 5
+  "watched": "CFDAD867",
+  "moves": 195,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: FAIL
+=== run 6
+  "watched": "0DF29801",
+  "moves": 16,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: FAIL
+=== run 7
+  "watched": "FA8F820B",
+  "moves": 36,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+FAIL  a finished game was reported to DO
+RESULT: FAIL
+=== run 8
+  "watched": null,
+  "moves": 0,
+  "stray": 0,
+FAIL  sync happened
+FAIL  a game was watched
+FAIL  snapshot received for watched game
+FAIL  snapshot precedes first move
+FAIL  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+FAIL  a finished game was reported to DO
+RESULT: FAIL
+=== run 9
+  "watched": "079457C7",
+  "moves": 35,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+FAIL  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: FAIL
+=== run 10
+  "watched": "647338AD",
+  "moves": 52,
+  "stray": 0,
+PASS  sync happened
+PASS  a game was watched
+PASS  snapshot received for watched game
+PASS  snapshot precedes first move
+PASS  move frames streamed
+PASS  no frames for unwatched games
+PASS  every finished game round-tripped
+PASS  a finished game was reported to DO
+RESULT: PASS
+TOTAL PASS 2 of 10

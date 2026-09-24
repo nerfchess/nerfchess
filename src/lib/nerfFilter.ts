@@ -3,8 +3,11 @@
 // component only worries about presentation and URL state.
 
 import type { Nerf } from "@/engine/nerf";
-import { CATEGORY_IDS, categoriesOf, getCategoryLabel } from "@/lib/nerfCategories";
-import { COLLECTION_IDS, nerfCollection } from "@/lib/cardCollections";
+// Definitions only: the library-backed lookups (categoriesOf, nerfCollection)
+// come in as the `lookups` argument, so this module, which the client codex
+// chunk imports, never pulls the card libraries in with it.
+import { CATEGORY_IDS, getCategoryLabel } from "@/lib/nerfCategoryDefs";
+import { COLLECTION_IDS, type NerfCollection } from "@/lib/cardCollectionDefs";
 
 import { TIER_ROMAN } from "./tiers";
 const SORT_IDS: SortId[] = ["az", "za", "easy", "brutal"];
@@ -105,12 +108,23 @@ export function matchesSearch(haystack: string, name: string, query: string): bo
   return tokens.every((t) => haystack.includes(t) || (t.length >= 3 && isSubsequence(t, name)));
 }
 
-function haystackFor(nerf: Nerf): string {
+/** The library-backed lookups filterAndSortNerfs needs (from nerfCategories.ts
+ *  and cardCollections.ts), passed in so the caller can load them lazily. */
+export type NerfLookups = {
+  categoriesOf: (nerfId: string) => string[];
+  nerfCollection: (n: Pick<Nerf, "id">) => NerfCollection;
+};
+
+function haystackFor(nerf: Nerf, categoriesOf: NerfLookups["categoriesOf"]): string {
   const cats = categoriesOf(nerf.id).map(getCategoryLabel).join(" ");
   return `${nerf.name} ${nerf.description} ${nerf.flavor ?? ""} ${cats}`.toLowerCase();
 }
 
-export function filterAndSortNerfs(nerfs: Nerf[], f: CodexFilters): Nerf[] {
+export function filterAndSortNerfs(
+  nerfs: Nerf[],
+  f: CodexFilters,
+  { categoriesOf, nerfCollection }: NerfLookups,
+): Nerf[] {
   const query = f.search.trim();
   const out = nerfs.filter((n) => {
     if (f.tier !== null && n.tier !== f.tier) return false;
@@ -120,7 +134,7 @@ export function filterAndSortNerfs(nerfs: Nerf[], f: CodexFilters): Nerf[] {
       const cats = categoriesOf(n.id);
       if (!f.categories.every((c) => cats.includes(c))) return false;
     }
-    if (query && !matchesSearch(haystackFor(n), n.name.toLowerCase(), query)) return false;
+    if (query && !matchesSearch(haystackFor(n, categoriesOf), n.name.toLowerCase(), query)) return false;
     return true;
   });
 

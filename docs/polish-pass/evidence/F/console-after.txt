@@ -1,0 +1,18 @@
+  /  1280x800|dark|full|signed-out|normal  HTTP 200  console 2  4050ms
+  /  1280x800|dark|full|user|normal  HTTP 200  console 2  4379ms
+  /lobby  1280x800|dark|full|signed-out|normal  HTTP 200  console 2  3069ms
+  /lobby  1280x800|dark|full|user|normal  HTTP 200  console 2  3209ms
+  /play  1280x800|dark|full|signed-out|normal  HTTP 200  console 0  2968ms
+  /play  1280x800|dark|full|user|normal  HTTP 200  console 0  2956ms
+  /profile  1280x800|dark|full|signed-out|normal  HTTP 200  console 8  31843ms
+  /profile  1280x800|dark|full|user|normal  HTTP 200  console 8  31857ms
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  1280x800|dark|full|signed-out|normal  HTTP 200  console 0  3175ms
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  1280x800|dark|full|user|normal  HTTP 200  console 0  3019ms
+  /leaderboard  1280x800|dark|full|signed-out|normal  HTTP 200  console 2  2838ms
+  /leaderboard  1280x800|dark|full|user|normal  HTTP 200  console 2  3000ms
+  /codex  1280x800|dark|full|signed-out|normal  HTTP 200  console 0  3592ms
+  /codex  1280x800|dark|full|user|normal  HTTP 200  console 0  3588ms
+  /tv  1280x800|dark|full|signed-out|normal  HTTP 200  console 2  4572ms
+  /tv  1280x800|dark|full|user|normal  HTTP 200  console 2  3521ms
+
+[console] 16 cells, 20 known item(s), 0 new

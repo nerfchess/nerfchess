@@ -12,7 +12,7 @@
 //   quiet    text       inline text actions inside a row
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, LinkButton, type ButtonSize as CoreSize } from "@/components/ui/Button";
 
 export type ButtonTone = "default" | "primary" | "danger" | "quiet";
@@ -23,7 +23,7 @@ const SIZE: Record<ButtonSize, CoreSize> = { sm: "sm", md: "md" };
 function quietClass(size: ButtonSize, extra?: string): string {
   return [
     "inline-flex items-center justify-center gap-1.5 text-parchment-300 transition-colors hover:text-parchment-50 disabled:cursor-not-allowed disabled:opacity-40",
-    size === "sm" ? "min-h-[36px] px-2 text-[12px]" : "min-h-[40px] px-3 text-sm",
+    size === "sm" ? "min-h-[36px] px-2 text-[13px]" : "min-h-[40px] px-3 text-sm",
     extra ?? "",
   ].join(" ");
 }
@@ -52,6 +52,75 @@ export function ModButton({
       {children}
     </Button>
   );
+}
+
+/**
+ * A destructive action that asks twice (F121). The first press arms it: the
+ * label turns into the confirmation (`confirmLabel`) and the button keeps its
+ * place in the row; it may widen to fit the longer label, which is a response
+ * to the press, not a layout shift. A second press within five seconds
+ * runs `onConfirm`; Escape, leaving the button or the timeout disarms it.
+ */
+export function ConfirmButton({
+  onConfirm,
+  confirmLabel,
+  children,
+  disabled,
+  ...rest
+}: {
+  onConfirm: () => void;
+  confirmLabel: ReactNode;
+  tone?: ButtonTone;
+  size?: ButtonSize;
+  className?: string;
+  title?: string;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  const { armed: pressArmed, press, disarm } = useArmedPress();
+  // A button that turns disabled while armed shows its plain label again.
+  const armed = pressArmed && !disabled;
+  return (
+    <ModButton
+      {...rest}
+      disabled={disabled}
+      aria-live="polite"
+      data-armed={armed ? "true" : undefined}
+      onClick={() => press(onConfirm)}
+      onBlur={disarm}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") disarm();
+      }}
+    >
+      {armed ? confirmLabel : children}
+    </ModButton>
+  );
+}
+
+/**
+ * The two-press rule of ConfirmButton for a button that keeps its own look:
+ * `press(fn)` arms on the first call and runs `fn` on a second within five
+ * seconds; `disarm` is for blur and Escape.
+ */
+export function useArmedPress(): { armed: boolean; press: (fn: () => void) => void; disarm: () => void } {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = window.setTimeout(() => setArmed(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [armed]);
+  return {
+    armed,
+    press: (fn) => {
+      if (!armed) {
+        setArmed(true);
+        return;
+      }
+      setArmed(false);
+      fn();
+    },
+    disarm: () => setArmed(false),
+  };
 }
 
 /** Same shape as ModButton, for the links that behave like actions. */
@@ -88,12 +157,15 @@ export function ModToggle({
   on,
   busy,
   disabled,
+  failed,
   onToggle,
   label,
 }: {
   on: boolean | null;
   busy?: boolean;
   disabled?: boolean;
+  /** The state could not be loaded: shows "-" instead of the loading "…". */
+  failed?: boolean;
   onToggle: () => void;
   label: string;
 }) {
@@ -107,13 +179,13 @@ export function ModToggle({
         aria-label={label}
         disabled={unknown || busy || disabled}
         onClick={onToggle}
-        title={unknown ? "Loading…" : on ? `${label} is on. Click to turn off.` : `${label} is off. Click to turn on.`}
+        title={unknown ? (failed ? "Could not load" : "Loading…") : on ? `${label} is on. Click to turn off.` : `${label} is off. Click to turn on.`}
         className="settings-toggle"
       >
         <span aria-hidden className="settings-toggle__thumb" />
       </button>
-      <span className={"text-[12px] " + (unknown ? "text-parchment-400" : on ? "text-parchment-100" : "text-parchment-400")}>
-        {unknown ? "…" : busy ? "Saving…" : on ? "On" : "Off"}
+      <span className={"text-[13px] " + (unknown ? "text-parchment-400" : on ? "text-parchment-100" : "text-parchment-400")}>
+        {unknown ? (failed ? "-" : "…") : busy ? "Saving…" : on ? "On" : "Off"}
       </span>
     </span>
   );
@@ -145,7 +217,7 @@ export function SegmentedControl<T extends string>({
             onClick={() => onChange(opt.value)}
             className={
               "flex-1 border border-[color:var(--edge)] text-center transition-colors [&+&]:border-l-0 sm:flex-none " +
-              (size === "sm" ? "min-h-[36px] px-3 text-[12px]" : "min-h-[40px] px-4 text-sm") +
+              (size === "sm" ? "min-h-[36px] px-3 text-[13px]" : "min-h-[40px] px-4 text-sm") +
               " " +
               (active
                 ? opt.tone === "danger"
@@ -195,7 +267,7 @@ export function CountBadge({ n, tone = "warn" }: { n: number; tone?: "warn" | "n
   return (
     <span
       className={
-        "ml-auto shrink-0 px-1.5 py-px font-mono text-[12px] tabular-nums " +
+        "ml-auto shrink-0 px-1.5 py-px font-mono text-[13px] tabular-nums " +
         (tone === "warn" ? "bg-oxblood text-white" : "bg-[color:var(--bg-raised)] text-parchment-200")
       }
     >
@@ -221,7 +293,7 @@ export function Pill({
           : tone === "gold"
             ? "text-brag"
             : "text-parchment-300";
-  return <span className={`shrink-0 text-[12px] uppercase tracking-[0.05em] ${style}`}>{children}</span>;
+  return <span className={`shrink-0 text-[13px] uppercase tracking-[0.05em] ${style}`}>{children}</span>;
 }
 
 export type StatItem = {
@@ -240,8 +312,8 @@ export function StatCard({ label, value, sub, tone }: StatItem) {
   return (
     <div className="px-3.5 py-3">
       <div className={"font-display text-[22px] leading-none tabular-nums " + valueTone(tone)}>{value}</div>
-      <div className="mt-1 text-[12px] uppercase tracking-[0.05em] text-parchment-400">{label}</div>
-      {sub && <div className="mt-0.5 text-[12px] leading-snug text-parchment-400">{sub}</div>}
+      <div className="mt-1 text-[13px] uppercase tracking-[0.05em] text-parchment-400">{label}</div>
+      {sub && <div className="mt-0.5 text-[13px] leading-snug text-parchment-400">{sub}</div>}
     </div>
   );
 }
@@ -255,10 +327,13 @@ export function StatGrid({ items, cols = 4 }: { items: StatItem[]; cols?: 3 | 4 
       <div className="plate divide-y divide-[color:var(--edge)] sm:hidden">
         {items.map((it) => (
           <div key={it.label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-            <span className="min-w-0 text-[12px] leading-tight text-parchment-400">{it.label}</span>
-            <span className="shrink-0 text-right">
-              <span className={"font-display text-lg tabular-nums " + valueTone(it.tone)}>{it.value}</span>
-              {it.sub && <span className="block text-[12px] leading-tight text-parchment-400">{it.sub}</span>}
+            <span className="min-w-0 text-[13px] leading-tight text-parchment-400">{it.label}</span>
+            {/* A fixed floor on the value column, and block children, so a
+                value that arrives after a placeholder ("…") does not move the
+                column's boxes sideways (GamesSection draws the grid early). */}
+            <span className="min-w-[45%] shrink-0 text-right">
+              <span className={"block font-display text-lg tabular-nums " + valueTone(it.tone)}>{it.value}</span>
+              {it.sub && <span className="block text-[13px] leading-tight text-parchment-400">{it.sub}</span>}
             </span>
           </div>
         ))}
@@ -285,7 +360,7 @@ export function SectionHead({
   actionsInline?: boolean;
 }) {
   const heading = <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-300">{title}</h2>;
-  const prose = blurb && <p className="mt-1 max-w-2xl text-[12px] leading-snug text-parchment-400">{blurb}</p>;
+  const prose = blurb && <p className="mt-1 max-w-2xl text-[13px] leading-snug text-parchment-400">{blurb}</p>;
 
   if (actionsInline) {
     return (
@@ -328,6 +403,19 @@ export function Empty({ children }: { children: ReactNode }) {
 
 export function Loading({ what }: { what: string }) {
   return <p className="text-sm text-parchment-400">Loading {what}…</p>;
+}
+
+/** A section whose data did not load: says so and offers Retry, instead of
+ *  leaving "Loading…" up forever. */
+export function LoadFailed({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="plate flex flex-wrap items-center justify-center gap-3 px-4 py-8 text-sm text-parchment-200">
+      <span>Could not load {what}.</span>
+      <ModButton size="sm" onClick={onRetry}>
+        Retry
+      </ModButton>
+    </div>
+  );
 }
 
 export function RoleBadge({ role }: { role: string }) {
@@ -375,12 +463,16 @@ export function pct(part: number, whole: number): string {
   return `${Math.round((part / whole) * 100)}%`;
 }
 
-export async function postJson(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+export async function postJson(
+  path: string,
+  body: unknown,
+  method: "POST" | "DELETE" = "POST",
+): Promise<{ ok: boolean; status: number; error?: string }> {
   const res = await fetch(path, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return { ok: res.ok, error: data.error };
+  return { ok: res.ok, status: res.status, error: data.error };
 }

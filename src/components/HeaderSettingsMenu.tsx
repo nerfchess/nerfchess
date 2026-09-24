@@ -15,6 +15,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Settings as SettingsIcon, X } from "lucide-react";
 import type { CSSProperties } from "react";
+import "@/components/SettingsPanel.css";
+import { useExitPresence } from "@/lib/useExitPresence";
 import {
   BOARD_THEMES,
   BoardTheme,
@@ -101,6 +103,10 @@ function MiniToggle({
   onChange: (next: boolean) => void;
   label: string;
 }) {
+  // The same switch as the Preferences panel (.settings-toggle in
+  // SettingsPanel.css): 44x24 visual, a ::before that lifts the hit area to
+  // 44px tall, token timings and the data-anim gate. It used to be a third
+  // hand-rolled switch with a 24px target (F198).
   return (
     <button
       type="button"
@@ -108,20 +114,9 @@ function MiniToggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className="pill-switch relative inline-flex h-6 w-11 shrink-0 items-center transition-colors"
-      style={{
-        background: checked ? "var(--accent)" : "var(--bg-raised)",
-        boxShadow: "inset 0 0 0 1px var(--border-subtle)",
-      }}
+      className="settings-toggle"
     >
-      <span
-        aria-hidden
-        className="block h-4 w-4 rounded-full transition-transform"
-        style={{
-          background: checked ? "var(--text-on-accent, #fff)" : "var(--text-secondary)",
-          transform: checked ? "translateX(24px)" : "translateX(4px)",
-        }}
-      />
+      <span aria-hidden className="settings-toggle__thumb" />
     </button>
   );
 }
@@ -183,6 +178,8 @@ export function HeaderSettingsMenu({
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+  // Keeps the panel mounted for its mirrored exit (.m-pop[data-leaving]).
+  const pop = useExitPresence(open);
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -259,11 +256,12 @@ export function HeaderSettingsMenu({
         <SettingsIcon size={18} />
       </button>
 
-      {open && (
+      {pop.mounted && (
         <div
           role="dialog"
           aria-label="Quick settings"
-          className="absolute right-0 top-full z-50 mt-2 w-[19rem] max-w-[calc(100vw-1.5rem)] space-y-3.5 overflow-y-auto p-3 text-[13px]"
+          data-leaving={pop.leaving ? "" : undefined}
+          className="m-pop m-pop--end absolute right-0 top-full z-50 mt-2 w-[19rem] max-w-[calc(100vw-1.5rem)] space-y-3.5 overflow-y-auto p-3 text-[13px]"
           style={{ ...PANEL_STYLE, maxHeight: "min(32rem, calc(100vh - 5rem))" }}
         >
           <BackgroundSection value={settings.siteTheme} onPick={(t) => update({ siteTheme: t })} />

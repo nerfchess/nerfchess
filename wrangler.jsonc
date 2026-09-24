@@ -43,10 +43,10 @@
     // Tier 2 / M4 cutover (reversible). "true" (with INGEST on) stops the DO
     // spawning its own house-vs-house filler so the arena owns bot-vs-bot;
     // bot-vs-human pickup + house seeks stay on the DO. Flip back off and the
-    // DO resumes filler next tick — the arena being down never empties the lobby.
+    // DO resumes filler next tick, the arena being down never empties the lobby.
     // "true" since 2026-07-13: the arena is live and confirmed POSTing to
     // /arena/games (Tier 2 ingest verified). This MUST live here, not just in
-    // the Cloudflare dashboard — `wrangler deploy` (via `npm run deploy`)
+    // the Cloudflare dashboard, `wrangler deploy` (via `npm run deploy`)
     // rewrites plaintext vars from this file on every deploy, so a dashboard-only
     // "true" gets clobbered back to the committed value each time. To stand the
     // DO filler back up, set this to "false" here and redeploy.
@@ -57,7 +57,21 @@
     // rewrites vars from here, so a dashboard-only value is clobbered on the next
     // deploy. The optional shared secret is set separately:
     //   wrangler secret put MOD_WEBHOOK_TOKEN
-    "MOD_WEBHOOK_URL": ""
+    "MOD_WEBHOOK_URL": "",
+    // Daily email (brief section 17, src/lib/server/dailyJob.ts). Ships dormant:
+    // nothing is sent until RESEND_API_KEY (secret) and EMAIL_FROM are set, the
+    // founders' report also needs FOUNDER_REPORT_EMAILS, and the welcome email
+    // also needs EMAIL_MAILING_ADDRESS and the EMAIL_UNSUBSCRIBE_SECRET secret
+    // (CASL: sender address and a working unsubscribe in every email).
+    //   wrangler secret put RESEND_API_KEY
+    //   wrangler secret put EMAIL_UNSUBSCRIBE_SECRET   (any long random string)
+    // Like every plaintext var these MUST live in this file (a deploy rewrites
+    // vars from here). EMAIL_FROM must be on a domain verified in Resend, for
+    // example "Nerf Chess <hello@nerfchess.com>".
+    "EMAIL_FROM": "",
+    "FOUNDER_REPORT_EMAILS": "",
+    "EMAIL_MAILING_ADDRESS": "",
+    "EMAIL_CONTACT": ""
     // Cloudflare Turnstile on the signup form. The public sitekey is a build-time
     // var (NEXT_PUBLIC_TURNSTILE_SITEKEY) set in the build environment, not here.
     // The secret is set with: wrangler secret put TURNSTILE_SECRET_KEY
@@ -71,8 +85,8 @@
     }
   ],
   // OCI Postgres holding the finished-game archive (large, append-only). It
-  // listens local-only on the box (127.0.0.1:5432), so Hyperdrive — which dials
-  // from Cloudflare's edge — reaches it over a Cloudflare Tunnel (TCP public
+  // listens local-only on the box (127.0.0.1:5432), so Hyperdrive, which dials
+  // from Cloudflare's edge, reaches it over a Cloudflare Tunnel (TCP public
   // hostname pgdb.nerfchess.com) guarded by an Access service token. The config
   // below (`nerfchess-pg`) already exists on the account with that host + an
   // Access client id, so deploys with this id no longer fail (contrary to the
@@ -83,12 +97,12 @@
   // Access service token valid, and the PG `games` schema present + backfilled
   // (scripts/backfill-games.mjs). With the binding present, reads fall back to
   // D1 only on error (see pg.ts), and finished-game archive writes go to PG only
-  // (games.ts) — so a dead origin means lost archive rows, not a silent D1 write.
+  // (games.ts), so a dead origin means lost archive rows, not a silent D1 write.
   //
   // `localConnectionString` is a placeholder needed only at BUILD time: OpenNext
   // runs getPlatformProxy during the build, which requires some local Hyperdrive
   // string for this binding (else the build errors with "no local hyperdrive
-  // connection string"). It is never used in production — the deployed Worker
+  // connection string"). It is never used in production, the deployed Worker
   // talks to the real Hyperdrive config via `id`. For a real local Postgres,
   // override it with WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE.
   "hyperdrive": [
@@ -116,5 +130,11 @@
   ],
   "observability": {
     "enabled": true
+  },
+  // The daily email job (welcome emails and the founders' report), handled by
+  // scheduled() in worker.ts. Cron times are UTC: 13:00 UTC is 9am EDT and
+  // 8am EST (integrator decision Q23).
+  "triggers": {
+    "crons": ["0 13 * * *"]
   }
 }

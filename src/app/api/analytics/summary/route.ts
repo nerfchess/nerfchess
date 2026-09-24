@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb, getEnvVar } from "@/lib/server/db";
 import { pgAll, pgFirst } from "@/lib/server/pg";
+import { HUMAN_USER_SQL, humanSeatSql, testAccountIds } from "@/lib/server/metrics";
+import { HUMAN_GAME_SQL } from "@/lib/server/modGames";
 
 export const dynamic = "force-dynamic";
 
@@ -19,16 +21,22 @@ export const dynamic = "force-dynamic";
  *   generatedAt: string,            // ISO timestamp
  *   range: { days: 30, start: "YYYY-MM-DD", end: "YYYY-MM-DD" },
  *   totals: {
- *     users: number,                // all registered accounts
- *     games: number,                // archived human games (all time)
- *     botGames: number,             // vs-bot games counter (all time)
- *     activeUsers1d: number,        // distinct players in the last 24h-ish day window
+ *     users: number,                // human accounts, guests included (exclusion rule below)
+ *     games: number,                // archived games with at least one human seat (all time)
+ *     botGames: number,             // local vs-bot games counter (all time)
+ *     activeUsers1d: number,        // distinct human accounts that finished a game today (UTC)
  *     activeUsers7d: number,
  *     activeUsers30d: number
  *   },
  *   daily: [{ date: "YYYY-MM-DD", games: number, newUsers: number, activeUsers: number }],
  *   modes: { nerf: number, buff: number, other: number }   // games in the 30-day window
  * }
+ *
+ * Humans only (F117): house bots (hp_ ids), seeded accounts (seed_) and test
+ * accounts (polish_ usernames) are left out of every count, the rule written
+ * in src/lib/server/metrics.ts (EXCLUSION_RULE). Guests are accounts with
+ * real ids and ARE counted when they play; anonymous seats (NULL ids) have no
+ * account and are not.
  *
  * Query cost: every games query is bounded by `completed_at >= cutoff` and
  * served by idx_games_completed; the users scan is bounded by created_at over
@@ -69,28 +77,31 @@ export async function GET(request: Request) {
   const cutoff = startIndex * DAY_MS;
   const cutoff7d = (todayIndex - 6) * DAY_MS;
   const cutoff1d = todayIndex * DAY_MS;
+  const testIds = await testAccountIds(db);
+  const humanW = humanSeatSql("white_user_id", testIds);
+  const humanB = humanSeatSql("black_user_id", testIds);
 
   // Games per UTC day over the window (index range on completed_at, then a
   // small GROUP BY). Integer division truncates identically on Postgres int8
   // and SQLite, so the same SQL serves both the archive and the D1 fallback.
   const gamesPerDay = await pgAll<{ day: number; n: number }>(
     `SELECT completed_at / 86400000 AS day, COUNT(*)::int AS n
-     FROM games WHERE completed_at >= ?
+     FROM games WHERE completed_at >= ? AND ${HUMAN_GAME_SQL}
      GROUP BY 1`,
     [cutoff],
   );
 
-  // Distinct logged-in players per day (guests have NULL user ids and are
-  // excluded). Both halves of the union hit the completed_at index.
+  // Distinct human accounts per day (house, seed and test seats excluded;
+  // anonymous seats have no id). Both halves hit the completed_at index.
   const activePerDay = await pgAll<{ day: number; n: number }>(
     `SELECT day, COUNT(DISTINCT uid)::int AS n FROM (
        SELECT completed_at / 86400000 AS day, white_user_id AS uid
-         FROM games WHERE completed_at >= ? AND white_user_id IS NOT NULL
+         FROM games WHERE completed_at >= ? AND ${humanW}
        UNION ALL
        SELECT completed_at / 86400000 AS day, black_user_id AS uid
-         FROM games WHERE completed_at >= ? AND black_user_id IS NOT NULL
+         FROM games WHERE completed_at >= ? AND ${humanB}
      ) sub GROUP BY day`,
-    [cutoff, cutoff],
+    [cutoff, ...testIds, cutoff, ...testIds],
   );
 
   // Rolling distinct-player windows (true DAU/WAU/MAU, not sums of dailies).
@@ -100,12 +111,12 @@ export async function GET(request: Request) {
             COUNT(DISTINCT uid)::int AS d30
      FROM (
        SELECT completed_at, white_user_id AS uid
-         FROM games WHERE completed_at >= ? AND white_user_id IS NOT NULL
+         FROM games WHERE completed_at >= ? AND ${humanW}
        UNION ALL
        SELECT completed_at, black_user_id AS uid
-         FROM games WHERE completed_at >= ? AND black_user_id IS NOT NULL
+         FROM games WHERE completed_at >= ? AND ${humanB}
      ) sub`,
-    [cutoff1d, cutoff7d, cutoff, cutoff],
+    [cutoff1d, cutoff7d, cutoff, ...testIds, cutoff, ...testIds],
   );
 
   // Mode split for the window. `category` carries the queue mode for draft
@@ -113,7 +124,7 @@ export async function GET(request: Request) {
   // Anything else (e.g. casual draft games labeled by speed) lands in `other`.
   const modeRows = await pgAll<{ ruleset: string | null; category: string | null; n: number }>(
     `SELECT ruleset, category, COUNT(*)::int AS n
-     FROM games WHERE completed_at >= ?
+     FROM games WHERE completed_at >= ? AND ${HUMAN_GAME_SQL}
      GROUP BY ruleset, category`,
     [cutoff],
   );
@@ -122,7 +133,7 @@ export async function GET(request: Request) {
   const signupsPerDay = await db
     .prepare(
       `SELECT created_at / 86400000 AS day, COUNT(*) AS n
-       FROM users WHERE created_at >= ?
+       FROM users WHERE created_at >= ? AND ${HUMAN_USER_SQL}
        GROUP BY 1`,
     )
     .bind(cutoff)
@@ -130,10 +141,10 @@ export async function GET(request: Request) {
 
   // Totals: same aggregates the public /api/stats endpoint already serves.
   const gamesTotal = await pgFirst<{ total: number }>(
-    `SELECT COUNT(*)::int AS total FROM games`,
+    `SELECT COUNT(*)::int AS total FROM games WHERE ${HUMAN_GAME_SQL}`,
   );
   const usersTotal = await db
-    .prepare(`SELECT COUNT(*) AS total FROM users`)
+    .prepare(`SELECT COUNT(*) AS total FROM users WHERE ${HUMAN_USER_SQL}`)
     .first<{ total: number }>();
   let botGames = 0;
   try {
