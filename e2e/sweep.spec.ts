@@ -1743,7 +1743,9 @@ test("report: write the defect list", async () => {
     // (every codex row discloses) and would punish a route for ADDING a
     // properly built 44px row. It stays in the report and out of the lock.
     if (d.kind === "touch-target-row-exempt") continue;
-    const key = `${d.route} ${d.kind}`;
+    // The swept tournament is whichever one the sweep account made, so its id
+    // changes whenever the database does; the lock keys it by the route shape.
+    const key = `${d.route.replace(/^\/tournaments\/[0-9a-f-]{36}$/, "/tournaments/[id]")} ${d.kind}`;
     counts[key] = (counts[key] || 0) + 1;
   }
 
