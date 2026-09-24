@@ -1,0 +1,633 @@
+{
+ "generatedAt": "2026-09-24T16:12:11.260Z",
+ "routes": [
+  {
+   "key": "/|signed-out",
+   "items": []
+  },
+  {
+   "key": "/|user",
+   "items": []
+  },
+  {
+   "key": "/lobby|signed-out",
+   "items": []
+  },
+  {
+   "key": "/lobby|user",
+   "items": []
+  },
+  {
+   "key": "/play|signed-out",
+   "items": []
+  },
+  {
+   "key": "/play|user",
+   "items": []
+  },
+  {
+   "key": "/profile|signed-out",
+   "items": []
+  },
+  {
+   "key": "/profile|user",
+   "items": [
+    {
+     "sig": "console-error: WebSocket connection to 'ws://localhost:<n>/_next/hmr?<q>' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+     "text": "WebSocket connection to 'ws://localhost:3000/_next/hmr?id=edMumwIT-qbeedZAgTCR5' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+     "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/web-socket.js"
+    },
+    {
+     "sig": "load: page.evaluate: Execution context was destroyed, most likely because of a navigation",
+     "text": "page.evaluate: Execution context was destroyed, most likely because of a navigation"
+    }
+   ]
+  },
+  {
+   "key": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0|signed-out",
+   "items": []
+  },
+  {
+   "key": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0|user",
+   "items": []
+  },
+  {
+   "key": "/leaderboard|signed-out",
+   "items": []
+  },
+  {
+   "key": "/leaderboard|user",
+   "items": []
+  },
+  {
+   "key": "/codex|signed-out",
+   "items": [
+    {
+     "sig": "load: page.evaluate: Execution context was destroyed, most likely because of a navigation",
+     "text": "page.evaluate: Execution context was destroyed, most likely because of a navigation"
+    }
+   ]
+  },
+  {
+   "key": "/codex|user",
+   "items": []
+  },
+  {
+   "key": "/tv|signed-out",
+   "items": []
+  },
+  {
+   "key": "/tv|user",
+   "items": []
+  }
+ ],
+ "warnings": [
+  "/: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790265900367 was preloaded using link preload but not used",
+  "/: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790265900367 was preloaded using link preload but not used",
+  "/: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790265929172 was preloaded using link preload but not used",
+  "/: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790265929172 was preloaded using link preload but not used",
+  "/: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790265942258 was preloaded using link preload but not used",
+  "/: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790265942258 was preloaded using link preload but not used",
+  "/lobby: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/play: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/profile: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/profile: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790266003877 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790266003877 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/page.css?v=1790266024512 was preloaded using link preload but not u",
+  "/profile: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790266021818 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790266021818 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/loading.css?v=1790266024246 was preloaded using link preload but no",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/loading.css?v=1790266024512 was preloaded using link preload but no",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/page.css?v=1790266024246 was preloaded using link preload but not u",
+  "/profile: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790266038724 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/loading.css?v=1790266043358 was preloaded using link preload but no",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/page.css?v=1790266043358 was preloaded using link preload but not u",
+  "/profile: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790266038724 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790266053585 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790266053585 was preloaded using link preload but not used",
+  "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/leaderboard: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/codex: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/tv: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/tv: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790266256008 was preloaded using link preload but not used",
+  "/tv: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790266256008 was preloaded using link preload but not used"
+ ],
+ "apiCallCounts": [
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/games/recent",
+     3
+    ],
+    [
+     "/api/community/recent",
+     3
+    ],
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/JollySquire61/achievements",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/games/recent",
+     11
+    ],
+    [
+     "/api/community/recent",
+     11
+    ],
+    [
+     "/api/lobby",
+     5
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     5
+    ],
+    [
+     "/api/users/polish_user",
+     5
+    ],
+    [
+     "/api/auth/me",
+     3
+    ],
+    [
+     "/api/users/settings",
+     3
+    ],
+    [
+     "/api/challenges",
+     3
+    ],
+    [
+     "/api/notifications",
+     3
+    ]
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     3
+    ],
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/CleverHerald14/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/lobby",
+     3
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ],
+    [
+     "/api/users/polish_user",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/LoyalFork55/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/profile",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/challenges",
+     6
+    ],
+    [
+     "/api/notifications",
+     6
+    ],
+    [
+     "/api/auth/me",
+     4
+    ],
+    [
+     "/api/users/SleepyPatzer64/games",
+     3
+    ],
+    [
+     "/api/users/SleepyPatzer64/stats",
+     3
+    ],
+    [
+     "/api/users/settings",
+     2
+    ],
+    [
+     "/api/users/SleepyPatzer64/achievements",
+     2
+    ],
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/users/SleepyPatzer64",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/profile",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/users/polish_user/achievements",
+     10
+    ],
+    [
+     "/api/users/polish_user/games",
+     7
+    ],
+    [
+     "/api/users/polish_user/stats",
+     7
+    ],
+    [
+     "/api/lobby",
+     6
+    ],
+    [
+     "/api/challenges",
+     4
+    ],
+    [
+     "/api/notifications",
+     4
+    ],
+    [
+     "/api/users/polish_user",
+     4
+    ],
+    [
+     "/api/friends",
+     4
+    ],
+    [
+     "/api/leaderboard",
+     4
+    ],
+    [
+     "/api/auth/me",
+     3
+    ],
+    [
+     "/api/users/settings",
+     2
+    ]
+   ]
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": []
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/leaderboard",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/leaderboard",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ],
+    [
+     "/api/users/DaringHerald24/achievements",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/leaderboard",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/leaderboard",
+     2
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/codex",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/cards",
+     1
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/DizzyOcelot12/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/codex",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/cards",
+     1
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/lobby",
+     1
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/games/recent",
+     3
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/lobby",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  }
+ ]
+}

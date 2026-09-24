@@ -1,0 +1,45 @@
+{
+ "generatedAt": "2026-09-24T16:42:20.183Z",
+ "rows": [
+  {
+   "route": "/",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/about",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/about",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/analysis",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/analysis",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  }
+ ]
+}

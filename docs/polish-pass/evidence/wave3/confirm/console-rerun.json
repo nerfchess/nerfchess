@@ -1,0 +1,155 @@
+{
+ "generatedAt": "2026-09-24T16:38:36.347Z",
+ "routes": [
+  {
+   "key": "/profile|signed-out",
+   "items": []
+  },
+  {
+   "key": "/profile|user",
+   "items": []
+  },
+  {
+   "key": "/codex|signed-out",
+   "items": []
+  },
+  {
+   "key": "/codex|user",
+   "items": []
+  }
+ ],
+ "warnings": [
+  "/profile: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/profile: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970.p.woff2?v=1790267808915 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/loading.css?v=1790267811883 was preloaded using link preload but no",
+  "/profile: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e.p.woff2?v=1790267808915 was preloaded using link preload but not used",
+  "/profile: The resource http://localhost:3000/_next/static/css/app/u/%5Busername%5D/page.css?v=1790267811883 was preloaded using link preload but not u",
+  "/codex: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl"
+ ],
+ "apiCallCounts": [
+  {
+   "route": "/profile",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     3
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/profile",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/challenges",
+     5
+    ],
+    [
+     "/api/notifications",
+     5
+    ],
+    [
+     "/api/lobby",
+     4
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     3
+    ],
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/users/polish_user/games",
+     2
+    ],
+    [
+     "/api/users/polish_user/stats",
+     2
+    ],
+    [
+     "/api/users/polish_user",
+     2
+    ],
+    [
+     "/api/users/settings",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/codex",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     3
+    ],
+    [
+     "/api/cards",
+     1
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/GallantMongoose77/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/codex",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/challenges",
+     2
+    ],
+    [
+     "/api/notifications",
+     2
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/cards",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ]
+   ]
+  }
+ ]
+}
