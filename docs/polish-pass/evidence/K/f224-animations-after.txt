@@ -1,0 +1,5 @@
+animation registry: 2452 tier 1-8 upgrades (1533 buffs, 551 hexes, 368 nerfs)
+status: keep 2452 | minor polish 0 | partial 0 | full 0
+shared flagships: 0 total, 0 at tier>=5 across 0 groups
+no hand-made art: 0 cards still on the generated fallback (baseline 0); list them with node scripts/audit-bespoke-coverage.cjs
+PASS: animation registry OK.
