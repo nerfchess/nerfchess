@@ -1,0 +1,159 @@
+{
+ "generatedAt": "2026-09-24T12:47:27.671Z",
+ "rows": [
+  {
+   "route": "/friend",
+   "state": "390x844|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      ".bg-\\[color\\:var\\(--accent\\)\\] :: Fix any of the following: Element has insufficient color contrast of 3.26 (foreground color: #ffffff, background color: #3692e7, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+      ".border-mode-nerf\\/30 :: Fix any of the following: Element has insufficient color contrast of 3.68 (foreground color: #c66060, background color: #2f2623, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+      ".border-2 :: Fix any of the following: Element has insufficient color contrast of 4.08 (foreground color: #3692e7, background color: #312f2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/friend",
+   "state": "390x844|light|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".border-2 :: Fix any of the following: Element has insufficient color contrast of 4.25 (foreground color: #1b78d0, background color: #f8f8f7, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/friend",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      ".bg-\\[color\\:var\\(--accent\\)\\] :: Fix any of the following: Element has insufficient color contrast of 3.26 (foreground color: #ffffff, background color: #3692e7, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+      ".border-mode-nerf\\/30 :: Fix any of the following: Element has insufficient color contrast of 3.68 (foreground color: #c66060, background color: #2f2623, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1",
+      ".border-2 :: Fix any of the following: Element has insufficient color contrast of 4.08 (foreground color: #3692e7, background color: #312f2b, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/friend",
+   "state": "1280x800|light|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".border-2 :: Fix any of the following: Element has insufficient color contrast of 4.25 (foreground color: #1b78d0, background color: #f8f8f7, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/profile/edit",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/profile/edit",
+   "state": "390x844|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/profile/edit",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/profile/edit",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/settings",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/settings",
+   "state": "390x844|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/settings",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/settings",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/community",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/community",
+   "state": "390x844|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|light|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".border-verdigris-glow\\/50 :: Fix any of the following: Element has insufficient color contrast of 3.02 (foreground color: #629924, background color: #edf2e8, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  }
+ ]
+}

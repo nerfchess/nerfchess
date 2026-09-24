@@ -1,0 +1,91 @@
+{
+ "generatedAt": "2026-09-24T13:16:02.896Z",
+ "rows": [
+  {
+   "route": "/community",
+   "state": "390x844|dark|full|user|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/community"
+  },
+  {
+   "route": "/community",
+   "state": "390x844|light|full|user|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/community"
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/community"
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|light|full|user|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/community"
+  },
+  {
+   "route": "/friend",
+   "state": "390x844|dark|full|user|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/friend"
+  },
+  {
+   "route": "/friend",
+   "state": "390x844|light|full|user|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/friend"
+  },
+  {
+   "route": "/friend",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/friend",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "390x844|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/lobby",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/lobby",
+   "state": "390x844|light|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|light|full|user|normal",
+   "violations": []
+  }
+ ]
+}

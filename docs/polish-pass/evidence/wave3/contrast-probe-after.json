@@ -1,0 +1,77 @@
+{
+ "generatedAt": "2026-09-24T13:22:11.028Z",
+ "rows": [
+  {
+   "theme": "dark",
+   "themeAttr": "dark",
+   "rest": {
+    "bg": "rgb(42, 111, 176)",
+    "color": "rgb(255, 255, 255)",
+    "filter": "none",
+    "ratio": 5.25
+   },
+   "hover": {
+    "bg": "rgb(42, 111, 176)",
+    "color": "rgb(255, 255, 255)",
+    "filter": "brightness(1.08)",
+    "ratio": 4.63
+   },
+   "nerfGlow": {
+    "color": "rgb(236, 111, 111)",
+    "onWhite": 2.97
+   },
+   "buffGlow": {
+    "color": "rgb(132, 183, 226)",
+    "onWhite": 2.13
+   }
+  },
+  {
+   "theme": "midnight",
+   "themeAttr": "midnight",
+   "rest": {
+    "bg": "rgb(42, 111, 176)",
+    "color": "rgb(255, 255, 255)",
+    "filter": "none",
+    "ratio": 5.25
+   },
+   "hover": {
+    "bg": "rgb(42, 111, 176)",
+    "color": "rgb(255, 255, 255)",
+    "filter": "brightness(1.08)",
+    "ratio": 4.63
+   },
+   "nerfGlow": {
+    "color": "rgb(236, 111, 111)",
+    "onWhite": 2.97
+   },
+   "buffGlow": {
+    "color": "rgb(146, 193, 234)",
+    "onWhite": 1.9
+   }
+  },
+  {
+   "theme": "light",
+   "themeAttr": "light",
+   "rest": {
+    "bg": "rgb(20, 92, 160)",
+    "color": "rgb(255, 255, 255)",
+    "filter": "none",
+    "ratio": 6.84
+   },
+   "hover": {
+    "bg": "rgb(20, 92, 160)",
+    "color": "rgb(255, 255, 255)",
+    "filter": "brightness(1.08)",
+    "ratio": 6.12
+   },
+   "nerfGlow": {
+    "color": "rgb(138, 46, 44)",
+    "onWhite": 8.37
+   },
+   "buffGlow": {
+    "color": "rgb(20, 88, 159)",
+    "onWhite": 7.18
+   }
+  }
+ ]
+}
