@@ -1,0 +1,86 @@
+{
+ "id": "long_leash",
+ "url": "/dev/plays?id=long_leash&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "long_leash",
+  "name": "Long Leash",
+  "tier": 6,
+  "category": "nerf",
+  "mechanic": "instant",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:long_leash",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2416,
+  "cssEndMs": 3478,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 28,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 43
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 133.4,
+  "dropped": 17
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 122,
+  "totalBlockingMs": 58,
+  "entries": [
+   {
+    "atMs": -53,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2626,
+    "duration": 122,
+    "blocking": 58,
+    "scripts": [
+     {
+      "duration": 106,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  292,
+  745,
+  1288,
+  1899,
+  2566
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/long_leash.png",
+ "pngBytes": 10422
+}

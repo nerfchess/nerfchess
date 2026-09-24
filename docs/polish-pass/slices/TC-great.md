@@ -38,7 +38,7 @@ Every tier 5 and 6 card in greatPlays now plays its own scene; no card at tier 5
 
 Cleanup (0aac41b): the 62 flourish blocks whose cards now have scenes, and the SiegeRoll, WarBanner and Grove templates (no card left on them), are deleted, 1,630 lines. The ten remaining templates carry only the 18 cards of tier 4 and below.
 
-Evidence: `after/<id>.png` (6 frames at 120px to keep the folder small; the evidence folder as a whole is over its 25 MB budget from other slices, this slice's folder is about 2.5 MB), before strips for the hex pool in `before/`. Off checks (`after/<id>.off.png`) were run on five representative cards; all pass. Strips for the 24 retired cards: see "Where I stopped".
+Evidence: `after/<id>.png` (6 frames at 120px to keep the folder small; the evidence folder as a whole is over its 25 MB budget from other slices, this slice's folder is about 2.5 MB), before strips for the hex pool in `before/`. Off checks (`after/<id>.off.png`) were run on five representative cards; all pass. Strips for the 24 retired cards are in `after/` as well.
 
 Guards at the last commit: test:animations PASS, test:scene-complexity no greatPlays scene below the floor (the gate itself fails on core.SanctRiseBurst, core.GodKnightBurst, core.BloodPactBurst and core.CrownRainBurst, all another slice's uncommitted core work), test:anim-props clean, test:reduced-motion clean, check-vfx-coverage and check-sig-plugins clean, audit-bespoke-coverage MISSING 0, check-great-weight 115/115, tsc and eslint clean on the module. threads_of_fate and ww_iron_bulwark pass the scene-complexity floor (the two misses named in the brief were fixed before this round).
 
@@ -112,7 +112,7 @@ Guards at the last commit: test:animations PASS, test:scene-complexity no greatP
 
 Round 2 (this pass): every tier 5 and 6 card in greatPlays, live and retired (97 of 115 entries), plays a per-card scene of its rule. The shared templates now carry only the 18 cards of tier 4 and below: wc_voodoo_doll, mind_control, royal_handicap (WitchCircle), queen_of_stone, stone_curse (StoneGaze), glacial_flanks (ColdFront), starlight_ward (PhantomParade), time_rewind (ClockSpire), the_tower, chess_diff (CardRite), empty_handed (ThiefHand), overclock_major, legendary_forge (CrownForge), rift_walker, ley_line, fey_step (RiftGate), dragon_mount, sahur (BeastRush); 16 of them still wear a flourish. Next in line: those 18, tier 4 first, then the same round-2 dead-code sweep for the templates they leave behind.
 
-Strips for the 24 retired cards were running in the background when this was written; if `after/<id>.png` is missing for any of them, the run did not finish (not a code finding: retired cards render through the same helpers as the live ones, all of which were stripped).
+Strips for the 24 retired cards were captured too (24/24, `after/<id>.png`).
 
 ## REQUESTS
 

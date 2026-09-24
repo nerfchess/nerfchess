@@ -1,0 +1,78 @@
+{
+ "id": "death_arcana",
+ "url": "/dev/plays?id=death_arcana&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "death_arcana",
+  "name": "The Death Arcana",
+  "tier": 6,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:death_arcana",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7"
+  ],
+  "picks": [
+   "d7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2462,
+  "cssEndMs": 3513,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 33,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 175,
+  "maxGapMs": 253.7
+ },
+ "raf": {
+  "frames": 211,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 74,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 136,
+    "duration": 74,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  297,
+  758,
+  1311,
+  1933,
+  2612
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/death_arcana.png",
+ "pngBytes": 11476
+}

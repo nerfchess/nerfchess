@@ -1,0 +1,67 @@
+{
+ "id": "palsied_hands",
+ "url": "/dev/plays?id=palsied_hands&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "palsied_hands",
+  "name": "Palsied Hands",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:palsied_hands",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2367,
+  "cssEndMs": 3452,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 24,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 208,
+  "maxGapMs": 320.8
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  287,
+  731,
+  1263,
+  1862,
+  2517
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/palsied_hands.png",
+ "pngBytes": 10327
+}
