@@ -3647,7 +3647,9 @@ function ExSmashBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     return (
       <BoardWideStage>
         <BoardFrame>
-          <span className="fx-tc-slam absolute block" style={{ left: "42%", top: "42%", width: "16%", height: "16%", animationDelay: dm(delayMs, 0) }}>
+          {/* the whole heart only lasts until the tear: a short slam whose hold
+              ends as the two halves (360ms) take over, so it never re-forms */}
+          <span className="fx-tc-slam absolute block" style={{ left: "42%", top: "42%", width: "16%", height: "16%", animationDelay: dm(delayMs, 0), animationDuration: "calc(520ms * var(--fx-dur, 1))" }}>
             <svg viewBox="0 0 16 16" className="block h-full w-full" aria-hidden="true">
               <path d="M8 14.4 C3 10.6 1 8 1 5.4 C1 3 2.8 1.4 4.8 1.4 C6.2 1.4 7.3 2.2 8 3.4 C8.7 2.2 9.8 1.4 11.2 1.4 C13.2 1.4 15 3 15 5.4 C15 8 13 10.6 8 14.4 Z" fill="#d66058" stroke="#3a2420" strokeWidth="0.8" {...TC_SJ} />
             </svg>
