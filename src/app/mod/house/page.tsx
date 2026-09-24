@@ -8,13 +8,14 @@
 // identity cache refreshes within about a minute). Open to any moderator or
 // admin, matching the server-side authorization in /api/mod/house/personas.
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ModGateNotice, useModGate } from "@/components/mod/ModGate";
 import { ModShell } from "@/components/mod/ModShell";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import { Button } from "@/components/ui/Button";
-import { useArmedPress } from "@/components/mod/ui";
+import { LoadFailed, useArmedPress } from "@/components/mod/ui";
 
 type PersonaView = {
   userId: string;
@@ -46,7 +47,11 @@ export default function ModHousePage() {
   const gate = useModGate();
   const { isMod } = gate;
   const [data, setData] = useState<PersonasPayload | null>(null);
-  const [failed, setFailed] = useState(false);
+  // "denied": the server says this session may not read the roster (401 or
+  // 403: signed out elsewhere, or the role was taken away since the page
+  // loaded). "error": anything else, which Retry can fix.
+  const [failed, setFailed] = useState<null | "denied" | "error">(null);
+  const [attempt, setAttempt] = useState(0);
   // 900 personas with three controls each is too much DOM to mount at once:
   // filter by name and page the rest in.
   const [query, setQuery] = useState("");
@@ -55,12 +60,31 @@ export default function ModHousePage() {
   // The roster is fetched only once the mod check passes, like the other mod
   // pages: for anyone else it is a request that always fails.
   useEffect(() => {
-    if (!isMod) return;
+    if (!isMod) return undefined;
+    let cancelled = false;
     fetch("/api/mod/house/personas")
-      .then((res) => (res.ok ? (res.json() as Promise<PersonasPayload>) : Promise.reject()))
-      .then(setData)
-      .catch(() => setFailed(true));
-  }, [isMod]);
+      .then(async (res): Promise<PersonasPayload | "denied"> => {
+        if (res.status === 401 || res.status === 403) return "denied";
+        if (!res.ok) throw new Error(String(res.status));
+        return (await res.json()) as PersonasPayload;
+      })
+      .then((answer) => {
+        if (cancelled) return;
+        if (answer === "denied") setFailed("denied");
+        else setData(answer);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isMod, attempt]);
+
+  const retry = () => {
+    setFailed(null);
+    setAttempt((n) => n + 1);
+  };
 
   return (
     <ModShell title="House bots" isAdmin={gate.isAdmin}>
@@ -69,13 +93,22 @@ export default function ModHousePage() {
           <ModGateNotice gate={gate} />
         ) : (
           <>
-                        <p className="mt-3 max-w-2xl text-sm text-parchment-300">
+            <p className="mt-3 max-w-2xl text-sm text-parchment-300">
               The engine-driven roster that keeps the lobby warm. Rename a persona,
               pick a different avatar, or set a profile bio; names pass the same
               checks a player registration does. Changes go live without a deploy.
             </p>
-            {failed ? (
-              <p className="mt-6 text-sm text-parchment-400">Could not load the roster. Try again in a minute.</p>
+            {failed === "denied" ? (
+              <p className="mt-6 text-parchment-200">
+                Your session can no longer edit house personas.{" "}
+                <Link href="/login?next=%2Fmod%2Fhouse" className="text-parchment-50 underline underline-offset-2">
+                  Sign in again
+                </Link>
+              </p>
+            ) : failed ? (
+              <div className="mt-6">
+                <LoadFailed what="the roster" onRetry={retry} />
+              </div>
             ) : !data ? (
               <p className="mt-6 text-parchment-300">Loading…</p>
             ) : (
