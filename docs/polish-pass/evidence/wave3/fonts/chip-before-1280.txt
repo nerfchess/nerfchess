@@ -1,0 +1,18 @@
+== /login 1280 cookies: dc_session
+  t=29323 cluster x=1078 w=175 kids=3
+  t=32085 cluster x=942 w=310 kids=5
+  shift t=32086 0.0014
+  shift t=32567 0.0000
+  cls=0.0014
+== /achievements 1280 cookies: dc_session
+  t=301 cluster x=1078 w=175 kids=3
+  t=1238 cluster x=942 w=310 kids=5
+  shift t=1239 0.0014
+  shift t=1885 0.0000
+  cls=0.0014
+== /faq 1280 cookies: dc_session
+  t=8775 cluster x=1078 w=175 kids=3
+  t=11047 cluster x=942 w=310 kids=5
+  shift t=11047 0.0014
+  shift t=11554 0.0000
+  cls=0.0014
