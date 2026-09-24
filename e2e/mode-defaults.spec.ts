@@ -99,7 +99,9 @@ test("lobby tabs: Play default, folds open, legacy deep links map", async ({ pag
   await expect(findButton(page)).toBeVisible();
 
   await page.getByRole("tab", { name: /watch & friends/i }).click();
-  await expect(page.getByText("Live games")).toBeVisible();
+  // Exact: the desktop rail's empty line ("No live games right now.") also
+  // contains the words whenever nobody is playing.
+  await expect(page.getByText("Live games", { exact: true })).toBeVisible();
   await expect(findButton(page)).toBeHidden();
 
   // The friends flow sits folded inside Watch & Friends.
