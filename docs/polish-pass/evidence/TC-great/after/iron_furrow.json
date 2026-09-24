@@ -1,22 +1,22 @@
 {
- "id": "ball_and_chain",
- "url": "/dev/plays?id=ball_and_chain&bare=1",
+ "id": "iron_furrow",
+ "url": "/dev/plays?id=iron_furrow&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "ball_and_chain",
-  "name": "Ball and Chain",
-  "tier": 6,
+  "id": "iron_furrow",
+  "name": "Iron Furrow",
+  "tier": 5,
   "category": "hex",
   "mechanic": "passive",
   "retired": false,
   "art": "plugin",
-  "visual": "x:ball_and_chain",
+  "visual": "x:iron_furrow",
   "anchor": "cast",
   "source": "removal",
   "hasLead": true,
-  "ordering": "radial",
-  "staggerMs": 60,
+  "ordering": "sweep",
+  "staggerMs": 55,
   "drive": "stage",
   "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
   "castSq": null,
@@ -31,21 +31,21 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2426,
-  "cssEndMs": 3482,
+  "visualMs": 2387,
+  "cssEndMs": 3477,
   "settled": true,
   "windowMs": 3600,
   "cssAnimations": 33,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 168,
-  "maxGapMs": 342.4
+  "framesInWindow": 170,
+  "maxGapMs": 365.8
  },
  "raf": {
   "frames": 215,
   "medianMs": 16.7,
-  "maxMs": 33.4,
+  "maxMs": 49.9,
   "dropped": 3
  },
  "longAnimationFrames": {
@@ -56,21 +56,12 @@
  },
  "tiles": [
   0,
-  293,
-  748,
-  1293,
-  1906,
-  2576
+  289,
+  736,
+  1273,
+  1877,
+  2537
  ],
- "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.png",
- "pngBytes": 11716,
- "off": {
-  "url": "/dev/plays?id=ball_and_chain&anim=off&bare=1",
-  "pass": true,
-  "instantChanged": 0,
-  "instantRegions": [],
-  "endChanged": 0,
-  "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.off.png"
- }
+ "png": "docs/polish-pass/evidence/TC-great/after/iron_furrow.png",
+ "pngBytes": 11243
 }

@@ -1,0 +1,80 @@
+{
+ "id": "ironclad",
+ "url": "/dev/plays?id=ironclad&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ironclad",
+  "name": "Ironclad",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ironclad",
+  "anchor": "board",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 50,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2451,
+  "cssEndMs": 3520,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 161,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 422.6
+ },
+ "raf": {
+  "frames": 207,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 15
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 122,
+  "totalBlockingMs": 89,
+  "entries": [
+   {
+    "atMs": -95,
+    "duration": 122,
+    "blocking": 67,
+    "scripts": []
+   },
+   {
+    "atMs": 64,
+    "duration": 72,
+    "blocking": 22,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  296,
+  755,
+  1305,
+  1924,
+  2601
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/ironclad.png",
+ "pngBytes": 14259
+}

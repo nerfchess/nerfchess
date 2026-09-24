@@ -1,22 +1,22 @@
 {
- "id": "ball_and_chain",
- "url": "/dev/plays?id=ball_and_chain&bare=1",
+ "id": "throne_bound",
+ "url": "/dev/plays?id=throne_bound&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "ball_and_chain",
-  "name": "Ball and Chain",
-  "tier": 6,
+  "id": "throne_bound",
+  "name": "Throne Bound",
+  "tier": 5,
   "category": "hex",
   "mechanic": "passive",
   "retired": false,
   "art": "plugin",
-  "visual": "x:ball_and_chain",
+  "visual": "x:throne_bound",
   "anchor": "cast",
   "source": "removal",
   "hasLead": true,
   "ordering": "radial",
-  "staggerMs": 60,
+  "staggerMs": 0,
   "drive": "stage",
   "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
   "castSq": null,
@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2426,
-  "cssEndMs": 3482,
+  "visualMs": 2366,
+  "cssEndMs": 3452,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 33,
+  "cssAnimations": 24,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 168,
-  "maxGapMs": 342.4
+  "framesInWindow": 170,
+  "maxGapMs": 313.9
  },
  "raf": {
-  "frames": 215,
+  "frames": 218,
   "medianMs": 16.7,
-  "maxMs": 33.4,
-  "dropped": 3
+  "maxMs": 16.8,
+  "dropped": 0
  },
  "longAnimationFrames": {
   "count": 0,
@@ -56,21 +56,12 @@
  },
  "tiles": [
   0,
-  293,
-  748,
-  1293,
-  1906,
-  2576
+  286,
+  730,
+  1262,
+  1862,
+  2516
  ],
- "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.png",
- "pngBytes": 11716,
- "off": {
-  "url": "/dev/plays?id=ball_and_chain&anim=off&bare=1",
-  "pass": true,
-  "instantChanged": 0,
-  "instantRegions": [],
-  "endChanged": 0,
-  "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.off.png"
- }
+ "png": "docs/polish-pass/evidence/TC-great/after/throne_bound.png",
+ "pngBytes": 11652
 }

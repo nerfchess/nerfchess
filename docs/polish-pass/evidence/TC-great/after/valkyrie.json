@@ -1,0 +1,114 @@
+{
+ "id": "valkyrie",
+ "url": "/dev/plays?id=valkyrie&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "valkyrie",
+  "name": "Valkyrie",
+  "tier": 6,
+  "category": "pieces",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:valkyrie",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2519,
+  "cssEndMs": 3448,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 75,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 337.9
+ },
+ "raf": {
+  "frames": 143,
+  "medianMs": 16.7,
+  "maxMs": 349.9,
+  "dropped": 76
+ },
+ "longAnimationFrames": {
+  "count": 6,
+  "worstMs": 321,
+  "totalBlockingMs": 452,
+  "entries": [
+   {
+    "atMs": -51,
+    "duration": 59,
+    "blocking": 8,
+    "scripts": []
+   },
+   {
+    "atMs": 30,
+    "duration": 98,
+    "blocking": 46,
+    "scripts": []
+   },
+   {
+    "atMs": 2011,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2673,
+    "duration": 321,
+    "blocking": 271,
+    "scripts": []
+   },
+   {
+    "atMs": 2998,
+    "duration": 117,
+    "blocking": 67,
+    "scripts": []
+   },
+   {
+    "atMs": 3117,
+    "duration": 139,
+    "blocking": 60,
+    "scripts": [
+     {
+      "duration": 55,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  304,
+  775,
+  1339,
+  1975,
+  2669
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/valkyrie.png",
+ "pngBytes": 11910
+}

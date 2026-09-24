@@ -1,0 +1,86 @@
+{
+ "id": "time_stop_short",
+ "url": "/dev/plays?id=time_stop_short&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "time_stop_short",
+  "name": "Time Stop (Short)",
+  "tier": 6,
+  "category": "tempo",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:time_stop_short",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 45,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2663,
+  "cssEndMs": 3515,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 152,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 162,
+  "maxGapMs": 423.5
+ },
+ "raf": {
+  "frames": 197,
+  "medianMs": 16.7,
+  "maxMs": 83.4,
+  "dropped": 24
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 111,
+  "totalBlockingMs": 90,
+  "entries": [
+   {
+    "atMs": -84,
+    "duration": 111,
+    "blocking": 57,
+    "scripts": []
+   },
+   {
+    "atMs": 57,
+    "duration": 84,
+    "blocking": 33,
+    "scripts": []
+   },
+   {
+    "atMs": 938,
+    "duration": 65,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  320,
+  816,
+  1411,
+  2081,
+  2813
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/time_stop_short.png",
+ "pngBytes": 13637
+}

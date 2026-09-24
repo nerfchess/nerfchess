@@ -1,0 +1,73 @@
+{
+ "id": "ww_bridgehead",
+ "url": "/dev/plays?id=ww_bridgehead&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ww_bridgehead",
+  "name": "Bridgehead",
+  "tier": 6,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ww_bridgehead",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4"
+  ],
+  "picks": [
+   "d4",
+   "e4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2517,
+  "cssEndMs": 3440,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 55,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 307.4
+ },
+ "raf": {
+  "frames": 185,
+  "medianMs": 16.7,
+  "maxMs": 83.4,
+  "dropped": 33
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  304,
+  774,
+  1338,
+  1973,
+  2667
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/ww_bridgehead.png",
+ "pngBytes": 13367
+}

@@ -1,0 +1,80 @@
+{
+ "id": "phase_army",
+ "url": "/dev/plays?id=phase_army&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "phase_army",
+  "name": "Phase Army",
+  "tier": 5,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:phase_army",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2398,
+  "cssEndMs": 3485,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 23,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 383.6
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 55,
+  "totalBlockingMs": 1,
+  "entries": [
+   {
+    "atMs": -54,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 13,
+    "duration": 51,
+    "blocking": 1,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  290,
+  740,
+  1279,
+  1885,
+  2548
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/phase_army.png",
+ "pngBytes": 11719
+}

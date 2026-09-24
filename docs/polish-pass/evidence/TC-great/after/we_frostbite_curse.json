@@ -1,0 +1,86 @@
+{
+ "id": "we_frostbite_curse",
+ "url": "/dev/plays?id=we_frostbite_curse&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_frostbite_curse",
+  "name": "Frostbite",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:we_frostbite_curse",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2368,
+  "cssEndMs": 3452,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 27,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 136,
+  "maxGapMs": 323.9
+ },
+ "raf": {
+  "frames": 162,
+  "medianMs": 16.7,
+  "maxMs": 333.3,
+  "dropped": 57
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 161,
+  "totalBlockingMs": 31,
+  "entries": [
+   {
+    "atMs": 70,
+    "duration": 161,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 1203,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1784,
+    "duration": 86,
+    "blocking": 21,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  287,
+  731,
+  1263,
+  1863,
+  2518
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/we_frostbite_curse.png",
+ "pngBytes": 11504
+}

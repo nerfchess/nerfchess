@@ -1,0 +1,102 @@
+{
+ "id": "medusas_verdict",
+ "url": "/dev/plays?id=medusas_verdict&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "medusas_verdict",
+  "name": "Medusa's Verdict",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:medusas_verdict",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 50,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, walnut diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2675,
+  "cssEndMs": 3436,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 63,
+  "infiniteAnimations": 3
+ },
+ "screencast": {
+  "framesInWindow": 180,
+  "maxGapMs": 314.4
+ },
+ "raf": {
+  "frames": 148,
+  "medianMs": 16.7,
+  "maxMs": 183.3,
+  "dropped": 72
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 111,
+  "totalBlockingMs": 91,
+  "entries": [
+   {
+    "atMs": -63,
+    "duration": 77,
+    "blocking": 25,
+    "scripts": []
+   },
+   {
+    "atMs": 17,
+    "duration": 60,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 201,
+    "duration": 77,
+    "blocking": 21,
+    "scripts": []
+   },
+   {
+    "atMs": 371,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3223,
+    "duration": 111,
+    "blocking": 35,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  322,
+  820,
+  1417,
+  2090,
+  2825
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/medusas_verdict.png",
+ "pngBytes": 10051
+}

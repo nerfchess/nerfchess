@@ -1,18 +1,18 @@
 {
- "id": "ball_and_chain",
- "url": "/dev/plays?id=ball_and_chain&bare=1",
+ "id": "cast_a_nerf",
+ "url": "/dev/plays?id=cast_a_nerf&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "ball_and_chain",
-  "name": "Ball and Chain",
-  "tier": 6,
+  "id": "cast_a_nerf",
+  "name": "Cast a Nerf",
+  "tier": 5,
   "category": "hex",
   "mechanic": "passive",
   "retired": false,
   "art": "plugin",
-  "visual": "x:ball_and_chain",
-  "anchor": "cast",
+  "visual": "x:cast_a_nerf",
+  "anchor": "board",
   "source": "removal",
   "hasLead": true,
   "ordering": "radial",
@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2426,
-  "cssEndMs": 3482,
+  "visualMs": 2358,
+  "cssEndMs": 3444,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 33,
+  "cssAnimations": 29,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 168,
-  "maxGapMs": 342.4
+  "framesInWindow": 169,
+  "maxGapMs": 299.6
  },
  "raf": {
   "frames": 215,
   "medianMs": 16.7,
-  "maxMs": 33.4,
-  "dropped": 3
+  "maxMs": 33.3,
+  "dropped": 2
  },
  "longAnimationFrames": {
   "count": 0,
@@ -56,21 +56,12 @@
  },
  "tiles": [
   0,
-  293,
-  748,
-  1293,
-  1906,
-  2576
+  286,
+  728,
+  1258,
+  1856,
+  2508
  ],
- "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.png",
- "pngBytes": 11716,
- "off": {
-  "url": "/dev/plays?id=ball_and_chain&anim=off&bare=1",
-  "pass": true,
-  "instantChanged": 0,
-  "instantRegions": [],
-  "endChanged": 0,
-  "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.off.png"
- }
+ "png": "docs/polish-pass/evidence/TC-great/after/cast_a_nerf.png",
+ "pngBytes": 10278
 }

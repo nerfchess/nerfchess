@@ -1,22 +1,22 @@
 {
- "id": "ball_and_chain",
- "url": "/dev/plays?id=ball_and_chain&bare=1",
+ "id": "parole",
+ "url": "/dev/plays?id=parole&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "ball_and_chain",
-  "name": "Ball and Chain",
+  "id": "parole",
+  "name": "Parole",
   "tier": 6,
-  "category": "hex",
+  "category": "nerf",
   "mechanic": "passive",
   "retired": false,
   "art": "plugin",
-  "visual": "x:ball_and_chain",
+  "visual": "x:parole",
   "anchor": "cast",
   "source": "removal",
   "hasLead": true,
   "ordering": "radial",
-  "staggerMs": 60,
+  "staggerMs": 0,
   "drive": "stage",
   "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
   "castSq": null,
@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2426,
-  "cssEndMs": 3482,
+  "visualMs": 2331,
+  "cssEndMs": 3454,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 33,
+  "cssAnimations": 34,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 168,
-  "maxGapMs": 342.4
+  "framesInWindow": 169,
+  "maxGapMs": 313.7
  },
  "raf": {
-  "frames": 215,
+  "frames": 217,
   "medianMs": 16.7,
   "maxMs": 33.4,
-  "dropped": 3
+  "dropped": 1
  },
  "longAnimationFrames": {
   "count": 0,
@@ -56,21 +56,12 @@
  },
  "tiles": [
   0,
-  293,
-  748,
-  1293,
-  1906,
-  2576
+  282,
+  720,
+  1245,
+  1836,
+  2481
  ],
- "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.png",
- "pngBytes": 11716,
- "off": {
-  "url": "/dev/plays?id=ball_and_chain&anim=off&bare=1",
-  "pass": true,
-  "instantChanged": 0,
-  "instantRegions": [],
-  "endChanged": 0,
-  "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-great/after/ball_and_chain.off.png"
- }
+ "png": "docs/polish-pass/evidence/TC-great/after/parole.png",
+ "pngBytes": 12136
 }

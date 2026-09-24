@@ -35,44 +35,87 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2502,
-  "cssEndMs": 3459,
+  "visualMs": 2457,
+  "cssEndMs": 3479,
   "settled": true,
   "windowMs": 3600,
   "cssAnimations": 58,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 174,
-  "maxGapMs": 327
+  "framesInWindow": 173,
+  "maxGapMs": 373.1
  },
  "raf": {
   "frames": 207,
   "medianMs": 16.7,
-  "maxMs": 100,
-  "dropped": 12
+  "maxMs": 116.6,
+  "dropped": 14
  },
  "longAnimationFrames": {
-  "count": 1,
-  "worstMs": 64,
-  "totalBlockingMs": 13,
+  "count": 2,
+  "worstMs": 116,
+  "totalBlockingMs": 105,
   "entries": [
    {
-    "atMs": -57,
-    "duration": 64,
-    "blocking": 13,
+    "atMs": -95,
+    "duration": 116,
+    "blocking": 59,
     "scripts": []
+   },
+   {
+    "atMs": 104,
+    "duration": 96,
+    "blocking": 46,
+    "scripts": [
+     {
+      "duration": 90,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
    }
   ]
  },
  "tiles": [
   0,
-  302,
-  770,
-  1331,
-  1962,
-  2652
+  297,
+  757,
+  1308,
+  1929,
+  2607
  ],
  "png": "docs/polish-pass/evidence/TC-great/after/the_big_chill.png",
- "pngBytes": 12108
+ "pngBytes": 12124,
+ "off": {
+  "url": "/dev/plays?id=the_big_chill&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0011,
+  "endRegions": [
+   {
+    "x": 224,
+    "y": 72,
+    "w": 24,
+    "h": 56,
+    "cells": 11
+   },
+   {
+    "x": 168,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 280,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-great/after/the_big_chill.off.png"
+ }
 }
