@@ -1,0 +1,195 @@
+{
+ "generatedAt": "2026-09-24T12:07:33.478Z",
+ "target": 0.01,
+ "runs": 3,
+ "rows": [
+  {
+   "key": "/community|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFriskyLynx95 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-5xl.px-5 > div.flex.flex-wrap.items-end > span.flex.items-center.gap-2",
+     "text": "Counting players…888 players online",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 3,
+     "maxDh": 0,
+     "maxDw": -3
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/community|1280x800|dark|full|signed-out|normal",
+   "best": 0.0031,
+   "worst": 0.0033,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCalmHedgehog22 ·Sign in",
+     "score": 0.0033,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -239,
+     "maxDh": 0,
+     "maxDw": 239
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-5xl.px-5 > div.flex.flex-wrap.items-end > span.flex.items-center.gap-2",
+     "text": "Counting players…888 players online",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 3,
+     "maxDh": 0,
+     "maxDw": -3
+    },
+    {
+     "selector": "ul.mt-1.space-y-0\\.5 > li > a.flex.min-h-\\[44px\\].items-center > span.tabular-nums",
+     "text": "1 member",
+     "score": 0,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 15,
+     "maxDh": 0,
+     "maxDw": -16
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/community|360x780|dark|full|user|normal",
+   "best": 0.0062,
+   "worst": 0.0087,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section.mx-auto.max-w-5xl.px-5 > div.mt-6.grid.gap-4 > div.min-w-0.space-y-4 > div.plate",
+     "text": "Recent gamesNo finished games yet. Completed games...",
+     "score": 0.0031,
+     "count": 1,
+     "maxDy": 10,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-5xl.px-5 > div.mt-6.grid.gap-4 > aside.space-y-4",
+     "text": "Top playersFull boardNo Nerf ratings yet. Play a r...",
+     "score": 0.0031,
+     "count": 1,
+     "maxDy": 10,
+     "maxDx": 0,
+     "maxDh": -10,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-5xl.px-5 > div.flex.flex-wrap.items-end > span.flex.items-center.gap-2",
+     "text": "Counting players…888 players online",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 3,
+     "maxDh": 0,
+     "maxDw": -3
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/community|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-5xl.px-5 > div.flex.flex-wrap.items-end > span.flex.items-center.gap-2",
+     "text": "Counting players…888 players online",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 3,
+     "maxDh": 0,
+     "maxDw": -3
+    },
+    {
+     "selector": "ul.mt-1.space-y-0\\.5 > li > a.flex.min-h-\\[44px\\].items-center > span.tabular-nums",
+     "text": "1 member",
+     "score": 0,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 15,
+     "maxDh": 0,
+     "maxDw": -16
+    }
+   ],
+   "findings": []
+  }
+ ]
+}

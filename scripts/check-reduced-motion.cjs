@@ -64,7 +64,7 @@ for (const file of walk(SRC)) {
 
 // --- OS-only motion variants and media queries --------------------------
 const OS_VARIANT_BASELINE = {
-  "src/app/community/page.tsx": 1,
+  "src/app/community/CommunityClient.tsx": 1,
   "src/app/guide/glossary/page.tsx": 2,
   "src/app/lobby/page.tsx": 2,
   "src/app/play/PlayIntro.tsx": 2,
