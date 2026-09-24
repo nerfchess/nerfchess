@@ -1,0 +1,697 @@
+{
+ "generatedAt": "2026-09-24T13:09:58.639Z",
+ "target": 0.01,
+ "runs": 2,
+ "rows": [
+  {
+   "key": "/|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0022,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.flex.flex-col > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestBoldWalrus76 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.block",
+     "text": "0 players",
+     "score": 0.0008,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.0018,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.flex.flex-col > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestJollySquire44 ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.block",
+     "text": "0 players",
+     "score": 0.0007,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/|1280x800|dark|full|signed-out|normal",
+   "best": 0.0025,
+   "worst": 0.0027,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.flex.flex-col > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFierceRook ·Sign in",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -200,
+     "maxDh": 0,
+     "maxDw": 200
+    },
+    {
+     "selector": "section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.block",
+     "text": "0 players",
+     "score": 0.0001,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/faq|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestTrickyCastle30 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/faq|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestIronPuffin56 ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/faq|1280x800|dark|full|signed-out|normal",
+   "best": 0.0029,
+   "worst": 0.0031,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestEagerGambit11 ·Sign in",
+     "score": 0.0031,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -227,
+     "maxDh": 0,
+     "maxDw": 227
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/tutorial|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestDaringFalcon98 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/tutorial|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCalmGecko18 ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/tutorial|1280x800|dark|full|signed-out|normal",
+   "best": 0.0027,
+   "worst": 0.0031,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestRowdyHerald81 ·Sign in",
+     "score": 0.0031,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -230,
+     "maxDh": 0,
+     "maxDw": 230
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/buff-mode|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestHastyMarmot87 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/buff-mode|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCalmLynx ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/buff-mode|1280x800|dark|full|signed-out|normal",
+   "best": 0.003,
+   "worst": 0.0032,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestQuirkyHedgehog ·Sign in",
+     "score": 0.0032,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -236,
+     "maxDh": 0,
+     "maxDw": 236
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/nerf-mode|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestNobleWombat13 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/nerf-mode|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCunningBlunder ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/nerf-mode|1280x800|dark|full|signed-out|normal",
+   "best": 0.003,
+   "worst": 0.003,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestZestyWalrus50 ·Sign in",
+     "score": 0.003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -223,
+     "maxDh": 0,
+     "maxDw": 223
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/capture-the-king|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestGallantBlunder67 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/capture-the-king|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestQuietPangolin ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/capture-the-king|1280x800|dark|full|signed-out|normal",
+   "best": 0.0028,
+   "worst": 0.003,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestQuietWeasel30 ·Sign in",
+     "score": 0.003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -225,
+     "maxDh": 0,
+     "maxDw": 225
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/terms-of-service|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCalmHedgehog10 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/terms-of-service|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestGallantOsprey ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/terms-of-service|1280x800|dark|full|signed-out|normal",
+   "best": 0.0025,
+   "worst": 0.0029,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestQuietTempo60 ·Sign in",
+     "score": 0.0029,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -221,
+     "maxDh": 0,
+     "maxDw": 221
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/how-to-play|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestIronBadger ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/how-to-play|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCalmRook96 ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/how-to-play|1280x800|dark|full|signed-out|normal",
+   "best": 0.0024,
+   "worst": 0.0032,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestSneakyKnight86 ·Sign in",
+     "score": 0.0032,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -232,
+     "maxDh": 0,
+     "maxDw": 232
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-roguelike|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestNobleJester98 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-roguelike|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestProudSkewer27 ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-roguelike|1280x800|dark|full|signed-out|normal",
+   "best": 0.0027,
+   "worst": 0.0029,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestGallantFork70 ·Sign in",
+     "score": 0.0029,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -217,
+     "maxDh": 0,
+     "maxDw": 217
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-with-power-ups|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestQuietOcelot ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-with-power-ups|390x844|dark|full|signed-out|normal",
+   "best": 0.001,
+   "worst": 0.001,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestSwiftFerret ·Sign in",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-with-power-ups|1280x800|dark|full|signed-out|normal",
+   "best": 0.003,
+   "worst": 0.003,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFeistyGecko48 ·Sign in",
+     "score": 0.003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -223,
+     "maxDh": 0,
+     "maxDw": 223
+    }
+   ],
+   "findings": []
+  }
+ ]
+}

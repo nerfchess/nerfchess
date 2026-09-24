@@ -92,6 +92,9 @@ and the work was committed here.
   clean.
 - Guest path: a visitor with no session keeps the `h-9 w-24` placeholder
   (`reserveSignedIn` needs `hasSession`).
+- The killed run's own 30-cell reports agree: baseline/wave3-fonts-before.json
+  (worst 0.1081), wave3-fonts-after.json (per-weight faces with swap, worst
+  0.087), wave3-fonts-after-optional.json (worst 0.0032).
 - Commit b4607b8 (code), this file and the evidence in the next commit.
 
 ## Requests
