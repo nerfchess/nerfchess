@@ -58,6 +58,8 @@ type FriendGameContextValue = {
   error: string | null;
   // Actions.
   handleCreate: () => void;
+  /** A host request is in flight (the Create button is busy). */
+  creating: boolean;
   joinWithCode: (code: string) => void;
 };
 
@@ -107,6 +109,8 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
   const [challenging, setChallenging] = useState<string | null>(null);
 
   const sessionRef = useRef<MPSession | null>(null);
+  const creatingRef = useRef(false);
+  const [creating, setCreating] = useState(false);
   // Mirrors sessionRef for the in-game render gate below: the many pre-game
   // transitions read the ref synchronously, but rendering must not, so the live
   // session is also tracked as state (set when the `start` frame lands).
@@ -331,8 +335,14 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const handleCreate = async () => {
+    // One host request at a time: a double tap would open a second socket,
+    // overwrite sessionRef without closing the first, and host two games.
+    if (creatingRef.current) return;
+    creatingRef.current = true;
+    setCreating(true);
     setError(null);
     clearSavedFriendSession();
+    sessionRef.current?.destroy();
     const sess = new MPSession();
     sessionRef.current = sess;
     wireSession(sess);
@@ -353,7 +363,12 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
       if (challenging) registerChallenge(challenging, c, baseSec, incrementSec, rated);
     } catch (e) {
       if (sessionRef.current !== sess) return;
+      sess.destroy();
+      sessionRef.current = null;
       setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      creatingRef.current = false;
+      setCreating(false);
     }
   };
 
@@ -447,6 +462,7 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
         challenging,
         error,
         handleCreate,
+        creating,
         joinWithCode,
       }}
     >
@@ -474,6 +490,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
     challenging,
     error,
     handleCreate,
+    creating,
     joinWithCode,
   } = useFriendGame();
   const [joinCode, setJoinCode] = useState("");
@@ -585,6 +602,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
 
       <Button tone="leaf"
         onClick={handleCreate}
+        loading={creating}
         className="w-full py-3.5 font-body text-lg">
         {challenging
           ? `Send ${rated ? "rated " : ""}challenge to ${challenging}`

@@ -954,7 +954,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
         onClick={() => setTab(color)}
         aria-pressed={active}
         className={
-          "flex min-h-[36px] min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[13px] font-semibold transition-colors " +
+          "flex min-h-[36px] [@media(pointer:coarse)]:min-h-[44px] min-w-0 flex-1 items-center justify-center gap-1.5 border px-2 py-1.5 font-display text-[13px] font-semibold transition-colors " +
           (active
             ? "border-gold/60 bg-[rgb(var(--accent-rgb)/0.12)] text-gold-leaf"
             : "border-[color:var(--edge)] text-parchment-300 hover:bg-[var(--surface-hover)]")
@@ -1098,7 +1098,11 @@ function SpectatorChat({
   const [hidden, setHidden] = useState(false);
   const [mutedNames, setMutedNames] = useState<ReadonlySet<string>>(new Set());
   const [actionsFor, setActionsFor] = useState<string | null>(null);
-  const [reportState, setReportState] = useState<Record<string, "sent" | "failed">>({});
+  // Per message: "sending" while the POST is in flight (a second tap is a
+  // no-op), "sent" once filed, or the failure text to show on the line. The
+  // failure sits outside the actions row, which closes on every outcome.
+  const [reportState, setReportState] = useState<Record<string, "sending" | "sent" | { error: string }>>({});
+  const reportingRef = useRef<Set<string>>(new Set());
   const listRef = useRef<HTMLDivElement | null>(null);
 
   const shownMessages = messages.filter((m) => !mutedNames.has(m.name));
@@ -1122,6 +1126,9 @@ function SpectatorChat({
   };
 
   const reportMessage = async (key: string, m: MPSpectatorChatMessage) => {
+    if (reportingRef.current.has(key) || reportState[key] === "sent") return;
+    reportingRef.current.add(key);
+    setReportState((prev) => ({ ...prev, [key]: "sending" }));
     try {
       const res = await fetch("/api/report", {
         method: "POST",
@@ -1132,9 +1139,17 @@ function SpectatorChat({
           description: `Spectator chat message: "${m.text.slice(0, 500)}"`,
         }),
       });
-      setReportState((prev) => ({ ...prev, [key]: res.ok ? "sent" : "failed" }));
+      const error =
+        res.status === 401
+          ? "Sign in to report."
+          : res.status === 429
+          ? "Too many reports today."
+          : "Couldn't report. Try again.";
+      setReportState((prev) => ({ ...prev, [key]: res.ok ? "sent" : { error } }));
     } catch {
-      setReportState((prev) => ({ ...prev, [key]: "failed" }));
+      setReportState((prev) => ({ ...prev, [key]: { error: "Couldn't report. Check your connection." } }));
+    } finally {
+      reportingRef.current.delete(key);
     }
     setActionsFor(null);
   };
@@ -1146,7 +1161,7 @@ function SpectatorChat({
         <button
           type="button"
           onClick={() => setHidden((v) => !v)}
-          className="text-[12px] text-parchment-400 transition-colors hover:text-parchment-100"
+          className="-mr-1 inline-flex items-center px-1 text-[12px] text-parchment-400 transition-colors hover:text-parchment-100 [@media(pointer:coarse)]:min-h-[44px]"
           title={hidden ? "Show chat messages" : "Hide chat messages"}
         >
           {hidden ? "Show chat" : "Hide chat"}
@@ -1169,7 +1184,7 @@ function SpectatorChat({
               <button
                 type="button"
                 onClick={() => setActionsFor((cur) => (cur === key ? null : key))}
-                className="font-display font-semibold text-bruise-glow hover:underline"
+                className="font-display font-semibold text-bruise-glow hover:underline [@media(pointer:coarse)]:inline-flex [@media(pointer:coarse)]:min-h-[44px] [@media(pointer:coarse)]:items-center"
                 title={`Actions for ${m.name}`}
                 aria-expanded={actionsFor === key}
               >
@@ -1179,25 +1194,27 @@ function SpectatorChat({
               {report === "sent" && (
                 <span className="ml-1 text-[12px] text-parchment-400">reported</span>
               )}
+              {typeof report === "object" && (
+                <span role="status" className="ml-1 text-[12px] text-oxblood-glow">{report.error}</span>
+              )}
               {actionsFor === key && (
-                <span className="ml-2 inline-flex gap-2 text-[12px]">
+                <span className="ml-2 inline-flex gap-3 text-[13px] [@media(pointer:coarse)]:text-[14px]">
                   <button
                     type="button"
                     onClick={() => muteName(m.name)}
-                    className="text-parchment-400 hover:text-parchment-100"
+                    className="inline-flex items-center text-parchment-400 hover:text-parchment-100 [@media(pointer:coarse)]:min-h-[44px]"
                   >
                     Mute {m.name}
                   </button>
                   <button
                     type="button"
                     onClick={() => reportMessage(key, m)}
-                    className="text-oxblood-glow hover:underline"
+                    disabled={report === "sending" || report === "sent"}
+                    aria-busy={report === "sending" || undefined}
+                    className="inline-flex items-center text-oxblood-glow hover:underline disabled:opacity-60 [@media(pointer:coarse)]:min-h-[44px]"
                   >
-                    Report
+                    {report === "sending" ? "Reporting..." : "Report"}
                   </button>
-                  {report === "failed" && (
-                    <span className="text-oxblood-glow">Couldn&apos;t report (sign in first)</span>
-                  )}
                 </span>
               )}
             </div>
