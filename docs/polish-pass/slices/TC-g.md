@@ -122,3 +122,32 @@ Stopped here, at a clean commit. Next: the other 32 live tier 6 members of g01..
 - Not changed: Crossbow Curfew's 8-square ring stays. The curfew applies to every piece type, so the ring shows the rule's general one-square reach; the capture it shows on d4 is legal for the bishop.
 - Evidence folder is at 41M against the 25 MB limit. That was already true before this round and is left to the integrator.
 - Where to pick up: unchanged from round 2 (the 32 remaining live tier 6 cards listed above).
+
+## Round 3 (tier 6 rule scenes)
+
+All 32 live tier 6 cards of g01..g44 that round 2 left now lead with their own rule on the board. Commits: 27c3b6c (g26, g41, g22: Ancestral Shield, Guardian of the Line, Saint's Procession, Dead Calm, Hall of Mirrors, Quagmire March, Hourglass Throne, Tithe of Time), 73bcd19 (g20, g05, g09, g10: twelve cards, listed in its message), and the batch below (the last twelve).
+
+Last batch, by module (before strips `before/<id>.png`, after strips `after/<id>.png` with `after/<id>.off.png`, all off pass):
+
+| Card | Module | Scene |
+| --- | --- | --- |
+| hx4_prowlers_bell | g27 | The caster's half is ruled off and a bell hangs on each gate square of its third and fourth ranks; three pips; their knight lands on the empty c3 and the bell rings it back with a cross; their bishop takes on e2, a capture, and is let in. |
+| hx4_sealed_meridian | g27 | A wax seal is pressed on the file and a red line runs down it; two pips; their rook's slide across it is barred; their queen moves down the file itself; the caster's bishop crosses freely. |
+| hx4_gorgons_court | g28 | A gorgon's mask on the caster's flank looks at two of their pieces; the second one chosen turns to a walnut at once; the first makes its one move and then hardens; three pips. |
+| hx4_hunters_moon | g28 | A hunter's moon rises; four pips; their knight takes on d2 and hardens into a walnut on the square it took, with two pips for its two turns. |
+| bn4_stormcrossing | g42 | A bolt runs down the a-file; the caster's rook slides through its own a2 pawn to a5 and the bishop through d2 to g5, the pawns going pale as they are passed; each lands winded with a grey pip for the turn it sits out; three pips. |
+| ov_puppeteers_gala | g42 | A puppeteer's cross-bar tips over the middle with two strings; each moved minor piece gets its own string, grip and slack in its target cut on the square it was walked to. |
+| bn4_ravens_court | g15 | Three ravens fly down from their draft offer; two drop its cards face up by the caster with the tier showing; the third brings two dice, the rerolls. The shared impact rig is removed. |
+| bn4_dancing_master | g18 | The master taps the count; the caster's knight on c3 turns and glides the diagonal to f6 like a bishop, footprints on the line; the bishop on f4 leaps like a knight to e6; two pips. The shared impact rig is removed. g18 gets the rule-scene kit. |
+| bn4_second_spring | g01 | The caster's pawn rank greens; seeds fall on the empty pawn squares, sprout and open into pawns; the next draft card is dealt and struck through (skipped). Its entry in g01's impact table is removed. |
+| ov_nerfchess_the_musical | g12 | Curtains part over the caster's half under stage light; five pieces step to new marks on empty squares of that half; a +0:10 card is held up. The shared impact rig is removed. g12 gets the rule-scene kit. |
+| ov_royal_food_taster | g25 | A Taster pawn with a goblet steps up on the cast square with a small queen badge at its shoulder; a strike lands on the badge, the Taster falls away and the queen rises on its square. The resumed work had the queen fixed on d1, which is wrong once she has moved, so the badge now rides on the Taster's square. g25 gets the rule-scene kit. |
+| ov_grail_quest | g32 | The chosen knight rides off the board edge from its own square; five pips; it comes back on a square of the caster's half with a grail, and the eight squares around it light: its new king step. |
+
+Resume notes: this batch was written by an agent killed by a container restart; its edits were kept and checked against each card's rule. Fixes made on resume: Royal Food Taster's queen placement (above), Gorgon's Court's mask now sits on the caster's side from either seat, the shared impact rig was dropped from Raven's Court, Dancing Master, The Musical and Second Spring (their revamped siblings had already dropped it), and unused kit helpers were removed from g12 and g25.
+
+Guards at this batch: test:animations, test:scene-complexity (2 below the floor, baseline 2), test:anim-props, test:reduced-motion, check-vfx-coverage, check-sig-plugins, audit-bespoke-coverage all pass; eslint is clean on the nine modules; tsc shows one error, in `.next/types/validator.ts` (a missing `src/app/codex/page.js`, another slice's route), and none in these modules.
+
+Strips in this batch use `--frames 6 --tile 120` to keep the evidence small (about 35 KB per card for before, after and off). `du -sh docs/polish-pass/evidence` reads 47M, over the 25 MB line; that was already true before this round and is left to the integrator.
+
+Where I stopped: every live tier 6 card in g01..g44 is done. Tier 5 and below in these modules has not been started.

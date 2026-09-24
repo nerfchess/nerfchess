@@ -1,0 +1,97 @@
+{
+ "id": "hx4_gorgons_court",
+ "url": "/dev/plays?id=hx4_gorgons_court&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_gorgons_court",
+  "name": "Gorgon's Court",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_gorgons_court",
+  "anchor": "aim",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 70,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7"
+  ],
+  "picks": [
+   "d7",
+   "e7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2398,
+  "cssEndMs": 3422,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 1
+ },
+ "screencast": {
+  "framesInWindow": 202,
+  "maxGapMs": 280.3
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 49.9,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 58,
+  "totalBlockingMs": 3,
+  "entries": [
+   {
+    "atMs": -51,
+    "duration": 58,
+    "blocking": 3,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  290,
+  740,
+  1279,
+  1885,
+  2548
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/hx4_gorgons_court.png",
+ "pngBytes": 13491,
+ "off": {
+  "url": "/dev/plays?id=hx4_gorgons_court&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0003,
+  "endRegions": [
+   {
+    "x": 264,
+    "y": 88,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-g/after/hx4_gorgons_court.off.png"
+ }
+}

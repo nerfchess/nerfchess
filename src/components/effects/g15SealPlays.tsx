@@ -1901,6 +1901,57 @@ function FeastOfFoolsRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/* --- bn4_ravens_court --------------------------------------------------------------
+   "See both the cards and the tier of your opponent's next draft offer, and
+   gain 2 draft rerolls." Their next draft offer sits face down at their
+   edge; two ravens fly off it, each with
+   one of their next draft cards in its beak, and drop them face up by the
+   caster's side with the tier (VI) showing; a third raven brings two dice,
+   the rerolls, and lets them fall onto the caster's rank. */
+const C_RCR = { core: "#8f7fb0", glow: "#fff2de", deep: "#1a1524" };
+
+function Raven({ c }: { c: Pal }) {
+  return (
+    <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 8c4-5 8-6 11-4l3-3c1 3 0 5-2 6l6 1-6 2c-3 2-8 2-12-2z" fill={c.deep} stroke={c.core} strokeWidth="0.8" {...SJ} />
+      <path d="M19 8l4 .4-4 1z" fill={c.glow} />
+    </svg>
+  );
+}
+
+function RavensCourtRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <RavensCourtScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_RCR;
+  const d = delayMs;
+  return (
+    <Brd>
+      {[0, 1, 2].map((i) => (
+        <Q key={`r${i}`} x={`${32 + i * 18}%`} y={rk(3)} w={10} h={6} cls="g15-r-go" delayMs={d + 40 + i * 120} v={{ "--gd": "1.1s", "--tx0": `${(1 - i) * 40}%`, "--ty0": `calc(var(--fx-side, 1) * ${-Math.round(4.4 * fileIn(6))}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Raven c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(7.2)} w={8} h={12} cls="g15-r-dim" delayMs={d + 20} v={{ "--gd": "0.9s" }}>
+        <DraftCard c={c} />
+      </Q>
+      <Q x="34%" y={rk(2.2)} w={8} h={12} cls="g15-r-stamp" delayMs={d + 560} v={{ "--gd": "1.7s" }}>
+        <DraftCard c={c} tier="VI" />
+      </Q>
+      <Q x="52%" y={rk(2.2)} w={8} h={12} cls="g15-r-stamp" delayMs={d + 650} v={{ "--gd": "1.6s" }}>
+        <DraftCard c={c} tier="VI" />
+      </Q>
+      {[0, 1].map((i) => (
+        <Q key={`d${i}`} x={`${66 + i * 8}%`} y={rk(1.6)} w={5.4} h={5.4} cls="g15-r-go" delayMs={d + 760 + i * 90} v={{ "--gd": "1.4s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * -180%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <Die c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(3.4)} w={1.4} h={3} cls="g15-r-lean" delayMs={d + 1260} v={{ "--gd": "0.8s" }} style={{ background: c.deep, borderRadius: "50%", rotate: "-20deg" }} />
+      {[0, 1, 2].map((i) => (
+        <Q key={`f${i}`} x={`${36 + i * 16}%`} y={rk(3.4)} w={1.4} h={3} cls="g15-r-lean" delayMs={d + 1300 + i * 60} v={{ "--gd": "0.8s" }} style={{ background: c.deep, borderRadius: "50%", rotate: "30deg" }} />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_deck_of_kings: S(DeckOfKingsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }, { rgb: "232 196 106", at: 780, laser: true, glyph: impSeal("#e8c46a", "#2a1e0b"), shock: true, box: [41, 33, 16, 18] }),
   bn4_triumphal_arch: S(TriumphalArchScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }, { rgb: "203 184 148", at: 720, laser: true, shock: true, box: [42, 32, 15, 20] }),
@@ -1911,7 +1962,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_broken_supply: S(BrokenSupplyScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "192 90 60", at: 660, laser: true, shock: true, box: [42, 36, 14, 16], rot: -10 }),
   ov_patch_notes: S(PatchNotesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "127 194 168", at: 600, laser: true, box: [44, 35, 12, 17] }),
   bn4_all_seeing_spire: S(AllSeeingSpireScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "158 200 216", at: 640, laser: true, box: [43, 32, 13, 20] }),
-  bn4_ravens_court: S(RavensCourtScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "143 127 176", at: 620, laser: true, glyph: impSeal("#8f7fb0", "#1a1524"), box: [42, 36, 14, 15] }),
+  bn4_ravens_court: S(RavensCourtRule, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   hx4_wax_seal: S(WaxSealScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "210 69 47", at: 680, glyph: impSeal("#d2452f", "#2c0f0a"), shock: true, box: [43, 37, 14, 14] }),
   ov_grand_illusionist: S(GrandIllusionistScene, { ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "cast" }, { rgb: "180 143 216", at: 560, laser: true, box: [44, 36, 12, 16] }),
   ov_season_pass: S(SeasonPassScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "111 216 192", at: 540, shock: true, box: [44, 39, 12, 12] }),

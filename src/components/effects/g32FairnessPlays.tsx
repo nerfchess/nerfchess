@@ -1766,6 +1766,45 @@ function AllTheKingsMenRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/* --- ov_grail_quest ----------------------------------------------------------------
+   "Send one of your knights away on quest. After 5 of your turns it returns
+   to a random empty square in your half as a Grail Knight, permanently able
+   to also step one square in any direction." The chosen knight rides off the
+   board's edge from its own square; five turn pips mark the road; it comes
+   back onto an empty square in the caster's half carrying a grail, and the
+   eight squares around it light one by one: its new king's step. */
+const C_GQR = { core: "#e8c46a", glow: "#fff4dc", deep: "#2a200c" };
+
+/** Centre of the cast square (the chosen knight), in board percent. */
+const CAST_X = "calc((0.5 - var(--fx-board-dx, -3.5) - var(--fx-anchor-dx, 0)) * 12.5%)";
+const CAST_Y = "calc((0.5 - var(--fx-board-dy, -3.5) - var(--fx-anchor-dy, 0)) * 12.5%)";
+
+function GrailQuestRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GrailQuestScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GQR;
+  const d = delayMs;
+  const ring: Array<[number, number]> = [[-1, -1], [0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+  return (
+    <Brd>
+      <Q x={CAST_X} y={CAST_Y} w={11} h={11} cls="g32-r-go" delayMs={d + 40} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "calc(var(--fx-side, 1) * -900%)", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Pips n={5} r={3.5} x0={42} x1={58} color={c.glow} delayMs={d + 360} gd="1.8s" />
+      <Q x={fc(5)} y={rk(2)} w={11} h={11} cls="g32-r-go" delayMs={d + 700} v={{ "--gd": "1.3s", "--tx0": "calc(var(--fx-side, 1) * 500%)", "--ty0": "0%", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${fc(5)} + 3.4%)`} y={`calc(${rk(2)} - 3.4%)`} w={5} h={5} cls="g32-r-stamp" delayMs={d + 1000} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 3h12c0 5-2.6 8-6 8S4 8 4 3zM10 11v4M6 17h8" fill={c.core} stroke={c.deep} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      {ring.map(([dx, dy], i) => (
+        <Tint key={`k${i}`} x={fc(5 + dx)} y={rk(2 + dy)} color="rgba(232,196,106,0.3)" delayMs={d + 1080 + i * 30} gd="0.9s" />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- the big machines: a raffle drum and a spinner ---
   ov_pandemonium_carnival: S(PandemoniumCarnivalScene, {
@@ -1792,7 +1831,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
     sound: "slots", anchor: "aim",
   }),
-  ov_grail_quest: S(GrailQuestScene, {
+  ov_grail_quest: S(GrailQuestRule, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true,
     sound: "vault", anchor: "cast",
   }),

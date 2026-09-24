@@ -1,0 +1,67 @@
+{
+ "id": "hx4_prowlers_bell",
+ "url": "/dev/plays?id=hx4_prowlers_bell&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_prowlers_bell",
+  "name": "Prowler's Bell",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_prowlers_bell",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 70,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2389,
+  "cssEndMs": 3474,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 165,
+  "maxGapMs": 336
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  289,
+  737,
+  1274,
+  1879,
+  2539
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/hx4_prowlers_bell.png",
+ "pngBytes": 13230
+}

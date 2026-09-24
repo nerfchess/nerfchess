@@ -1,0 +1,96 @@
+{
+ "id": "ov_nerfchess_the_musical",
+ "url": "/dev/plays?id=ov_nerfchess_the_musical&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_nerfchess_the_musical",
+  "name": "NerfChess: The Musical",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_nerfchess_the_musical",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "activated with 10 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "f2",
+   "f3",
+   "g2",
+   "g3",
+   "h2",
+   "h3"
+  ],
+  "picks": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "f2",
+   "f3",
+   "g2",
+   "g3",
+   "h2",
+   "h3"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2453,
+  "cssEndMs": 3490,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 177,
+  "maxGapMs": 252.5
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 66,
+  "totalBlockingMs": 11,
+  "entries": [
+   {
+    "atMs": 12,
+    "duration": 66,
+    "blocking": 11,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  296,
+  756,
+  1306,
+  1926,
+  2603
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/ov_nerfchess_the_musical.png",
+ "pngBytes": 13459
+}

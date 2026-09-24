@@ -2273,6 +2273,110 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/** Centre of file `c` counted from the caster's left (the board turns half a
+ *  circle with the side, so a scene reads the same from either seat). */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Centre of the square a scene is anchored on (a target cut's own square),
+ *  in board percent: the board frame sits -col, -row cells from it, less the
+ *  stage edge clamp. */
+const CAST_X = "calc((0.5 - var(--fx-board-dx, -3.5) - var(--fx-anchor-dx, 0)) * 12.5%)";
+const CAST_Y = "calc((0.5 - var(--fx-board-dy, -3.5) - var(--fx-anchor-dy, 0)) * 12.5%)";
+
+/* --- bn4_stormcrossing -------------------------------------------------------------
+   "For your next 3 turns, your bishops, rooks and queen may slide straight
+   through your own pieces (never capturing them) to squares beyond. A piece
+   that crosses this way cannot move again on your next turn." A bolt forks
+   down the a-file and the c1-g5 diagonal; the caster's rook on a1 slides
+   straight through its own a2 pawn to a5, and the bishop on c1 through the
+   d2 pawn to g5, the pawns they pass going pale for a moment; each lands
+   winded, with one grey pip for the turn it must sit out; three turn pips. */
+const C_SCR = { core: "#9fb8f0", glow: "#fff6e0", deep: "#141c30" };
+
+function StormcrossingRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <StormcrossingScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SCR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(0)} y={rk(2.5)} w={4} h={40} cls="g42-r-in" delayMs={d + 30} v={{ "--gd": "0.7s", "--s0": "1" }}>
+        <svg viewBox="0 0 8 80" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0L2 22l4 4-3 24 4 4-3 26" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Pips n={3} r={3.5} x0={45} x1={55} color={c.glow} delayMs={d + 200} gd="1.9s" />
+      <Q x={fc(0)} y={rk(1)} w={11} h={11} cls="g42-r-dim" delayMs={d + 300} v={{ "--gd": "0.9s" }}>
+        <Man kind="p" fill="rgba(255,246,224,0.6)" stroke={c.deep} />
+      </Q>
+      <Q x={fc(0)} y={rk(0)} w={11} h={11} cls="g42-r-go" delayMs={d + 280} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${-4 * fileIn(11)}%)` }}>
+        <Man kind="r" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Thread c0={2} r0={0} c1={6} r1={4} color={c.core} delayMs={d + 560} gd="0.9s" />
+      <Q x={fc(3)} y={rk(1)} w={11} h={11} cls="g42-r-dim" delayMs={d + 620} v={{ "--gd": "0.9s" }}>
+        <Man kind="p" fill="rgba(255,246,224,0.6)" stroke={c.deep} />
+      </Q>
+      <Q x={fc(2)} y={rk(0)} w={11} h={11} cls="g42-r-go" delayMs={d + 600} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${4 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-4 * fileIn(11)}%)` }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      {([[0, 4], [6, 4]] as Array<[number, number]>).map(([col, r], i) => (
+        <Q key={`w${col}`} x={`calc(${fc(col)} + 3.4%)`} y={`calc(${rk(r)} - 3.4%)`} w={3} h={3} cls="g42-r-pip" delayMs={d + 1000 + i * 90} v={{ "--gd": "1.2s" }} style={{ background: "rgba(255,246,224,0.5)", borderRadius: "50%" }} />
+      ))}
+      <Q x={fc(6)} y={rk(4.4)} w={10} h={2} cls="g42-r-lean" delayMs={d + 1400} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(159,184,240,0.45)" }} />
+    </Brd>
+  );
+}
+
+/* --- ov_puppeteers_gala ------------------------------------------------------------
+   "Pull the strings: move up to two different enemy minor pieces yourself,
+   each along its own normal non-capture moves, onto empty squares." A
+   puppeteer's cross-bar swings in over the middle of the board and tips
+   from side to side as the caster works it; two strings run up from it
+   toward the opponent's side. Each piece it moved gets its own string in
+   its target cut, on the square it was walked to: the string drops onto
+   the piece, a grip closes over it, and the string goes slack. */
+const C_PGR = { core: "#c89ae0", glow: "#fff2e4", deep: "#241430" };
+
+function PuppeteersGalaRule({ lead, role, delayMs }: SceneProps) {
+  const c = C_PGR;
+  const d = delayMs;
+  if (role === "target") {
+    return (
+      <Brd>
+        <Q x={CAST_X} y={`calc(${CAST_Y} - 14%)`} w={0.6} h={24} cls="g42-r-grow" delayMs={d + 20} v={{ "--gd": "1.3s" }} style={{ background: c.glow, transformOrigin: "50% 0%" }} />
+        <Q x={CAST_X} y={`calc(${CAST_Y} - 25%)`} w={7} h={2.4} cls="g42-r-tip" delayMs={d + 120} v={{ "--gd": "1.3s", "--ra": "10deg" }} style={{ background: c.core, border: `1px solid ${c.deep}`, borderRadius: "999px" }} />
+        <Q x={CAST_X} y={CAST_Y} w={12.5} h={12.5} cls="g42-r-in" delayMs={d + 380} v={{ "--gd": "0.9s", "--s0": "1.1" }} style={{ border: `2px solid ${c.core}`, borderRadius: "2px" }} />
+        <Q x={CAST_X} y={`calc(${CAST_Y} - 8%)`} w={4} h={4} cls="g42-r-lean" delayMs={d + 900} v={{ "--gd": "0.8s" }} style={{ background: "rgba(200,154,224,0.5)", borderRadius: "50%" }} />
+      </Brd>
+    );
+  }
+  if (role !== "lead") return <PuppeteersGalaScene lead={lead} role={role} delayMs={delayMs} />;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(3.6)} w={46} h={3.6} cls="g42-r-tip" delayMs={d + 30} v={{ "--gd": "2.1s", "--ra": "-7deg" }}>
+        <svg viewBox="0 0 80 6" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <rect x="1" y="1" width="78" height="4" rx="2" fill={c.core} stroke={c.deep} strokeWidth="0.8" />
+        </svg>
+      </Q>
+      <Q x="50%" y={rk(3.6)} w={3.6} h={12} cls="g42-r-in" delayMs={d + 120} v={{ "--gd": "1.9s", "--s0": "0.4" }} style={{ background: c.core, border: `1px solid ${c.deep}`, borderRadius: "999px" }} />
+      {[-1, 1].map((sgn, i) => (
+        <Q key={`s${i}`} x={`calc(50% + ${sgn * 20}%)`} y={rk(5.1)} w={0.6} h={36} cls="g42-r-grow" delayMs={d + 360 + i * 90} v={{ "--gd": "1.5s" }} style={{ background: c.glow, transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }} />
+      ))}
+      <Q x="50%" y={rk(3.6)} w={30} h={1.4} cls="g42-r-lean" delayMs={d + 1400} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(200,154,224,0.4)" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   op_border_report: S(BorderReportScene, { ordering: "line", staggerMs: 80, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
   op_day_census: S(DayCensusScene, { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "slots", anchor: "board" }),
@@ -2285,7 +2389,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_do_si_do: S(DoSiDoScene, { ordering: "line", staggerMs: 70, victims: ["k"], hasLead: true, sound: "coinflip", anchor: "aim" }),
   bn4_party_hat: S(PartyHatScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "cast" }),
   bn4_gryphon_rider: S(GryphonRiderScene, { ordering: "line", staggerMs: 70, victims: ["n"], hasLead: true, sound: "rampage", anchor: "aim" }),
-  ov_puppeteers_gala: S(PuppeteersGalaScene, { ordering: "line", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "aim" }),
+  ov_puppeteers_gala: S(PuppeteersGalaRule, { ordering: "line", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "aim" }),
   bn4_hall_of_doors: S(HallOfDoorsRule, { ordering: "line", staggerMs: 85, victims: "all", hasLead: true, sound: "colossus", anchor: "aim" }),
   op_distant_thunder: S(DistantThunderScene, { ordering: "radial", staggerMs: 60, victims: ["k"], hasLead: true, sound: "lightning", anchor: "board" }),
   ov_static_cling: S(StaticClingScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "lightning", anchor: "cast" }),
@@ -2295,7 +2399,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_blood_moon: S(BloodMoonScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
   hx4_sandstorm: S(SandstormScene, { ordering: "line", staggerMs: 80, victims: ["b", "r", "q"], hasLead: true, sound: "rampage", anchor: "board" }),
   bn4_lightning_rod: S(LeydenBankScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "lightning", anchor: "cast" }),
-  bn4_stormcrossing: S(StormcrossingScene, { ordering: "line", staggerMs: 75, victims: ["b", "r", "q"], hasLead: true, sound: "lightning", anchor: "aim" }),
+  bn4_stormcrossing: S(StormcrossingRule, { ordering: "line", staggerMs: 75, victims: ["b", "r", "q"], hasLead: true, sound: "lightning", anchor: "aim" }),
   ov_olympus_voicemail: S(OlympusVoicemailScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "lightning", anchor: "cast" }),
   ov_menagerie_stampede: S(MenagerieStampedeScene, { ordering: "line", staggerMs: 80, victims: "all", hasLead: true, sound: "rampage", anchor: "cast" }),
   op_closed_for_cleaning: S(ClosedForCleaningScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),

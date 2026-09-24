@@ -2297,7 +2297,6 @@ const IMPACT: Record<string, G01Imp> = {
   bn4_crown_jubilee: { at: 440, rgb: "255 200 97", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
   bn4_patrons_favor: { at: 640, rgb: "224 120 143", laser: true, g: 0, q: "s" },
   bn4_masked_ball: { at: 595, rgb: "197 143 214", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
-  bn4_second_spring: { at: 560, rgb: "143 219 168", shock: true, g: 2, q: "s" },
   hx4_debt_of_crowns: { at: 675, rgb: "201 160 106", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
   hx4_last_toll: { at: 430, rgb: "196 180 143", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
   ov_time_heist: { at: 640, rgb: "113 214 192", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
@@ -2350,6 +2349,48 @@ function withImpact(Base: SigPlugin["Render"], imp: G01Imp): SigPlugin["Render"]
     );
   }
   return ImpactLead;
+}
+
+/* --- bn4_second_spring -------------------------------------------------------------
+   "Every one of your captured pawns returns at once, each to the empty square
+   nearest your home rank. Your next draft is then skipped." The caster's
+   pawn rank greens over; seeds drop onto
+   the empty squares nearest the caster's home rank where pawns are missing
+   (c2 and f2 here; the play's own cuts sprout on the real squares), and each
+   one shoots up and opens into a pawn; then the next draft card is dealt and
+   struck through, skipped. */
+const C_SSR = { core: "#8fdba8", glow: "#fff4dc", deep: "#12301c" };
+
+function SecondSpringRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SecondSpringScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SSR;
+  const d = delayMs;
+  const beds = [2, 5];
+  return (
+    <Brd>
+      <Q x="50%" y={rk(1)} w={100} h={12.5} cls="g01-r-in" delayMs={d + 160} v={{ "--gd": "1.5s", "--s0": "1" }} style={{ background: "rgba(143,219,168,0.2)" }} />
+      {beds.map((col, i) => (
+        <Q key={`s${col}`} x={cl(col)} y={rk(1)} w={2.4} h={2.4} cls="g01-r-go" delayMs={d + 40 + i * 80} v={{ "--gd": "0.6s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * -600%)", "--tx1": "0%", "--ty1": "0%" }} style={{ background: c.core, borderRadius: "50%" }} />
+      ))}
+      {beds.map((col, i) => (
+        <Q key={`t${col}`} x={cl(col)} y={`calc(${rk(1)} + var(--fx-side, 1) * 2%)`} w={6} h={8} cls="g01-r-up" delayMs={d + 360 + i * 80} v={{ "--gd": "0.8s" }}>
+          <svg viewBox="0 0 12 16" className="block h-full w-full" aria-hidden="true">
+            <path d="M6 16V6" stroke={c.core} strokeWidth="1.6" {...SJ} />
+            <path d="M6 8C3 8 1.6 6 1.6 3.6 4.4 3.6 6 5.4 6 8zM6 6.4c2.6 0 4.4-1.6 4.4-4.2C7.6 2.2 6 4 6 6.4z" fill={c.core} stroke={c.deep} strokeWidth="0.8" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      {beds.map((col, i) => (
+        <Q key={`p${col}`} x={cl(col)} y={rk(1)} w={11} h={11} cls="g01-r-up" delayMs={d + 680 + i * 80} v={{ "--gd": "1.2s" }}>
+          <Man kind="p" fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      <Q x="84%" y={rk(3.5)} w={7} h={10} cls="g01-r-in" delayMs={d + 900} v={{ "--gd": "1.3s" }}>
+        <DraftCard c={c} />
+      </Q>
+      <SkipToken x="84%" y={rk(3.5)} c={c} delayMs={d + 1100} />
+    </Brd>
+  );
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
@@ -2476,7 +2517,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
     sound: "snooze", source: "frozen", anchor: "board",
   }),
-  bn4_second_spring: S(SecondSpringScene, {
+  bn4_second_spring: S(SecondSpringRule, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
     sound: "clockice", anchor: "board",
   }),

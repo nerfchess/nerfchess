@@ -1,0 +1,67 @@
+{
+ "id": "bn4_stormcrossing",
+ "url": "/dev/plays?id=bn4_stormcrossing&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_stormcrossing",
+  "name": "Stormcrossing",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_stormcrossing",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 75,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2388,
+  "cssEndMs": 3475,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 168,
+  "maxGapMs": 335.9
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  289,
+  737,
+  1273,
+  1878,
+  2538
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_stormcrossing.png",
+ "pngBytes": 12640
+}

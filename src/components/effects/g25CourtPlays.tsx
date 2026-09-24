@@ -1345,8 +1345,115 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g25-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** Centre of the cast square (the square or rank the card was aimed at), in
+ *  board percent: the board frame sits at -col, -row cells from it, less the
+ *  stage's edge clamp. A cast-less play lands on the board centre. */
+const CAST_X = "calc((0.5 - var(--fx-board-dx, -3.5) - var(--fx-anchor-dx, 0)) * 12.5%)";
+const CAST_Y = "calc((0.5 - var(--fx-board-dy, -3.5) - var(--fx-anchor-dy, 0)) * 12.5%)";
+
+/** A barred move: a cross stamped where it would have landed. */
+function Bar({ c }: { c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- ov_royal_food_taster ----------------------------------------------------------
+   "Place a Taster pawn on an empty square next to your queen. The next time
+   your queen is captured, the Taster dies in her place and your queen returns
+   on the Taster's square." On the chosen square beside the queen a pawn with
+   a goblet steps up, with a small queen badge at its shoulder; then a
+   preview of the bargain: a strike lands on the queen badge, the Taster
+   falls away from its square, and the queen rises again where it stood.
+   (The badge rides on the Taster's square because the queen can stand on
+   any of its neighbours.) */
+const C_RFR = { core: "#e0b86a", glow: "#fff4dc", deep: "#2a1e0c" };
+
+function RoyalFoodTasterRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TasterFoldsScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_RFR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={CAST_X} y={CAST_Y} w={11} h={11} cls="g25-r-up" delayMs={d + 40} v={{ "--gd": "1.2s" }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${CAST_X} + 3.2%)`} y={`calc(${CAST_Y} - 3.2%)`} w={4.6} h={4.6} cls="g25-r-pip" delayMs={d + 240} v={{ "--gd": "1.9s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 3h12c0 5-2.6 8-6 8S4 8 4 3zM10 11v4M6 17h8" fill={c.core} stroke={c.deep} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={`calc(${CAST_X} - 3.2%)`} y={`calc(${CAST_Y} - 3.2%)`} w={5} h={5} cls="g25-r-pip" delayMs={d + 380} v={{ "--gd": "1.1s" }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${CAST_X} - 3.2%)`} y={`calc(${CAST_Y} - 3.2%)`} w={5} h={5} cls="g25-r-stamp" delayMs={d + 760} v={{ "--gd": "0.7s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={CAST_X} y={CAST_Y} w={11} h={11} cls="g25-r-part" delayMs={d + 900} v={{ "--gd": "0.8s", "--tx1": "30%", "--ty1": "calc(var(--fx-side, 1) * 60%)", "--r1": "60deg" }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={CAST_X} y={CAST_Y} w={11} h={11} cls="g25-r-up" delayMs={d + 1060} v={{ "--gd": "1.2s" }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={CAST_X} y={CAST_Y} w={10} h={2} cls="g25-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(224,184,106,0.45)" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
-  ov_royal_food_taster: S(TasterFoldsScene, { ordering: "radial", staggerMs: 60, victims: ["q", "p"], hasLead: true, sound: "coronation", anchor: "cast" }),
+  ov_royal_food_taster: S(RoyalFoodTasterRule, { ordering: "radial", staggerMs: 60, victims: ["q", "p"], hasLead: true, sound: "coronation", anchor: "cast" }),
   ov_squires_ascension: S(RollCalledScene, { ordering: "file", staggerMs: 90, victims: ["p", "n"], hasLead: true, sound: "coronation", anchor: "cast" }),
   bn4_royal_taster: S(CupRoundScene, { ordering: "radial", staggerMs: 60, victims: ["q"], hasLead: true, sound: "coronation", anchor: "cast" }),
   hx4_food_taster: S(DishRefusedScene, { ordering: "octagon", staggerMs: 60, victims: ["q"], hasLead: true, sound: "shades", anchor: "cast" }),

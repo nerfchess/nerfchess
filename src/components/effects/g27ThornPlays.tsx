@@ -1895,11 +1895,129 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/** Centre of file `c` counted from the caster's left (the board turns half a
+ *  circle with the side, so a scene reads the same from either seat). */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** A barred move: a cross stamped where it would have landed. */
+function Bar({ c }: { c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- hx4_prowlers_bell -------------------------------------------------------------
+   "A bell is tied to every gate in your half: for your opponent's next 3
+   turns, their pieces may not end a move on an EMPTY square in your half.
+   They may enter only by capturing. Their king is exempt." The edge of the
+   caster's half is ruled off, and a bell hangs on
+   each empty square of the caster's third and fourth ranks; three turn pips.
+   Their knight on d5 lands on the empty c3 and the bell there rings it back
+   with a cross; their bishop on b5 takes the pawn on e2 instead, which is a
+   capture, so it is let in. */
+const C_PBR = { core: "#d8b25a", glow: "#fff2d8", deep: "#2a2010" };
+
+function Bell({ c }: { c: typeof C_PBR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M10 2v2" stroke={c.deep} strokeWidth="1.6" {...SJ} />
+      <path d="M4.4 15c1-1.2 1.4-3 1.4-5.4a4.2 4.2 0 0 1 8.4 0c0 2.4.4 4.2 1.4 5.4z" fill={c.core} stroke={c.deep} strokeWidth="1.3" {...SJ} />
+      <circle cx="10" cy="16.6" r="1.6" fill={c.deep} />
+    </svg>
+  );
+}
+
+function ProwlersBellRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ProwlersBellScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PBR;
+  const d = delayMs;
+  const gates: Array<[number, number]> = [];
+  for (let r = 2; r <= 3; r++) for (let col = 0; col < 8; col++) gates.push([col, r]);
+  return (
+    <Brd>
+      <Q x="50%" y={rk(3.5)} w={100} h={0.9} cls="g27-r-draw" delayMs={d + 60} v={{ "--gd": "2s" }} style={{ background: `repeating-linear-gradient(90deg, ${c.core} 0 6px, transparent 6px 10px)` }} />
+      {gates.map(([col, r], i) => (
+        <Q key={`g${col}-${r}`} x={fc(col)} y={rk(r)} w={5} h={5} cls="g27-r-pip" delayMs={d + 40 + i * 22} v={{ "--gd": "2.1s" }}>
+          <Bell c={c} />
+        </Q>
+      ))}
+      <Pips n={3} r={4.5} x0={45} x1={55} color={c.glow} delayMs={d + 440} gd="1.5s" />
+      <Q x={fc(3)} y={rk(4)} w={11} h={11} cls="g27-r-go" delayMs={d + 560} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      {[0, 1].map((i) => (
+        <Q key={`t${i}`} x={fc(2)} y={rk(2)} w={8 + i * 5} h={8 + i * 5} cls="g27-r-toll" delayMs={d + 900 + i * 90} v={{ "--gd": "0.6s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      ))}
+      <Q x={fc(2)} y={rk(2)} w={7} h={7} cls="g27-r-stamp" delayMs={d + 960} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(1)} y={rk(4)} w={11} h={11} cls="g27-r-go" delayMs={d + 1060} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${3 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${3 * fileIn(11)}%)` }}>
+        <Man kind="b" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={1} r0={4} c1={4} r1={1} color={c.core} delayMs={d + 1080} gd="0.8s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_sealed_meridian -----------------------------------------------------------
+   "Choose a file: for 2 of your opponent's turns none of their pieces may
+   cross it, though they may move along it, stop on it, or leave it. Your
+   pieces pass freely." A wax seal is pressed on the file and a
+   red line runs down it (shown on the e-file; the play's own cuts mark the
+   file chosen); two turn pips. Their rook on b5 slides along the rank and
+   is stopped at the line; their queen slides down the file itself, which is
+   allowed; the caster's bishop crosses the line unhindered. */
+const C_SMR = { core: "#c8483a", glow: "#fff0dc", deep: "#2c0e0a" };
+
+function SealedMeridianRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SealedMeridianScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(4)} y={rk(5)} w={8} h={8} cls="g27-r-stamp" delayMs={d + 40} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 1.6l2.4 1.8 3-.2.8 2.9 2.5 1.7-1 2.8 1 2.8-2.5 1.7-.8 2.9-3-.2L10 18.4l-2.4-1.8-3 .2-.8-2.9-2.5-1.7 1-2.8-1-2.8 2.5-1.7.8-2.9 3 .2z" fill={c.core} stroke={c.deep} strokeWidth="1" {...SJ} />
+          <path d="M7 10h6M10 7v6" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={fc(4)} y="50%" w={1.4} h={100} cls="g27-r-grow" delayMs={d + 160} v={{ "--gd": "2s" }} style={{ background: c.core, transformOrigin: "50% calc(50% - var(--fx-side, 1) * 50%)" }} />
+      <Pips n={2} r={3.5} x0={45} x1={50} color={c.glow} delayMs={d + 420} gd="1.6s" />
+      <Q x={fc(1)} y={rk(4)} w={11} h={11} cls="g27-r-go" delayMs={d + 560} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)`, "--ty1": "0%" }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(4)} y={rk(4)} w={7} h={7} cls="g27-r-stamp" delayMs={d + 860} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(6)} w={11} h={11} cls="g27-r-go" delayMs={d + 900} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${1 * fileIn(11)}%)` }}>
+        <Man kind="q" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(2)} y={rk(2)} w={11} h={11} cls="g27-r-go" delayMs={d + 1100} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${4 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-4 * fileIn(11)}%)` }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_echo_chamber: S(EchoChamberScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   hx4_iron_ring: S(IronRingScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   hx4_maze_of_thorns: S(MazeOfThornsRule, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" }),
-  hx4_sealed_meridian: S(SealedMeridianScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
+  hx4_sealed_meridian: S(SealedMeridianRule, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   ov_terraform: S(TerraformScene, { ordering: "radial", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "board" }),
   bn4_sting_of_the_wasp: S(StingOfTheWaspScene, { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   hx4_signal_jam: S(SignalJamScene, { ordering: "file", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
@@ -1909,7 +2027,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_no_return: S(NoReturnScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board" }),
   hx4_tar_pits: S(TarPitsScene, { ordering: "radial", staggerMs: 80, victims: "all", hasLead: true, sound: "snooze", anchor: "cast" }),
   hx4_fresh_crater: S(FreshCraterScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }),
-  hx4_prowlers_bell: S(ProwlersBellScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
+  hx4_prowlers_bell: S(ProwlersBellRule, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
   hx4_bramble_patch: S(BramblePatchScene, { ordering: "radial", staggerMs: 85, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }),
   hx4_restless_blades: S(RestlessBladesScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
   hx4_rope_bridge: S(RopeBridgeScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "aim" }),

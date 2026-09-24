@@ -2086,15 +2086,120 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/** Centre of file `c` counted from the caster's left (the board turns half a
+ *  circle with the side, so a scene reads the same from either seat). */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** A walnut: what a petrified piece turns into. */
+function Walnut({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M10 2c4.6 0 7 3.6 7 8s-2.4 8-7 8-7-3.6-7-8 2.4-8 7-8z" fill="#8a6440" stroke={c.deep} strokeWidth="1.4" />
+      <path d="M10 2.6v14.8M6 6.4c1.4 1 1.4 2.4 0 3.6s-1.4 2.6 0 3.6M14 6.4c-1.4 1-1.4 2.4 0 3.6s1.4 2.6 0 3.6" fill="none" stroke={c.deep} strokeWidth="1" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- hx4_gorgons_court -------------------------------------------------------------
+   "Choose 2 enemy pieces (never the king): both become walnuts for 3 of their
+   turns. The first piece chosen may make one move before it petrifies." A
+   gorgon's mask rises on the caster's flank and its gaze falls on two of
+   their pieces (a knight on c6 and a bishop on f5 here; the play's own cuts
+   land on the ones picked). The bishop, chosen second, turns to a walnut at
+   once; the knight, chosen first, makes its one move to e5 and only then
+   hardens; three turn pips. */
+const C_GCR = { core: "#9cc27a", glow: "#f6f0da", deep: "#1c2412" };
+
+function GorgonsCourtRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <PlugFeather lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GCR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(0)} y={rk(3.5)} w={12} h={12} cls="g28-r-up" delayMs={d + 30} v={{ "--gd": "2.1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 7c-2-2-1-5 1-5M7 4c-1-2 1-4 3-3M13 4c1-2 3-2 4 0M16 7c2-1 3 1 2 3" fill="none" stroke={c.core} strokeWidth="1.4" {...SJ} />
+          <path d="M10 5c3.6 0 6 2.6 6 6.4 0 3.6-2.6 6.6-6 6.6s-6-3-6-6.6C4 7.6 6.4 5 10 5z" fill={c.core} stroke={c.deep} strokeWidth="1.3" />
+          <path d="M7.4 10.6h1.8M10.8 10.6h1.8" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Thread c0={0.5} r0={3.5} c1={5} r1={4} color={c.glow} delayMs={d + 260} gd="0.9s" />
+      <Thread c0={0.5} r0={3.5} c1={2} r1={5} color={c.glow} delayMs={d + 320} gd="0.9s" />
+      <Q x={fc(5)} y={rk(4)} w={11} h={11} cls="g28-r-dim" delayMs={d + 300} v={{ "--gd": "0.8s" }}>
+        <Man kind="b" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(5)} y={rk(4)} w={9} h={9} cls="g28-r-stamp" delayMs={d + 560} v={{ "--gd": "1.6s" }}>
+        <Walnut c={c} />
+      </Q>
+      <Q x={fc(2)} y={rk(5)} w={11} h={11} cls="g28-r-go" delayMs={d + 520} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(4)} y={rk(4)} w={9} h={9} cls="g28-r-stamp" delayMs={d + 1080} v={{ "--gd": "1.1s" }}>
+        <Walnut c={c} />
+      </Q>
+      <Pips n={3} r={2.6} x0={45} x1={55} color={c.glow} delayMs={d + 1160} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_hunters_moon --------------------------------------------------------------
+   "For your opponent's next 4 turns, any piece of theirs that captures is
+   cursed by the moon and becomes a walnut for 2 of their turns. Kings are
+   beyond the curse." A hunter's moon rises on their side of the board;
+   four turn pips. Their knight on f3 takes the pawn on d2, the moonlight
+   finds it on the square it took, and it hardens into a walnut there for
+   two turns. */
+const C_HMR = { core: "#e8a45a", glow: "#fff2dc", deep: "#2a1a0c" };
+
+function HuntersMoonRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TrammelArc lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="88%" y={rk(5)} w={11} h={11} cls="g28-r-up" delayMs={d + 30} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="10" r="8" fill={c.core} stroke={c.deep} strokeWidth="1.2" />
+          <circle cx="7" cy="8" r="1.6" fill="rgba(42,26,12,0.3)" />
+          <circle cx="12.4" cy="12.4" r="2.2" fill="rgba(42,26,12,0.3)" />
+        </svg>
+      </Q>
+      <Pips n={4} r={4.5} x0={44} x1={56} color={c.glow} delayMs={d + 380} gd="1.6s" />
+      <Q x={fc(5)} y={rk(2)} w={11} h={11} cls="g28-r-go" delayMs={d + 540} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={5} r0={2} c1={3} r1={1} color={c.glow} delayMs={d + 560} gd="0.7s" />
+      <Q x={fc(3)} y={rk(1)} w={12.5} h={12.5} cls="g28-r-in" delayMs={d + 900} v={{ "--gd": "1.2s", "--s0": "1" }} style={{ background: "rgba(232,164,90,0.34)" }} />
+      <Q x={fc(3)} y={rk(1)} w={9} h={9} cls="g28-r-stamp" delayMs={d + 1000} v={{ "--gd": "1.3s" }}>
+        <Walnut c={c} />
+      </Q>
+      {[-1, 1].map((i) => (
+        <Q key={`w${i}`} x={`calc(${fc(3)} + ${i * 1.6}%)`} y={`calc(${rk(1)} + var(--fx-side, 1) * 5%)`} w={1.6} h={2.8} cls="g28-r-pip" delayMs={d + 1100} v={{ "--gd": "1.1s" }} style={{ background: c.glow, borderRadius: "1px" }} />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8 ---
   bn4_written_in_stone: S(WrittenInStoneRule, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board",
   }),
-  hx4_gorgons_court: S(PlugFeather, {
+  hx4_gorgons_court: S(GorgonsCourtRule, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "aim",
   }),
-  hx4_hunters_moon: S(TrammelArc, {
+  hx4_hunters_moon: S(HuntersMoonRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast",
   }),
   hx4_no_quarter: S(WedgeLine, {
