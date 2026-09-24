@@ -1,0 +1,104 @@
+{
+ "id": "bw3_hallowed_ground",
+ "url": "/dev/plays?id=bw3_hallowed_ground&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_hallowed_ground",
+  "name": "Hallowed Ground",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_hallowed_ground",
+  "anchor": "cast",
+  "source": "kingSafe",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2804,
+  "cssEndMs": 3860,
+  "settled": true,
+  "windowMs": 4110,
+  "cssAnimations": 39,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 189,
+  "maxGapMs": 279.4
+ },
+ "raf": {
+  "frames": 223,
+  "medianMs": 16.7,
+  "maxMs": 333.3,
+  "dropped": 26
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 330,
+  "totalBlockingMs": 279,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 27,
+    "duration": 330,
+    "blocking": 279,
+    "scripts": [
+     {
+      "duration": 327,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   },
+   {
+    "atMs": 367,
+    "duration": 64,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 10,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  214,
+  544,
+  941,
+  1388,
+  1876,
+  2399,
+  2954
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw3_hallowed_ground.png",
+ "pngBytes": 29419
+}

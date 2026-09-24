@@ -1,0 +1,73 @@
+{
+ "id": "bw2_diplomatic_immunity",
+ "url": "/dev/plays?id=bw2_diplomatic_immunity&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw2_diplomatic_immunity",
+  "name": "Diplomatic Immunity",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw2_diplomatic_immunity",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2"
+  ],
+  "picks": [
+   "d2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2455,
+  "cssEndMs": 3493,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 41,
+  "infiniteAnimations": 4
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 254.8
+ },
+ "raf": {
+  "frames": 207,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 10
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  188,
+  480,
+  830,
+  1224,
+  1654,
+  2116,
+  2605
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw2_diplomatic_immunity.png",
+ "pngBytes": 30937
+}

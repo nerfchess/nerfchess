@@ -1,0 +1,69 @@
+{
+ "id": "bw2_prisoner_exchange",
+ "url": "/dev/plays?id=bw2_prisoner_exchange&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw2_prisoner_exchange",
+  "name": "Prisoner Exchange",
+  "tier": 5,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw2_prisoner_exchange",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2386,
+  "cssEndMs": 3460,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 20,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 301.4
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  183,
+  467,
+  808,
+  1191,
+  1610,
+  2060,
+  2536
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw2_prisoner_exchange.png",
+ "pngBytes": 26461
+}

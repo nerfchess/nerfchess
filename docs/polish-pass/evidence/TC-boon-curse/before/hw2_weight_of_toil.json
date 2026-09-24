@@ -1,0 +1,69 @@
+{
+ "id": "hw2_weight_of_toil",
+ "url": "/dev/plays?id=hw2_weight_of_toil&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hw2_weight_of_toil",
+  "name": "Weight of Toil",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:hw2_weight_of_toil",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2398,
+  "cssEndMs": 3472,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 168,
+  "maxGapMs": 319.9
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  184,
+  470,
+  812,
+  1197,
+  1618,
+  2069,
+  2548
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/hw2_weight_of_toil.png",
+ "pngBytes": 25798
+}
