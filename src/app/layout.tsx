@@ -29,9 +29,26 @@ import "./zen.css";
 const notoSans = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  display: "swap",
-  // After next/font's own local(Arial) fallback: the same metrics on
-  // Liberation Sans / Arimo, for systems with no Arial (fontFallback.css).
+  // "optional", not "swap": no fallback metrics can match Noto Sans word for
+  // word. Even with the per-weight faces in fontFallback.css (every weight
+  // within 0.2% of Noto Sans over a whole page) a swap after first paint
+  // still rewrapped a line somewhere, 0.03 to 0.09 CLS on the guides
+  // (wave3-fonts.md). next/font preloads the latin file, and Chrome holds
+  // the first paint for a preloaded optional font, so the page paints once,
+  // in Noto Sans. If the font misses its ~100ms block period (a very slow
+  // first visit) that one page stays in the metric fallback and the next
+  // page has the font from cache.
+  //
+  // `next dev` (webpack) adds ?v=<timestamp> to the preload href but not to
+  // the @font-face url, so in dev the preload never counts ("preloaded but
+  // not used") and a fresh browser profile paints its first page in the
+  // fallback. Production serves one URL for both.
+  display: "optional",
+  // next/font's own fallback is one local(Arial) face at the 400 scale for
+  // every weight. fontFallback.css replaces it with one face per weight band
+  // that also names Liberation Sans and Arimo, so the fallback takes the same
+  // room as Noto Sans on systems with or without Arial.
+  adjustFontFallback: false,
   fallback: ["NotoSansMetricFallback"],
   variable: "--f-noto",
 });
@@ -45,6 +62,9 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  // A 0.6 em monospace (Courier New, Liberation Mono, Cousine) instead of
+  // next/font's scaled Arial: same advance as JetBrains Mono (fontFallback.css).
+  adjustFontFallback: false,
   fallback: ["JetBrainsMonoMetricFallback"],
   variable: "--f-mono",
 });

@@ -13,7 +13,7 @@ import { PlayerLink, isLinkablePlayerName } from "@/components/PlayerLink";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { logout } from "@/lib/authClient";
-import { useSession } from "@/lib/session/SessionProvider";
+import { useSeededHasSession, useSession } from "@/lib/session/SessionProvider";
 import { useExitPresence } from "@/lib/useExitPresence";
 import { playChallenge } from "@/lib/sounds";
 import { Button } from "@/components/ui/Button";
@@ -149,6 +149,12 @@ export function SiteHeader({ active }: { active?: string }) {
   // first paint (F001). `display` decides layout; `user` (the /me answer)
   // decides anything that needs the real account.
   const { user, display, setUser } = useSession({ ensure: true });
+  // A session cookie with no display hint (a session from before nc_who):
+  // someone is signed in but the server could not say who. Reserve the
+  // signed-in cluster (challenges, bell, a name-and-avatar chip) rather than
+  // the small unknown placeholder, so the header barely moves when /me lands.
+  const hadSession = useSeededHasSession();
+  const reserveSignedIn = display === undefined && hadSession;
   const [menu, setMenu] = useState<Menu>(null);
   // Each dropdown stays mounted for its mirrored exit (.m-pop[data-leaving]);
   // switching menus lets the old one leave while the new one enters.
@@ -412,6 +418,12 @@ export function SiteHeader({ active }: { active?: string }) {
           )}
         </div>
 
+        {reserveSignedIn && (
+          <>
+            <span aria-hidden className="h-[44px] w-[44px] shrink-0" />
+            <span aria-hidden className="h-[44px] w-[44px] shrink-0" />
+          </>
+        )}
         {display && (
           <>
             {/* Incoming challenges */}
@@ -547,10 +559,18 @@ export function SiteHeader({ active }: { active?: string }) {
 
         {/* Account */}
         {display === undefined ? (
-          // Genuinely unknown: a first visit whose guest account is still
-          // being minted, or a session from before the display cookie. A
-          // signed-in visitor with the cookie never sees this.
-          <span className="h-9 w-24" />
+          reserveSignedIn ? (
+            // A session from before the display cookie: the chip's own box
+            // (the avatar-only 44px button on a phone, avatar plus a
+            // typical name from sm up). Only the name's own length is left
+            // to settle when /me answers.
+            <span aria-hidden className="ml-1 h-[44px] w-[44px] shrink-0 sm:w-32" />
+          ) : (
+            // Genuinely unknown: a first visit whose guest account is still
+            // being minted. A signed-in visitor with the cookie never sees
+            // this.
+            <span className="h-9 w-24" />
+          )
         ) : !display ? (
           <Link
             href="/login"

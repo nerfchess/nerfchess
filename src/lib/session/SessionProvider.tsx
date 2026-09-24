@@ -43,6 +43,14 @@ export function useSeededMode(): "nerf" | "buff" | null {
   return useContext(SessionContext).lastMode;
 }
 
+/** Whether the request carried a session cookie. With no display hint beside
+ *  it (a session from before the nc_who cookie), the account is unknown but
+ *  real, so the header reserves the signed-in shape instead of the guest
+ *  placeholder until /me answers (and stamps the hint for the next load). */
+export function useSeededHasSession(): boolean {
+  return useContext(SessionContext).hasSession;
+}
+
 /** The fields that decide the header's shape, from the user or the hint. */
 export type SessionDisplay = SessionHint;
 
