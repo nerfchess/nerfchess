@@ -1,0 +1,123 @@
+{
+ "id": "void_realm",
+ "url": "/dev/plays?id=void_realm&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "void_realm",
+  "name": "The Void Realm",
+  "tier": 5,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "voidrealm",
+  "anchor": "cast",
+  "source": "blindfold",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "activated with 3 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "picks": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2492,
+  "cssEndMs": 3541,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 44,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 125,
+  "maxGapMs": 268.9
+ },
+ "raf": {
+  "frames": 148,
+  "medianMs": 16.7,
+  "maxMs": 250.1,
+  "dropped": 70
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 128,
+  "totalBlockingMs": 35,
+  "entries": [
+   {
+    "atMs": 24,
+    "duration": 61,
+    "blocking": 11,
+    "scripts": []
+   },
+   {
+    "atMs": 89,
+    "duration": 80,
+    "blocking": 24,
+    "scripts": []
+   },
+   {
+    "atMs": 330,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 478,
+    "duration": 128,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 856,
+    "duration": 69,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  301,
+  767,
+  1326,
+  1955,
+  2642
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/void_realm.png",
+ "pngBytes": 11725,
+ "off": {
+  "url": "/dev/plays?id=void_realm&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0015,
+  "endRegions": [
+   {
+    "x": 192,
+    "y": 184,
+    "w": 56,
+    "h": 120,
+    "cells": 21
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after/void_realm.off.png"
+ }
+}

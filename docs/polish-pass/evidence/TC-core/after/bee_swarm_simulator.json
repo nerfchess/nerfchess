@@ -1,0 +1,84 @@
+{
+ "id": "bee_swarm_simulator",
+ "url": "/dev/plays?id=bee_swarm_simulator&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bee_swarm_simulator",
+  "name": "Bee Swarm Simulator",
+  "tier": 5,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "geniepoof",
+  "anchor": "board",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 3 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "picks": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2411,
+  "cssEndMs": 3446,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 28,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 179,
+  "maxGapMs": 298.6
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  292,
+  743,
+  1285,
+  1895,
+  2561
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/bee_swarm_simulator.png",
+ "pngBytes": 11970,
+ "off": {
+  "url": "/dev/plays?id=bee_swarm_simulator&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-core/after/bee_swarm_simulator.off.png"
+ }
+}

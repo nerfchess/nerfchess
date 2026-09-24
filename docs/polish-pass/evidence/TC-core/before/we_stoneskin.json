@@ -1,0 +1,114 @@
+{
+ "id": "we_stoneskin",
+ "url": "/dev/plays?id=we_stoneskin&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_stoneskin",
+  "name": "Stoneskin",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "stonehide",
+  "anchor": "board",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 45,
+  "drive": "engine",
+  "driveNote": "activated with 4 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "e2",
+   "f2",
+   "e1"
+  ],
+  "picks": [
+   "d2",
+   "e2",
+   "f2",
+   "e1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2471,
+  "cssEndMs": 3444,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 62,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 142,
+  "maxGapMs": 340.7
+ },
+ "raf": {
+  "frames": 178,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 40
+ },
+ "longAnimationFrames": {
+  "count": 6,
+  "worstMs": 62,
+  "totalBlockingMs": 17,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 61,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 28,
+    "duration": 62,
+    "blocking": 12,
+    "scripts": []
+   },
+   {
+    "atMs": 938,
+    "duration": 57,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1026,
+    "duration": 58,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2253,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2305,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  298,
+  761,
+  1315,
+  1939,
+  2621
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/we_stoneskin.png",
+ "pngBytes": 14110
+}

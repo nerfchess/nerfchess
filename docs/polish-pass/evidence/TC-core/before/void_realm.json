@@ -1,0 +1,88 @@
+{
+ "id": "void_realm",
+ "url": "/dev/plays?id=void_realm&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "void_realm",
+  "name": "The Void Realm",
+  "tier": 5,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "voidrealm",
+  "anchor": "cast",
+  "source": "blindfold",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "activated with 3 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "picks": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2438,
+  "cssEndMs": 3521,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 57,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 138,
+  "maxGapMs": 262.5
+ },
+ "raf": {
+  "frames": 160,
+  "medianMs": 16.7,
+  "maxMs": 150,
+  "dropped": 58
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 73,
+  "totalBlockingMs": 22,
+  "entries": [
+   {
+    "atMs": 16,
+    "duration": 73,
+    "blocking": 22,
+    "scripts": []
+   },
+   {
+    "atMs": 92,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  295,
+  751,
+  1299,
+  1915,
+  2588
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/void_realm.png",
+ "pngBytes": 14724
+}

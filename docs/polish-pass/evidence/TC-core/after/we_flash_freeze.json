@@ -1,0 +1,121 @@
+{
+ "id": "we_flash_freeze",
+ "url": "/dev/plays?id=we_flash_freeze&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_flash_freeze",
+  "name": "Flash Freeze",
+  "tier": 6,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "core",
+  "visual": "iceshatter",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 40,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2663,
+  "cssEndMs": 3438,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 51,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 182,
+  "maxGapMs": 308.2
+ },
+ "raf": {
+  "frames": 186,
+  "medianMs": 16.7,
+  "maxMs": 183.3,
+  "dropped": 33
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 71,
+  "totalBlockingMs": 27,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 59,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 12,
+    "duration": 54,
+    "blocking": 4,
+    "scripts": []
+   },
+   {
+    "atMs": 188,
+    "duration": 71,
+    "blocking": 18,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  320,
+  816,
+  1411,
+  2081,
+  2813
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/we_flash_freeze.png",
+ "pngBytes": 11008,
+ "off": {
+  "url": "/dev/plays?id=we_flash_freeze&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0011,
+  "endRegions": [
+   {
+    "x": 224,
+    "y": 72,
+    "w": 24,
+    "h": 56,
+    "cells": 11
+   },
+   {
+    "x": 168,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 280,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after/we_flash_freeze.off.png"
+ }
+}

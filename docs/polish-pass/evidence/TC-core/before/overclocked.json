@@ -1,0 +1,67 @@
+{
+ "id": "overclocked",
+ "url": "/dev/plays?id=overclocked&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "overclocked",
+  "name": "Overclocked",
+  "tier": 5,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "core",
+  "visual": "overclock",
+  "anchor": "board",
+  "source": "rally",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 50,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2393,
+  "cssEndMs": 3467,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 29,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 185,
+  "maxGapMs": 421.7
+ },
+ "raf": {
+  "frames": 218,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  290,
+  738,
+  1276,
+  1882,
+  2543
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/overclocked.png",
+ "pngBytes": 12630
+}

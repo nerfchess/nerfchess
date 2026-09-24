@@ -1,0 +1,99 @@
+{
+ "id": "purge_realm",
+ "url": "/dev/plays?id=purge_realm&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "purge_realm",
+  "name": "Purge Realm",
+  "tier": 6,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "purgerealm",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 40,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2415,
+  "cssEndMs": 3454,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 29,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 148,
+  "maxGapMs": 324.5
+ },
+ "raf": {
+  "frames": 175,
+  "medianMs": 16.7,
+  "maxMs": 400,
+  "dropped": 43
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 61,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 470,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 605,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1206,
+    "duration": 61,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  292,
+  745,
+  1287,
+  1898,
+  2565
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/purge_realm.png",
+ "pngBytes": 12308,
+ "off": {
+  "url": "/dev/plays?id=purge_realm&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-core/after/purge_realm.off.png"
+ }
+}
