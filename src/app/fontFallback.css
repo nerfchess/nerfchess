@@ -1,0 +1,58 @@
+/*
+ * Metric-matched fallbacks for the two self-hosted faces, for systems with no
+ * Arial.
+ *
+ * next/font writes a size-adjusted "Noto Sans Fallback" (and "JetBrains Mono
+ * Fallback") face whose only source is local(Arial). Linux, ChromeOS and many
+ * Android builds ship no font named Arial, so that face fails to load and the
+ * text falls through to system-ui (DejaVu Sans on a stock Linux box, which is
+ * far wider). When Noto Sans then swaps in, every paragraph rewraps: the
+ * content pages measured 0.07 to 0.31 CLS from that alone.
+ *
+ * Liberation Sans and Arimo are metric-compatible with Arial (same advance
+ * widths, same vertical metrics), so the overrides next/font computed for
+ * Arial apply to them unchanged. These faces sit after the next/font
+ * fallback in the family list (layout.tsx `fallback`), so a system with Arial
+ * never reaches them. Keep the four override values in step with the ones
+ * next/font generates if the face or its subset ever changes.
+ */
+
+@font-face {
+  font-family: "NotoSansMetricFallback";
+  src: local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo Regular");
+  font-weight: 100 500;
+  ascent-override: 100.54%;
+  descent-override: 27.56%;
+  line-gap-override: 0%;
+  size-adjust: 106.33%;
+}
+
+@font-face {
+  font-family: "NotoSansMetricFallback";
+  src: local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  font-weight: 600 900;
+  ascent-override: 100.54%;
+  descent-override: 27.56%;
+  line-gap-override: 0%;
+  size-adjust: 106.33%;
+}
+
+@font-face {
+  font-family: "JetBrainsMonoMetricFallback";
+  src: local("Liberation Sans"), local("LiberationSans"), local("Arimo"), local("Arimo Regular");
+  font-weight: 100 500;
+  ascent-override: 75.79%;
+  descent-override: 22.29%;
+  line-gap-override: 0%;
+  size-adjust: 134.59%;
+}
+
+@font-face {
+  font-family: "JetBrainsMonoMetricFallback";
+  src: local("Liberation Sans Bold"), local("LiberationSans-Bold"), local("Arimo Bold"), local("Arimo-Bold");
+  font-weight: 600 900;
+  ascent-override: 75.79%;
+  descent-override: 22.29%;
+  line-gap-override: 0%;
+  size-adjust: 134.59%;
+}

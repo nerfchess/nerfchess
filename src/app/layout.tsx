@@ -11,6 +11,7 @@ import { PRE_PAINT_SCRIPT } from "@/lib/session/prePaint";
 import { SessionProvider } from "@/lib/session/SessionProvider";
 import { parseWho, WHO_COOKIE } from "@/lib/session/who";
 import "./globals.css";
+import "./fontFallback.css";
 import "./zen.css";
 
 // ---------------------------------------------------------------------------
@@ -29,6 +30,9 @@ const notoSans = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
+  // After next/font's own local(Arial) fallback: the same metrics on
+  // Liberation Sans / Arimo, for systems with no Arial (fontFallback.css).
+  fallback: ["NotoSansMetricFallback"],
   variable: "--f-noto",
 });
 
@@ -41,6 +45,7 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600"],
   display: "swap",
+  fallback: ["JetBrainsMonoMetricFallback"],
   variable: "--f-mono",
 });
 
