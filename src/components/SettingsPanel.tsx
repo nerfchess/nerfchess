@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useModalChrome } from "@/lib/useModalChrome";
+import { useExitPresence } from "@/lib/useExitPresence";
 import { usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { SECTIONS } from "@/components/settings/config";
@@ -53,7 +54,11 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   const chrome = useModalChrome(open, onClose);
   const { attachDialog } = chrome;
 
-  if (!open) return null;
+  // Stays mounted for the mirrored exit (.m-scrim / .m-modal [data-leaving]);
+  // scroll lock, Escape and the trap above follow `open`, not the exit.
+  const pop = useExitPresence(open);
+  const leaving = pop.leaving ? "" : undefined;
+  if (!pop.mounted) return null;
 
   const activeSection = view === "home" ? null : SECTIONS.find((s) => s.id === view) ?? null;
 
@@ -64,15 +69,20 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   // top of the settings pane, intercepting clicks meant for it.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain p-4"
       onPointerDown={chrome.onBackdropPointerDown}
     >
+      {/* The dim is its own layer so it fades on its own curve (.m-scrim)
+          while the dialog rises (.m-modal). pointer-events-none: the backdrop
+          handler above dismisses only a press whose target is the wrapper. */}
+      <div aria-hidden data-leaving={leaving} className="m-scrim pointer-events-none fixed inset-0 bg-black/70" />
       <div
         ref={attachDialog}
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="plate plate-raised relative flex max-h-[88dvh] w-full max-w-[46rem] flex-col overflow-hidden"
+        data-leaving={leaving}
+        className="m-modal plate plate-raised relative flex max-h-[88dvh] w-full max-w-[46rem] flex-col overflow-hidden"
         onPointerDown={(e) => e.stopPropagation()}
       >
         {/* Header. */}

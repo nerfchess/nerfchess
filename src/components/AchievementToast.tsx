@@ -7,6 +7,7 @@ import { useSession } from "@/lib/session/SessionProvider";
 import { RARITY_THEME } from "@/lib/achievementTheme";
 import type { AchievementRarity } from "@/lib/achievements";
 import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
+import { useExitPresence } from "@/lib/useExitPresence";
 
 // Desktop-only unlock toast: when an achievement lands (they are awarded
 // server-side after a game archives, silently), a small card slides into the
@@ -148,8 +149,14 @@ export function AchievementToast() {
       {announcement}
     </div>
   );
-  if (disabled || !current) return live;
-  const theme = RARITY_THEME[current.rarity] ?? RARITY_THEME.common;
+  const [shown, setShown] = useState<Unlock | null>(null);
+  if (current && shown?.id !== current.id) setShown(current);
+  const pop = useExitPresence(!disabled && !!current);
+  if (!pop.mounted || !shown) return live;
+  // `shown` outlives `current` by the exit (.m-toast[data-leaving]), so the
+  // card leaves with its own text instead of vanishing on dismiss (F195).
+  const card = shown;
+  const theme = RARITY_THEME[card.rarity] ?? RARITY_THEME.common;
   // Desktop only (hidden below sm): on phones this corner is busy with
   // drawers and the moment can wait for the achievements page. Safe-area
   // aware and width-capped so the card and its action row can never clip
@@ -158,7 +165,8 @@ export function AchievementToast() {
     <>
     {live}
     <div
-      className="fixed z-40 hidden w-72 max-w-[calc(100vw-2rem)] sm:block"
+      data-leaving={pop.leaving ? "" : undefined}
+      className="m-toast fixed z-40 hidden w-72 max-w-[calc(100vw-2rem)] sm:block"
       style={{
         right: "max(env(safe-area-inset-right), 1rem)",
         bottom: "max(env(safe-area-inset-bottom), 1rem)",
@@ -180,17 +188,17 @@ export function AchievementToast() {
           </span>
           <span className="min-w-0">
             <span className="block text-[12px] text-parchment-400">
-              Achievement unlocked · {current.rarity}
+              Achievement unlocked · {card.rarity}
             </span>
             <span className="block truncate font-display text-sm font-bold" style={{ color: theme.color }}>
-              {current.name}
+              {card.name}
             </span>
           </span>
           <X size={13} className="ml-auto shrink-0 text-parchment-500" aria-hidden />
         </span>
         {/* The achievement description is body copy, not a caption on the name. */}
         <span className="mt-1.5 block text-[13px] leading-snug text-parchment-300">
-          {current.description}
+          {card.description}
         </span>
       </button>
       {/* Secondary actions: 13px interactive text (section 3), and a 44px hit

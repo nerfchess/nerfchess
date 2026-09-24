@@ -249,13 +249,16 @@ export function EnemyBuffModal({
     // a button, and without it Tab walks straight past Cancel into the board
     // behind, which is covered and not meant to be reachable while a pick is
     // pending.
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 px-4 py-6">
+    // Enter only (.m-scrim on the dim, .m-modal on the panel): the parent
+    // unmounts this on pick or cancel, so there is no exit to mirror here.
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-4 py-6">
+      <div aria-hidden className="m-scrim pointer-events-none fixed inset-0 bg-black/80" />
       <div
         ref={attachDialog}
         role="dialog"
         aria-modal="true"
         aria-label={target.label}
-        className="plate w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto"
+        className="m-modal plate relative w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto"
       >
         <div className="text-[12px] text-parchment-400">{buffName}</div>
         <div className="font-display text-lg text-parchment mt-0.5">{target.label}</div>

@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { useSession, type SessionDisplay } from "@/lib/session/SessionProvider";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { Button } from "@/components/ui/Button";
+import { useExitPresence } from "@/lib/useExitPresence";
 
 type MobileNavItem = { href: string; label: string; className?: string };
 type MobileNavGroup = { header: string; items: MobileNavItem[] };
@@ -185,14 +186,13 @@ export function MobileNavMenu({
   }, [open]);
 
   // Empty groups (all items conditional and absent) render nothing, not a
-  // stray header. Each group also carries a running item offset so the
-  // per-item entrance stagger (--i) is cumulative across groups; a fixed
-  // stride would collide once a group holds more items than the stride.
-  const visibleGroups = buildGroups(user).filter((group) => group.items.length > 0);
-  const groups = visibleGroups.map((group, gi) => ({
-    ...group,
-    offset: visibleGroups.slice(0, gi).reduce((n, g) => n + g.items.length, 0),
-  }));
+  // stray header. The panel enters as one popover (.m-pop); there is no
+  // per-item stagger.
+  const groups = buildGroups(user).filter((group) => group.items.length > 0);
+
+  // Keeps the scrim and panel mounted for their mirrored exit (data-leaving).
+  const pop = useExitPresence(open);
+  const leaving = pop.leaving ? "" : undefined;
 
   return (
     <div className={"relative " + hideClass}>
@@ -205,7 +205,7 @@ export function MobileNavMenu({
         className="h-[44px] w-[44px]">
         {open ? <X size={18} /> : <Menu size={18} />}
       </Button>
-      {open && panelPos &&
+      {pop.mounted && panelPos &&
         createPortal(
           <>
             <button
@@ -213,7 +213,8 @@ export function MobileNavMenu({
               aria-hidden
               tabIndex={-1}
               onClick={() => setOpen(false)}
-              className="fixed inset-0 z-[60] cursor-default bg-black/40"
+              data-leaving={leaving}
+              className="m-scrim fixed inset-0 z-[60] cursor-default bg-black/40"
             />
             {/* A plain dropdown box, the same surface the header's other
                 popovers use: panel fill, one hairline, 7px corners. Fixed and
@@ -232,7 +233,8 @@ export function MobileNavMenu({
                 borderRadius: "var(--ui-roundness)",
               }}
               data-testid="mobile-nav-panel"
-              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
+              data-leaving={leaving}
+              className={(align === "left" ? "m-pop m-pop--start" : "m-pop m-pop--end") + " !fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"}
             >
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
@@ -259,7 +261,7 @@ export function MobileNavMenu({
               <div key={group.header}>
                 <div className="mx-3 mb-1 mt-2 h-px bg-[color:var(--bg-raised)]" />
                 <div className="px-4 pb-1 pt-0.5 text-[12px] text-parchment-400">{group.header}</div>
-                {group.items.map((item, ii) => {
+                {group.items.map((item) => {
                   const activeItem = itemActive(item.href, pathname);
                   return (
                     <Link
@@ -267,7 +269,6 @@ export function MobileNavMenu({
                       href={item.href}
                       onClick={() => setOpen(false)}
                       aria-current={activeItem ? "page" : undefined}
-                      style={{ ["--i" as string]: group.offset + ii }}
                       className={
                         "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-[color:var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
                         (activeItem ? "border-gold-leaf bg-[color:var(--bg-raised)] pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +
