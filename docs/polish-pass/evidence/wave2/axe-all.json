@@ -1,0 +1,1150 @@
+{
+ "generatedAt": "2026-09-24T07:05:03.210Z",
+ "rows": [
+  {
+   "route": "/",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/"
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/"
+  },
+  {
+   "route": "/about",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/about"
+  },
+  {
+   "route": "/about",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/about"
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/achievements"
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/achievements"
+  },
+  {
+   "route": "/analysis",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "label",
+     "impact": "critical",
+     "help": "Form elements must have labels",
+     "nodes": 1,
+     "targets": [
+      ".mt-1\\.5"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/analysis",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "label",
+     "impact": "critical",
+     "help": "Form elements must have labels",
+     "nodes": 1,
+     "targets": [
+      ".mt-1\\.5"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/clubs",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/clubs",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/codex",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.evaluate: Execution context was destroyed, most likely because of a navigation"
+  },
+  {
+   "route": "/codex",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/codex/build",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      "label[for=\"rule-name\"] > .opacity-60",
+      "label[for=\"rule-contact\"] > .opacity-60"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/codex/build",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      "label[for=\"rule-name\"] > .opacity-60",
+      "label[for=\"rule-contact\"] > .opacity-60"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/codex/suggest",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      "label[for=\"rule-name\"] > .opacity-60",
+      "label[for=\"rule-contact\"] > .opacity-60"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/codex/suggest",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      "label[for=\"rule-name\"] > .opacity-60",
+      "label[for=\"rule-contact\"] > .opacity-60"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/codex/buff/pawn_push",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/codex/buff/pawn_push",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/codex/hex/heavy_boots",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/codex/hex/heavy_boots",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/codex/boon/extra_glance",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "document-title",
+     "impact": "serious",
+     "help": "Documents must have <title> element to aid in navigation",
+     "nodes": 1,
+     "targets": [
+      "html"
+     ]
+    },
+    {
+     "id": "html-has-lang",
+     "impact": "serious",
+     "help": "<html> element must have a lang attribute",
+     "nodes": 1,
+     "targets": [
+      "html"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/codex/boon/extra_glance",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/codex/nerf/lucky",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/nerf/lucky"
+  },
+  {
+   "route": "/codex/nerf/lucky",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/nerf/lucky"
+  },
+  {
+   "route": "/community",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/community"
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/community"
+  },
+  {
+   "route": "/contact",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/contact"
+  },
+  {
+   "route": "/contact",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/contact"
+  },
+  {
+   "route": "/faq",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/faq"
+  },
+  {
+   "route": "/faq",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/faq"
+  },
+  {
+   "route": "/friend",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/friend"
+  },
+  {
+   "route": "/friend",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 4,
+     "targets": [
+      ".bg-\\[color\\:var\\(--accent\\)\\]",
+      ".border-mode-nerf\\/30",
+      ".border-2",
+      ".py-3\\.5"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/guide",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/capture-the-king",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/capture-the-king",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/chess-roguelike",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/chess-roguelike",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/chess-variants",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/chess-variants",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/chess-with-power-ups",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/chess-with-power-ups",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/glossary",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/glossary",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/how-to-play",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/how-to-play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/nerf-mode",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guide/nerf-mode",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guidelines",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/guidelines",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/history",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/history",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/inbox",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/inbox",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/leaderboard",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/leaderboard",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      ".btn-leaf.\\[\\@media\\(pointer\\:fine\\)\\]\\:min-h-\\[36px\\].gap-1\\.5",
+      ".fixed > .btn-leaf.w-full.min-h-\\[52px\\]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      ".btn-leaf.\\[\\@media\\(pointer\\:fine\\)\\]\\:min-h-\\[36px\\].gap-1\\.5",
+      ".btn-leaf.w-full.sm\\:inline-flex"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/login",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/login",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".text-parchment-50"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/mod",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".text-parchment-50"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/mod/cards",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/mod/cards",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/mod/house",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/house",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/stats",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".text-parchment-50"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/mod/stats",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".text-parchment-50"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/privacy-policy",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 3,
+     "targets": [
+      "a[href$=\"settings\"]",
+      "p:nth-child(2) > .hover\\:underline.text-gold-leaf[href$=\"contact\"]",
+      "#contact-us > .space-y-3.leading-relaxed.max-w-3xl > p > .hover\\:underline.text-gold-leaf[href$=\"contact\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/privacy-policy",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 3,
+     "targets": [
+      "a[href$=\"settings\"]",
+      "p:nth-child(2) > .hover\\:underline.text-gold-leaf[href$=\"contact\"]",
+      "#contact-us > .space-y-3.leading-relaxed.max-w-3xl > p > .hover\\:underline.text-gold-leaf[href$=\"contact\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/profile",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/profile",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/profile/edit",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/profile/edit",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/puzzles",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "help": "Certain ARIA roles must contain particular children",
+     "nodes": 1,
+     "targets": [
+      ".aspect-square"
+     ]
+    },
+    {
+     "id": "aria-required-parent",
+     "impact": "critical",
+     "help": "Certain ARIA roles must be contained by particular parents",
+     "nodes": 64,
+     "targets": [
+      "button[aria-label=\"h1, white rook\"]",
+      "button[aria-label=\"g1, empty\"]",
+      "button[aria-label=\"f1, empty\"]",
+      "button[aria-label=\"e1, white king\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/puzzles",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "aria-required-children",
+     "impact": "critical",
+     "help": "Certain ARIA roles must contain particular children",
+     "nodes": 1,
+     "targets": [
+      ".aspect-square"
+     ]
+    },
+    {
+     "id": "aria-required-parent",
+     "impact": "critical",
+     "help": "Certain ARIA roles must be contained by particular parents",
+     "nodes": 64,
+     "targets": [
+      "button[aria-label=\"h1, white rook\"]",
+      "button[aria-label=\"g1, empty\"]",
+      "button[aria-label=\"f1, empty\"]",
+      "button[aria-label=\"e1, white king\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/settings",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 7,
+     "targets": [
+      ".opacity-40 > .w-10.text-right.font-mono",
+      ".opacity-70.bg-transparent.p-2\\.5:nth-child(3) > .text-parchment-300.font-medium.text-\\[13px\\]",
+      ".opacity-70.bg-transparent.p-2\\.5:nth-child(3) > .rune-badge.shrink-0",
+      ".opacity-70.bg-transparent.p-2\\.5:nth-child(4) > .text-parchment-300.font-medium.text-\\[13px\\]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/settings",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 7,
+     "targets": [
+      ".opacity-40 > .w-10.text-right.font-mono",
+      ".opacity-70.bg-transparent.p-2\\.5:nth-child(3) > .text-parchment-300.font-medium.text-\\[13px\\]",
+      ".opacity-70.bg-transparent.p-2\\.5:nth-child(3) > .rune-badge.shrink-0",
+      ".opacity-70.bg-transparent.p-2\\.5:nth-child(4) > .text-parchment-300.font-medium.text-\\[13px\\]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/stats",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/stats",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/terms-of-service",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 4,
+     "targets": [
+      "#your-account > .space-y-3.leading-relaxed.max-w-3xl > p:nth-child(1) > .hover\\:underline.text-gold-leaf[href$=\"contact\"]",
+      ".hover\\:underline.text-gold-leaf[href$=\"guidelines\"]",
+      ".hover\\:underline.text-gold-leaf[href$=\"privacy-policy\"]",
+      "#contact-us > .space-y-3.leading-relaxed.max-w-3xl > p > .hover\\:underline.text-gold-leaf[href$=\"contact\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/terms-of-service",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 4,
+     "targets": [
+      "#your-account > .space-y-3.leading-relaxed.max-w-3xl > p:nth-child(1) > .text-gold-leaf.hover\\:underline[href$=\"contact\"]",
+      ".text-gold-leaf.hover\\:underline[href$=\"guidelines\"]",
+      ".text-gold-leaf.hover\\:underline[href$=\"privacy-policy\"]",
+      "#contact-us > .space-y-3.leading-relaxed.max-w-3xl > p > .text-gold-leaf.hover\\:underline[href$=\"contact\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tournaments"
+  },
+  {
+   "route": "/tournaments",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tournaments"
+  },
+  {
+   "route": "/tutorial",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial"
+  },
+  {
+   "route": "/tutorial",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial"
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial/first-game"
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial/first-game"
+  },
+  {
+   "route": "/tutorial/walkthrough",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial/walkthrough"
+  },
+  {
+   "route": "/tutorial/walkthrough",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tutorial/walkthrough"
+  },
+  {
+   "route": "/tv",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tv"
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/tv"
+  },
+  {
+   "route": "/u/polish_user",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/u/polish_user"
+  },
+  {
+   "route": "/u/polish_user",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/updates",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/updates",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  }
+ ]
+}

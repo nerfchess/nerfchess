@@ -1,0 +1,352 @@
+{
+ "generatedAt": "2026-09-24T07:14:47.979Z",
+ "rows": [
+  {
+   "route": "/",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/about",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/about"
+  },
+  {
+   "route": "/about",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/about"
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/achievements"
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/achievements"
+  },
+  {
+   "route": "/codex",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex"
+  },
+  {
+   "route": "/codex",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex"
+  },
+  {
+   "route": "/codex/nerf/lucky",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/nerf/lucky"
+  },
+  {
+   "route": "/codex/nerf/lucky",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/nerf/lucky"
+  },
+  {
+   "route": "/codex/boon/extra_glance",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/boon/extra_glance"
+  },
+  {
+   "route": "/codex/boon/extra_glance",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [],
+   "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/codex/boon/extra_glance"
+  },
+  {
+   "route": "/community",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    },
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    },
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/contact",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      "a[href$=\"a5bJYFrTx\"]",
+      "a[href$=\"tutorial\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/contact",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      "a[href$=\"a5bJYFrTx\"]",
+      "a[href$=\"tutorial\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/faq",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/faq",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/friend",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 4,
+     "targets": [
+      ".bg-\\[color\\:var\\(--accent\\)\\]",
+      ".border-mode-nerf\\/30",
+      ".border-2",
+      ".py-3\\.5"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/friend",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 4,
+     "targets": [
+      ".bg-\\[color\\:var\\(--accent\\)\\]",
+      ".border-mode-nerf\\/30",
+      ".border-2",
+      ".py-3\\.5"
+     ]
+    },
+    {
+     "id": "link-in-text-block",
+     "impact": "serious",
+     "help": "Links must be distinguishable without relying on color",
+     "nodes": 1,
+     "targets": [
+      ".hover\\:underline.text-gold-leaf[href$=\"login\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tutorial",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      ".mt-5.gap-3.flex-wrap > .btn-leaf.py-3.px-\\[1em\\]",
+      ".btn-leaf.py-3[href$=\"walkthrough\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tutorial",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      ".mt-5.gap-3.flex-wrap > .btn-leaf.py-3.px-\\[1em\\]",
+      ".btn-leaf.py-3[href$=\"walkthrough\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "document-title",
+     "impact": "serious",
+     "help": "Documents must have <title> element to aid in navigation",
+     "nodes": 1,
+     "targets": [
+      "html"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tutorial/walkthrough",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/tutorial/walkthrough",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 1,
+     "targets": [
+      ".space-y-2"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/u/polish_user",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/u/polish_user",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  }
+ ]
+}
