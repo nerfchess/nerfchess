@@ -635,3 +635,23 @@ count, mined), not just pieces, or it is unplayable in a way Lichess's is not.
 | F1 | Guide pages claimed a 45% top-tier slip gate that no longer exists; `docs/draft-system.md` said cadence 6 (code says 5) and "263 cards" (1,665 active) | XS | DONE (round 0) |
 | F2 | `.gitignore` does not cover the `AGENTS.md` that `next dev` generates | XS | TODO |
 | F3 | Desync telemetry, Priority 0 in `docs/improvement-roadmap.md`. Needs real traffic, so build the hashing and the report surface | M | TODO |
+
+
+## P. Leftovers from the full-site polish pass (2026-09-24, PR #492)
+
+Source: `docs/polish-pass/LEDGER.md` SESSION LOG final entry and `docs/polish-pass/slices/*.md`. Sizes as in this file's header.
+
+| ID | Item | Size | Status |
+|---|---|---|---|
+| P1 | Play a real game on a preview deploy: bot resign/draw/rematch, seat takeover (close code 4001), daily cron dry run. None of these run under `next dev` | S | TODO |
+| P2 | House bots R8: remote engine calls in parallel across matches (fetch kept per match across alarms) | M | TODO |
+| P3 | House bots R13: optional per-square filter in game.ts | S | TODO |
+| P4 | Tier C: g01..g44 tier 5 and below, boon/curse tier 3 and below, core tier 7-8 BoardWide scenes, retired cards (card-strip.ts --module X --list for the live set) | L | TODO |
+| P5 | Board passes the caster's king square to plays so peace_of_the_grave can draw its rule | XS | TODO |
+| P6 | Cast banner: scale its ~2.4s hold with tier and move or fade it off ranks 7-8 where most hexes land (TC-god request to slice J) | S | TODO |
+| P7 | Evidence folder 30.8 MB vs 25 MB: decide whether per-card after strips stay (owner) | XS | TODO |
+| P8 | API indexes (P-idx): bring back as a section 9 addition with EXPLAIN QUERY PLAN evidence | S | TODO |
+| P9 | Production-build checks: first-visit font with display optional, worker bundle size, OG render CPU | S | TODO |
+| P10 | .btn-leaf inset bevel shadow and scrim alpha unification (design-system decisions) | XS | TODO |
+| P11 | Header guest chip grows ~212px on a first signed-out visit (depends on owner Q2, guest minting) | S | TODO |
+| P12 | F081 (mod push notifications) and F093 (error counts for the founders' report) | M | TODO |

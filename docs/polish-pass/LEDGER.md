@@ -883,3 +883,26 @@ Next (wave 1, per brief 20 order):
 3. Security fixes that need no decision: F041, F042 (open redirects), F044 (CSP img-src), F047 (null body), F072 (message window), F082 (two-tab loop).
 4. Route slices B, C, D, E take their high and medium rows; I builds motion primitives and guards; J takes F204 and F205; K lands F221 and F222 and the strip harness before any per-card revamp; G builds metrics.ts and the audit log migration.
 5. After the first integrated wave is green: open the PR, rerun test:cls with `--update`, rerun the matrix, and start wave 2.
+
+### 2026-09-23 to 2026-09-24, waves 1 to 3 (final entry)
+
+Done (322 commits on the branch, PR #492; per-slice detail in `slices/*.md`, every slice approved by an adversarial reviewer):
+- Wave 1, all slices A to L, HB (three bot tracks) and Tier C round 1, integrated and green: typecheck, lint, `npm run guard` (24 guards), the engine, realtime and house-bot suites, `next build`.
+- Section 4 sign-in bump fixed at the root (display cookie read in the root layout, one SessionProvider, pre-paint stamp), plus a real sign-in versus guest-mint race found by e2e and fixed (7916ca8).
+- Wave 2: full re-measure plus six fresh scouts, 70 findings, all six areas fixed and approved.
+- Wave 3: the cross-area hand-offs (contrast, per-weight font fallbacks with display optional, header hint for legacy sessions, skeleton timing, mod failure states). The confirming measure found nothing worth fixing: all 32 core CLS cells under 0.01 (worst /lobby 1280 user 0.0093), no real console errors, axe clean on the scanned routes. Per brief 13.6 the wave loop stops here.
+- Tier C, three rounds, owner directive "card-specific": every godPlays, fantasyPlays and greatPlays live card, every live basicPlays card (257), every live boon and curse card at tier 4 and above, every live tier 6 and above card in the g01 to g44 modules, and the tier 3 to 10 core cards that sat on the shared GodEvent arc now draw their own rule. Reviewers caught and fixed five scenes that misstated their rule (Chain Gang, Twin Knights, Arrest the Hour, Sealed Meridian, Salted Earth).
+- House bots (owner request, presentation untouched): engine (tactics at 40ms 6/33 to 28/33), policy (king floor, human blunders, graded clock budget, pacing, openings), wiring into worker.ts (resign, draw with decline memory, rematch, breaker, overrides, one persona per game), engine-service pool.
+
+Partial or not done (also in `docs/ralph-backlog.md` section P):
+- Durable Object changes (bot wiring, seat takeover, cron) are covered by source checks and direct unit calls only; `next dev` does not run the DO. A preview deploy and a real game are owed.
+- House bots R8 (parallel remote engine calls) and R13 (per-square filter) not done.
+- Tier C still on templates: g-module tier 5 and below, boon and curse tier 3 and below, core tier 7 and 8 BoardWide scenes, retired cards; peace_of_the_grave needs the caster's king square from Board.
+- Evidence folder is 30.8 MB against the 25 MB line after pruning (per-card before strips and off images removed, all kept in git at 663fda8). Going lower means dropping the per-card after strips, which are the proof of the card scenes: owner decision.
+- The API index migration (P-idx, reverted from 0045 in wave 1) is still a proposal although brief section 9 would allow it as an addition with query plans.
+- Not checked on a production build: first-visit font rendering with display optional, the worker bundle size and per-render CPU of request-time OG images.
+- Owner questions still open in OWNER QUESTIONS (legal sign-off on the privacy policy, email sender and CASL address, and the rest).
+
+Unsure about:
+- display optional means a slow first visit can keep the fallback face for that page view; the fallback is metric-matched so nothing moves, but it is a visible font difference on first load.
+- The light-theme -hi rung changes (wave 3 contrast) have not been signed off visually by the owner.
