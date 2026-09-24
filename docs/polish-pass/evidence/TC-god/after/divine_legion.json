@@ -1,0 +1,76 @@
+{
+ "id": "divine_legion",
+ "url": "/dev/plays?id=divine_legion&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "divine_legion",
+  "name": "Divine Legion",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:divine_legion",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2454,
+  "cssEndMs": 3461,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 22,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 336.5
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  297,
+  756,
+  1307,
+  1927,
+  2604
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/divine_legion.png",
+ "pngBytes": 18511,
+ "off": {
+  "url": "/dev/plays?id=divine_legion&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-god/after/divine_legion.off.png"
+ }
+}
