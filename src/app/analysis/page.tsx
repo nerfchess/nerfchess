@@ -415,14 +415,17 @@ function AnalysisInner() {
           </div>
 
           <div className="plate p-4">
-            <div className="text-[12px] tracking-[0.04em] text-parchment-400">FEN</div>
+            <label htmlFor="analysis-fen" className="block text-[12px] tracking-[0.04em] text-parchment-400">
+              FEN
+            </label>
             <input
+              id="analysis-fen"
               readOnly
               value={fen}
               onFocus={(e) => e.currentTarget.select()}
               // A read-only field is still focusable and still selects on focus,
               // which is the whole point of it: it is how you copy the position.
-              className="mt-1.5 min-h-[44px] w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-2 py-1.5 font-mono text-[12px] text-parchment-300 [@media(pointer:fine)]:min-h-0"
+              className="mt-1.5 min-h-[44px] w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-2 py-1.5 font-mono text-[14px] text-parchment-300 sm:text-[13px] [@media(pointer:fine)]:min-h-0"
             />
             <div className="mt-2 flex gap-2">
               <input
@@ -433,8 +436,11 @@ function AnalysisInner() {
                 }}
                 onKeyDown={(e) => e.key === "Enter" && loadFen()}
                 placeholder="Paste a FEN to set up a position"
+                aria-label="Paste a FEN to set up a position"
+                aria-invalid={fenError || undefined}
+                aria-describedby={fenError ? "analysis-fen-error" : undefined}
                 className={
-                  "min-w-0 flex-1 border bg-[color:var(--bg-base)] px-2 py-1.5 font-mono text-[12px] text-parchment-100 " +
+                  "min-h-[44px] min-w-0 flex-1 border bg-[color:var(--bg-base)] px-2 py-1.5 font-mono text-[14px] text-parchment-100 sm:text-[13px] [@media(pointer:fine)]:min-h-0 " +
                   (fenError ? "border-oxblood-glow" : "border-[color:var(--edge)]")
                 }
               />
@@ -442,7 +448,11 @@ function AnalysisInner() {
                 Load
               </Button>
             </div>
-            {fenError && <p className="mt-1 text-xs text-oxblood-glow">Couldn&apos;t parse that FEN.</p>}
+            {/* Always mounted, so the live region exists before the error lands
+                in it and a screen reader announces it. */}
+            <p id="analysis-fen-error" role="alert" className="text-[13px] text-oxblood-glow empty:hidden [&:not(:empty)]:mt-1">
+              {fenError ? "Couldn't parse that FEN." : ""}
+            </p>
             {!customStart && moves.length > 0 && (
               <Button tone="ghost"
                 onClick={downloadPgn}

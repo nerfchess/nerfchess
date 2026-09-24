@@ -18,6 +18,7 @@
 // (`Piece`, `.sq-light` / `.sq-dark`, `.sq-sel`, `.sq-last`, `.dot-target`),
 // so the board reads as the same board a player sees in a game.
 
+import { useRef, useState, type KeyboardEvent } from "react";
 import { Piece } from "@/components/Pieces";
 import { FILE, RANK, squareName, type BoardState, type Color, type PieceType } from "@/engine/types";
 
@@ -73,14 +74,73 @@ export function PuzzleBoard({
     }
   }
 
+  // Roving tabindex, the grid pattern Board.tsx uses: one square is in the
+  // tab order, the arrow keys move between squares in the direction they are
+  // drawn, Home / End walk the row and Ctrl+Home / Ctrl+End the board, so a
+  // keyboard player tabs onto the board once and off it once instead of
+  // through 64 stops. The cursor follows the selection when there is one.
+  const [cursorIdx, setCursorIdx] = useState<number | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const selIdx = selected == null ? -1 : squares.indexOf(selected);
+  const activeIdx = cursorIdx ?? (selIdx >= 0 ? selIdx : 56);
+
+  const moveCursor = (idx: number) => {
+    setCursorIdx(idx);
+    gridRef.current?.querySelector<HTMLButtonElement>(`[data-idx="${idx}"]`)?.focus();
+  };
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.altKey || e.metaKey) return;
+    const row = Math.floor(activeIdx / 8);
+    const col = activeIdx % 8;
+    const clamp = (n: number) => Math.max(0, Math.min(7, n));
+    let next: number | null = null;
+    switch (e.key) {
+      case "ArrowRight":
+        next = row * 8 + clamp(col + 1);
+        break;
+      case "ArrowLeft":
+        next = row * 8 + clamp(col - 1);
+        break;
+      case "ArrowUp":
+        next = clamp(row - 1) * 8 + col;
+        break;
+      case "ArrowDown":
+        next = clamp(row + 1) * 8 + col;
+        break;
+      case "Home":
+        next = e.ctrlKey ? 0 : row * 8;
+        break;
+      case "End":
+        next = e.ctrlKey ? 63 : row * 8 + 7;
+        break;
+      default:
+        break;
+    }
+    if (next == null) return;
+    e.preventDefault();
+    if (next !== activeIdx) moveCursor(next);
+  };
+
+  const rows = [0, 1, 2, 3, 4, 5, 6, 7];
+
   return (
     <div
+      ref={gridRef}
       role="grid"
       aria-label="Puzzle board"
+      aria-rowcount={8}
+      aria-colcount={8}
+      onKeyDown={onKeyDown}
       className="grid aspect-square w-full grid-cols-8 grid-rows-8 select-none"
       style={{ outline: "1px solid var(--edge)" }}
     >
-      {squares.map((sq, i) => {
+      {/* display:contents row wrappers: the eight-column grid still lays the
+          squares out itself, the rows exist for the accessibility tree. */}
+      {rows.map((r) => (
+      <div key={r} role="row" aria-rowindex={r + 1} className="contents">
+      {squares.slice(r * 8, r * 8 + 8).map((sq, j) => {
+        const i = r * 8 + j;
         const piece = board.pieces[sq];
         const isLight = (FILE(sq) + RANK(sq)) % 2 === 1;
         const name = squareName(sq);
@@ -97,6 +157,8 @@ export function PuzzleBoard({
             key={sq}
             type="button"
             role="gridcell"
+            data-idx={i}
+            tabIndex={i === activeIdx ? 0 : -1}
             disabled={disabled}
             aria-label={
               label +
@@ -104,7 +166,10 @@ export function PuzzleBoard({
               (isDest ? ", move here" : "")
             }
             aria-selected={isSel}
-            onClick={() => onSquare(sq)}
+            onClick={() => {
+              setCursorIdx(i);
+              onSquare(sq);
+            }}
             className={
               "relative flex items-center justify-center p-0 " +
               (isLight ? "sq-light" : "sq-dark") +
@@ -149,6 +214,8 @@ export function PuzzleBoard({
           </button>
         );
       })}
+      </div>
+      ))}
     </div>
   );
 }
