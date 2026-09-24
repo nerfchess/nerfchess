@@ -288,10 +288,20 @@ export default function CommunityPage() {
                 (onlineCount === null ? "bg-parchment-500" : "bg-verdigris motion-safe:animate-flicker")
               }
             />
-            <span className="tabular-nums">
-              {onlineCount === null
-                ? "Connecting to the lobby…"
-                : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
+            {/* The text sits in one grid cell with an invisible sizer, so the
+                pill keeps its width when the count replaces the loading line
+                (wave 2). It used to shrink from "Connecting to the lobby…"
+                to "N players online"; on a phone that let it rejoin the h1's
+                row and lifted the whole page 37px (CLS 0.13 alone). */}
+            <span className="grid tabular-nums">
+              <span className="col-start-1 row-start-1">
+                {onlineCount === null
+                  ? "Counting players…"
+                  : `${onlineCount} player${onlineCount === 1 ? "" : "s"} online`}
+              </span>
+              <span aria-hidden className="invisible col-start-1 row-start-1">
+                888 players online
+              </span>
             </span>
           </span>
         </div>
@@ -313,10 +323,11 @@ export default function CommunityPage() {
           <div className="min-w-0 space-y-4">
             {signedIn && (
               <SectionCard title="Friends" icon={<Users size={16} />} tint="mint">
+                <ListReserve slots="friends">
                 {err.friends ? (
                   <SectionError onRetry={loadFriends} />
                 ) : !sortedFriends ? (
-                  <RailSkeleton rows={3} />
+                  <ListSkeleton slots="friends" />
                 ) : sortedFriends.length === 0 ? (
                   <InlineEmpty
                     title="No friends yet"
@@ -356,9 +367,35 @@ export default function CommunityPage() {
                     })}
                   </ul>
                 )}
+                </ListReserve>
               </SectionCard>
             )}
 
+            {/* Recent games: the latest finished games, each opening its replay. */}
+            <SectionCard title="Recent games" icon={<Tv size={16} />} tint="coral">
+              <ListReserve slots="recent">
+              {err.recent ? (
+                <SectionError onRetry={loadRecent} />
+              ) : !recent ? (
+                <ListSkeleton slots="recent" />
+              ) : recent.length === 0 ? (
+                <InlineEmpty
+                  title="No finished games yet"
+                  body="Completed games land here the moment they end. Play one to break the ice."
+                  action={{ href: "/lobby", label: "Find a match" }}
+                />
+              ) : (
+                <ul className="mt-1 divide-y divide-[color:var(--edge)]">
+                  {recent.map((game) => (
+                    <RecentGameRow key={game.id} game={game} />
+                  ))}
+                </ul>
+              )}
+              </ListReserve>
+            </SectionCard>
+            {/* Last in the column (wave 2): it needs the full user and then a
+                games fetch, so it lands seconds after everything else. Above
+                Recent games its arrival pushed that card down. */}
             {signedIn && opponents && opponents.length > 0 && (
               <SectionCard title="Recent opponents" icon={<Swords size={16} />} tint="coral">
                 <ul className="mt-1 divide-y divide-[color:var(--edge)]">
@@ -387,27 +424,6 @@ export default function CommunityPage() {
                 </ul>
               </SectionCard>
             )}
-
-            {/* Recent games: the latest finished games, each opening its replay. */}
-            <SectionCard title="Recent games" icon={<Tv size={16} />} tint="coral">
-              {err.recent ? (
-                <SectionError onRetry={loadRecent} />
-              ) : !recent ? (
-                <RailSkeleton rows={5} />
-              ) : recent.length === 0 ? (
-                <InlineEmpty
-                  title="No finished games yet"
-                  body="Completed games land here the moment they end. Play one to break the ice."
-                  action={{ href: "/lobby", label: "Find a match" }}
-                />
-              ) : (
-                <ul className="mt-1 divide-y divide-[color:var(--edge)]">
-                  {recent.map((game) => (
-                    <RecentGameRow key={game.id} game={game} />
-                  ))}
-                </ul>
-              )}
-            </SectionCard>
           </div>
 
           {/* Rail: doors to the wider community. */}
@@ -417,14 +433,15 @@ export default function CommunityPage() {
               icon={<Trophy size={15} />}
               action={{ href: "/leaderboard", label: "Full board" }}
             >
+              <ListReserve slots="rank">
               {err.top ? (
                 <RailError onRetry={loadTop} />
               ) : !top ? (
-                <RailSkeleton rows={5} />
+                <ListSkeleton slots="rank" />
               ) : top.length === 0 ? (
                 <EmptyRail>
                   No {topBoard.label} ratings yet.{" "}
-                  <Link href="/lobby" className="text-gold-leaf hover:underline">
+                  <Link href="/lobby" className="text-gold-leaf underline underline-offset-2">
                     Play a rated game
                   </Link>
                   .
@@ -449,17 +466,19 @@ export default function CommunityPage() {
                   ))}
                 </ol>
               )}
+              </ListReserve>
             </RailCard>
 
             <RailCard title="Clubs" icon={<Users size={15} />} action={{ href: "/clubs", label: "All clubs" }}>
+              <ListReserve slots="clubs">
               {err.clubs ? (
                 <RailError onRetry={loadClubs} />
               ) : !clubs ? (
-                <RailSkeleton rows={3} />
+                <ListSkeleton slots="clubs" />
               ) : clubs.length === 0 ? (
                 <EmptyRail>
                   No clubs yet.{" "}
-                  <Link href="/clubs" className="text-gold-leaf hover:underline">
+                  <Link href="/clubs" className="text-gold-leaf underline underline-offset-2">
                     Start one
                   </Link>
                   .
@@ -484,6 +503,7 @@ export default function CommunityPage() {
                   ))}
                 </ul>
               )}
+              </ListReserve>
             </RailCard>
 
             <RailCard
@@ -491,14 +511,17 @@ export default function CommunityPage() {
               icon={<Trophy size={15} />}
               action={{ href: "/tournaments", label: "All events" }}
             >
-              <TournamentRail tournaments={tournaments} error={!!err.tournaments} onRetry={loadTournaments} />
+              <ListReserve slots="events">
+                <TournamentRail tournaments={tournaments} error={!!err.tournaments} onRetry={loadTournaments} />
+              </ListReserve>
             </RailCard>
 
             <RailCard title="Active this week" icon={<Swords size={15} />}>
+              <ListReserve slots="rank">
               {err.active ? (
                 <RailError onRetry={loadActive} />
               ) : !active ? (
-                <RailSkeleton rows={4} />
+                <ListSkeleton slots="rank" />
               ) : active.length === 0 ? (
                 <EmptyRail>No games in the last 7 days. Be the first.</EmptyRail>
               ) : (
@@ -520,6 +543,7 @@ export default function CommunityPage() {
                   ))}
                 </ol>
               )}
+              </ListReserve>
             </RailCard>
           </aside>
         </div>
@@ -584,7 +608,7 @@ function RailCard({
             // The section "more" link. Same shape the home page and HeroTv
             // already carry: a 44px hit area on a finger, given back to the
             // layout with -my-2 so the header row keeps its height, and stepped
-            // down behind `(pointer: fine)` — never `sm:`, since a 1024px
+            // down behind `(pointer: fine)`, never `sm:`, since a 1024px
             // tablet is a coarse pointer. It measured 19.5px tall before.
             className="-my-2 inline-flex min-h-[44px] items-center gap-0.5 text-[13px] text-parchment-400 transition-colors hover:text-gold-leaf [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0"
           >
@@ -608,7 +632,7 @@ function TournamentRail({
   onRetry: () => void;
 }) {
   if (error) return <RailError onRetry={onRetry} />;
-  if (!tournaments) return <RailSkeleton rows={3} />;
+  if (!tournaments) return <ListSkeleton slots="events" />;
   const live = tournaments
     .filter((t) => t.phase !== "finished")
     .sort((a, b) => {
@@ -620,7 +644,7 @@ function TournamentRail({
     return (
       <EmptyRail>
         No upcoming events.{" "}
-        <Link href="/tournaments" className="text-gold-leaf hover:underline">
+        <Link href="/tournaments" className="text-gold-leaf underline underline-offset-2">
           Host one
         </Link>
         .
@@ -746,8 +770,10 @@ function InlineEmpty({
   );
 }
 
+// Centred in the list's reserved height (ListReserve), so an empty rail reads
+// as an empty panel rather than a line with a gap under it.
 function EmptyRail({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-sm text-parchment-400">{children}</p>;
+  return <p className="my-auto py-2 text-center text-sm text-parchment-400">{children}</p>;
 }
 
 // Section-level error (design system 8.3): what failed in plain words, a Retry,
@@ -775,7 +801,7 @@ function SectionError({ onRetry }: { onRetry: () => void }) {
 // keeps its own way out (nav and the other panels), so the rail stays tight.
 function RailError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div role="alert" className="mt-2 space-y-2">
+    <div role="alert" className="my-auto flex flex-col items-center gap-2 py-2 text-center">
       <p className="text-sm text-parchment-400">Could not load this list.</p>
       <Button tone="ghost" onClick={onRetry} className="px-3 py-1 text-[13px]">
         Retry
@@ -784,12 +810,71 @@ function RailError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function RailSkeleton({ rows }: { rows: number }) {
+// Loading geometry (wave 2). Each list's skeleton is drawn at its loaded
+// geometry: the same top margin, row height, row gap and row count as the
+// list it stands in for, so a full list replaces it in place. A list's body
+// also keeps that height as a floor (ListReserve), so a shorter list, the
+// one-line empty state or the error line leaves the panel the same height
+// instead of pulling up every panel below it. Before this the skeletons were
+// 32px rows on an 8px gap (3, 4 or 5 of them, not the list's count), and
+// the rail panels moved by up to 154px when their data landed.
+//
+// Row heights are the lists' own: ranked rails (top players, active) are
+// min-h-[40px] rows on space-y-0.5, club and event rails min-h-[44px] rows,
+// the Friends list 44px rows on 1px dividers, Recent games 2-line rows.
+const LIST_SLOTS = {
+  // Top players and Active this week: up to 5 rows of 40px.
+  rank: {
+    rows: 5,
+    list: "mt-1 space-y-0.5",
+    row: "h-[40px]",
+    reserve: "min-h-[calc(0.25rem_+_5_*_40px_+_4_*_0.125rem)]",
+  },
+  // Clubs: up to 5 rows of 44px.
+  clubs: {
+    rows: 5,
+    list: "mt-1 space-y-0.5",
+    row: "h-[44px]",
+    reserve: "min-h-[calc(0.25rem_+_5_*_44px_+_4_*_0.125rem)]",
+  },
+  // Tournaments: up to 4 rows of 44px.
+  events: {
+    rows: 4,
+    list: "mt-1 space-y-0.5",
+    row: "h-[44px]",
+    reserve: "min-h-[calc(0.25rem_+_4_*_44px_+_3_*_0.125rem)]",
+  },
+  // Friends: the first 3 rows of 44px on 1px dividers.
+  friends: {
+    rows: 3,
+    list: "mt-1 space-y-px",
+    row: "h-[44px]",
+    reserve: "min-h-[calc(0.25rem_+_3_*_44px_+_2px)]",
+  },
+  // Recent games: the feed's full page (/api/community/recent returns 12) of
+  // two-line rows (py-2.5, a 1.25rem and a 1rem line with mt-0.5 between:
+  // 3.625rem) on 1px dividers. No floor: the card is followed only by the
+  // late Recent opponents card, and on a phone the 12-row skeleton already
+  // puts the rail below the fold, so a short feed moves nothing in view.
+  recent: {
+    rows: 12,
+    list: "mt-1 space-y-px",
+    row: "h-[3.625rem]",
+    reserve: "",
+  },
+} as const;
+
+function ListSkeleton({ slots }: { slots: keyof typeof LIST_SLOTS }) {
+  const g = LIST_SLOTS[slots];
   return (
-    <div className="mt-3 space-y-2" aria-hidden>
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="skeleton h-8" />
+    <div className={g.list} aria-hidden>
+      {Array.from({ length: g.rows }).map((_, i) => (
+        <div key={i} className={`skeleton ${g.row}`} />
       ))}
     </div>
   );
+}
+
+function ListReserve({ slots, children }: { slots: keyof typeof LIST_SLOTS; children: React.ReactNode }) {
+  return <div className={`flex flex-col ${LIST_SLOTS[slots].reserve}`}>{children}</div>;
 }

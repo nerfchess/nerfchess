@@ -1,0 +1,59 @@
+[
+ {
+  "route": "/community",
+  "vp": 360,
+  "cls": 0.0001,
+  "total": 0.0001,
+  "findings": []
+ },
+ {
+  "route": "/community",
+  "vp": 360,
+  "cls": 0.1661,
+  "total": 0.1661,
+  "findings": [
+   {
+    "t": 8768.6,
+    "value": 0.1598,
+    "hadRecentInput": false,
+    "sources": [
+     {
+      "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-5xl.px-5 > div.mt-6.grid.gap-4 > aside.space-y-4",
+      "text": "Top playersFull boardClubsAll clubsSSweep Club1 me...",
+      "prev": {
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      },
+      "curr": {
+       "x": 18,
+       "y": 547,
+       "w": 315,
+       "h": 233
+      },
+      "change": "entered",
+      "dx": null,
+      "dy": null,
+      "dw": null,
+      "dh": null
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "route": "/community",
+  "vp": 1280,
+  "cls": 0.0003,
+  "total": 0.0004,
+  "findings": []
+ },
+ {
+  "route": "/community",
+  "vp": 1280,
+  "cls": 0.0003,
+  "total": 0.0004,
+  "findings": []
+ }
+]
