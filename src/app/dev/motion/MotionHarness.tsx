@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { motion } from "framer-motion";
 
 // The dock rows carry their lifecycle classes (.dock-arrive and friends) from
 // the draft stylesheet, which BuffDock imports in a real game.
@@ -51,6 +52,10 @@ export function MotionHarness() {
   const [open, setOpen] = useState<Record<number, boolean>>({});
   const [cp, setCp] = useState(0);
   const [tour, setTour] = useState<number | null>(null);
+  // Framer gate (F186): a one second framer fade that replays on each click.
+  // With Animations off, src/lib/motion.ts (installed by SettingsBootstrap)
+  // makes framer land on the end state instead of running.
+  const [framerRun, setFramerRun] = useState(0);
 
   const addGod = () => {
     const key = godKey.current++;
@@ -64,6 +69,22 @@ export function MotionHarness() {
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6 text-parchment-200">
       <h1 className="font-display text-xl">Motion harness</h1>
+
+      <section className="space-y-2">
+        <button type="button" data-testid="framer-replay" className={btn} onClick={() => setFramerRun((n) => n + 1)}>
+          Framer fade
+        </button>
+        {framerRun > 0 && (
+          <motion.div
+            key={framerRun}
+            data-testid="framer-probe"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, ease: "linear" }}
+            className="h-6 w-40 bg-[color:var(--bg-raised)]"
+          />
+        )}
+      </section>
 
       <section className="space-y-2">
         <div className="flex flex-wrap gap-2">

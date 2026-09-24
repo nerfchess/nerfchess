@@ -24,8 +24,8 @@
 //
 // Lastly it reports whether framer-motion's global gate (src/lib/motion.ts,
 // installFramerGate) is imported by an always-mounted module; until it is,
-// framer animations keep playing with Animations off (F186). A warning for
-// now, because the import lands in a file another slice owns.
+// framer animations keep playing with Animations off (F186). SettingsBootstrap
+// imports it since wave 2, so a missing import is now a failure.
 
 const fs = require("fs");
 const path = require("path");
@@ -71,7 +71,6 @@ const OS_VARIANT_BASELINE = {
   "src/app/tournaments/page.tsx": 1,
   "src/app/u/[username]/page.tsx": 1,
   "src/components/BuffCard.tsx": 1,
-  "src/components/ConnectionBanner.tsx": 1,
   "src/components/GameOver.tsx": 1,
   "src/components/GlossaryTerm.tsx": 2,
   "src/components/MobileBuffDrawer.tsx": 1,
@@ -135,8 +134,9 @@ if (osStale.length) {
   console.error("reduced-motion check: stale OS_VARIANT_BASELINE:\n  - " + osStale.join("\n  - "));
 }
 if (!gateInstalled) {
-  console.warn(
-    `reduced-motion: WARNING framer-motion is not gated by data-anim yet; none of ${GATE_HOSTS.join(", ")} imports "@/lib/motion" (F186)`,
+  failed = true;
+  console.error(
+    `reduced-motion check FAILED: framer-motion is not gated by data-anim; none of ${GATE_HOSTS.join(", ")} imports "@/lib/motion" (F186)`,
   );
 }
 

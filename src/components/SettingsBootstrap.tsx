@@ -14,6 +14,9 @@ import { configureSoundPrefs, preloadSounds, setUiSounds, setVolume } from "@/li
 import { fxLevel, setFxLevel } from "@/lib/fxToggle";
 import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
 import { useSession } from "@/lib/session/SessionProvider";
+// Side-effect import: installs the framer-motion gate (MotionGlobalConfig
+// follows html[data-anim]) once, from a module every page mounts (F186).
+import "@/lib/motion";
 
 export function SettingsBootstrap() {
   // Account settings sync only exists for an account: asking while signed out
