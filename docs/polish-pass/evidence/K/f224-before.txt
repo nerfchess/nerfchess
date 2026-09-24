@@ -1,0 +1,8 @@
+animation registry: 2452 tier 1-8 upgrades (1533 buffs, 551 hexes, 368 nerfs)
+status: keep 2452 | minor polish 0 | partial 0 | full 0
+shared flagships: 0 total, 0 at tier>=5 across 0 groups
+no hand-made art: 0 cards still on the generated fallback (baseline 0); list them with node scripts/audit-bespoke-coverage.cjs
+PASS: animation registry OK.
+[scene-complexity] measured 2160 scenes (0 not measurable from source), 0 below the floor; baseline 0
+[scene-complexity] coverage of 2452 registry cards: 1781 plugin + 303 core graded here, 368 passive compositions graded by test:passive-registry, 0 on the generated fallback (F5 in test:animations), 0 unattributed
+PASS: scene complexity OK.

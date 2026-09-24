@@ -44,6 +44,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { ALL_BUFFS } from "../src/engine/buffs/library";
+import { PLAYABLE_NERFS } from "../src/engine/nerfs/library";
 import { allowedAnchors, type Anchor } from "./lib/anchor-rule";
 
 const ROOT = path.join(__dirname, "..");
@@ -437,11 +439,18 @@ function handlesEntrance(body: string, moduleSrc: string): boolean {
   return /entrance/.test(body) || /entrance/.test(moduleSrc);
 }
 
+/**
+ * Live tiers from the engine card tables, never from the committed registry.
+ * The registry used to be the source here and it drifted (348 cards had moved
+ * tier since the last --write), so floors were graded against the wrong band.
+ * The engine tables also carry the tier 9 and 10 cards the tier 1-8 registry
+ * leaves out, which previously fell back to the tier 1 floor.
+ */
 function cardTiers(): Map<string, number> {
-  const reg = JSON.parse(
-    fs.readFileSync(path.join(ROOT, "docs", "animation-registry.json"), "utf8"),
-  ) as { entries: { id: string; tier: number }[] };
-  return new Map(reg.entries.map((e) => [e.id, e.tier]));
+  const out = new Map<string, number>();
+  for (const n of PLAYABLE_NERFS) out.set(n.id, n.tier);
+  for (const b of ALL_BUFFS) out.set(b.id, b.tier);
+  return out;
 }
 
 function main(): void {

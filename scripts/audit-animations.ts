@@ -36,6 +36,8 @@
  *       effects), but it must never spread further up the tiers.
  *   F4  a parsed module whose entry parse missed one of its PLAYS keys
  *       (parser drift guard, so F1-F3 can never silently under-count).
+ *   F6  the committed docs/animation-registry.json disagrees with the live
+ *       card tables on the set of ids or their tiers (freshness gate).
  */
 
 import fs from "node:fs";
@@ -436,6 +438,33 @@ if (!WRITE) {
     fail(
       `F5: cards with no hand-made art grew: ${genFallback.length} > baseline ${baseline.genFallbackCount}. ` +
         `Every new card needs a scene in a plugin module (see scripts/audit-bespoke-coverage.cjs for the list).`,
+    );
+}
+
+// F6: the committed registry must match the live card tables on who is in it
+// and at what tier. test:scene-complexity and the review worklists read tiers
+// and ids, and before this check the committed file had drifted 348 tiers
+// without anything failing. Only id, kind and tier are compared: the dressing
+// fields change with every scene edit, and gating on them would fail every
+// authoring agent until someone regenerated a file they do not own.
+if (!WRITE) {
+  const committed = fs.existsSync(OUT_JSON)
+    ? (JSON.parse(fs.readFileSync(OUT_JSON, "utf8")) as { entries?: { id: string; kind: string; tier: number }[] })
+        .entries ?? []
+    : [];
+  const key = (e: { id: string; kind: string }) => `${e.kind}:${e.id}`;
+  const want = new Map(entries.map((e) => [key(e), e.tier]));
+  const have = new Map(committed.map((e) => [key(e), e.tier]));
+  const stale: string[] = [];
+  for (const [k, t] of want) {
+    if (!have.has(k)) stale.push(`${k} missing`);
+    else if (have.get(k) !== t) stale.push(`${k} tier ${have.get(k)} -> ${t}`);
+  }
+  for (const k of have.keys()) if (!want.has(k)) stale.push(`${k} no longer a live tier 1-8 card`);
+  if (stale.length)
+    fail(
+      `F6: docs/animation-registry.json is stale (${stale.length} cards: ${stale.slice(0, 6).join("; ")}` +
+        `${stale.length > 6 ? `; +${stale.length - 6} more` : ""}). Regenerate it with --write in its own commit.`,
     );
 }
 

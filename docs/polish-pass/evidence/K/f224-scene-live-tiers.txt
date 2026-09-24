@@ -1,0 +1,10 @@
+[scene-complexity] measured 2160 scenes (0 not measurable from source), 2 below the floor; baseline 0
+[scene-complexity] coverage of 2452 registry cards: 1781 plugin + 303 core graded here, 368 passive compositions graded by test:passive-registry, 0 on the generated fallback (F5 in test:animations), 0 unattributed
+
+FAIL: scenes below the complexity floor grew to 2 (baseline 0).
+  [t9] core.SanctRiseBurst (full_resurrection)
+      - 6 animated layers, tier 9 floor is 8
+  [t7] core.GodKnightBurst (god_knight)
+      - 5 animated layers, tier 7 floor is 6
+
+The floor is in docs/animation-design-brief.md: three beats, the tier's layer count, warm whites, one layer that reads the geometry vars, and a declared anchor.
