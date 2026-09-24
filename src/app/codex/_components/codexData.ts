@@ -6,7 +6,7 @@
 
 import { isBoon, type Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
-import { cardPath, nerfPath } from "@/lib/cardCodex";
+import { cardPath, nerfPath } from "@/lib/cardPaths";
 import { filtersFromQueryString, type CodexFilters } from "@/lib/nerfFilter";
 
 // The four browsable families, matching the existing detail routes and the

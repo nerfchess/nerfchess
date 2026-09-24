@@ -8,7 +8,6 @@
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import type { PieceType } from "@/engine/types";
-import { categoriesOf } from "@/lib/nerfCategories";
 
 const PIECE_PLURAL: Record<PieceType, string> = {
   k: "kings",
@@ -40,9 +39,16 @@ function listWords(words: string[]): string {
 
 /** A short plain sentence naming the pieces a card affects, or null when the
  * data does not make it derivable (so nothing is faked). */
-export function affectedLine(kind: "buff" | "nerf", card: Buff | Nerf): string | null {
+// `nerfCategories` is the nerf's category ids (categoriesOf in
+// nerfCategories.ts). The caller passes them so this module stays free of the
+// nerf library and the client codex chunk does not ship it.
+export function affectedLine(
+  kind: "buff" | "nerf",
+  card: Buff | Nerf,
+  nerfCategories: readonly string[] = [],
+): string | null {
   if (kind === "nerf") {
-    const pieces = categoriesOf(card.id)
+    const pieces = nerfCategories
       .map((c) => NERF_PIECE_CATEGORY[c])
       .filter((w): w is string => Boolean(w));
     if (pieces.length === 0) return null;

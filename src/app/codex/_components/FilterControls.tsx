@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import type { CodexFilters } from "@/lib/nerfFilter";
 import { SORT_OPTIONS } from "@/lib/nerfFilter";
-import { CATEGORY_DEFS } from "@/lib/nerfCategories";
-import { BUFF_COLLECTIONS, NERF_COLLECTIONS } from "@/lib/cardCollections";
+import { CATEGORY_DEFS } from "@/lib/nerfCategoryDefs";
+import { BUFF_COLLECTIONS, NERF_COLLECTIONS } from "@/lib/cardCollectionDefs";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import {
   BEHAVIOUR_LABEL,

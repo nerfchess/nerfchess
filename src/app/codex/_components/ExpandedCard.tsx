@@ -27,14 +27,17 @@ export function ExpandedCard({
   copy,
   onCopy,
   onCollapse,
+  nerfCategories,
 }: {
   entry: CodexEntry;
+  /** The nerf's category ids, from the lazily loaded category map. */
+  nerfCategories?: readonly string[];
   copy: CopyState;
   onCopy: () => void;
   onCollapse: () => void;
 }) {
   const path = entryPath(entry);
-  const affected = affectedLine(entry.kind, entry.card);
+  const affected = affectedLine(entry.kind, entry.card, nerfCategories);
 
   return (
     <div className="plate-raised rounded-none border border-[color:var(--edge-strong)] p-3">

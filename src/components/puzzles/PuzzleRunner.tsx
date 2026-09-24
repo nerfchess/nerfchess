@@ -27,7 +27,7 @@ import {
   playMove,
   type NerfGame,
 } from "@/engine/game";
-import { cardPath } from "@/lib/cardCodex";
+import { cardPath } from "@/lib/cardPaths";
 import {
   markSolved,
   solvedServerSnapshot,

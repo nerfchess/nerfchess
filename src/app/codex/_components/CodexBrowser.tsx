@@ -11,13 +11,17 @@ import {
   EMPTY_FILTERS,
   filterAndSortNerfs,
   filtersToQueryString,
+  type NerfLookups,
   hasActiveFilters,
   matchesSearch,
   type CodexFilters,
 } from "@/lib/nerfFilter";
 import { cardText, hydrateCardText } from "@/lib/cardText";
-import { buffCollection, BUFF_COLLECTIONS, NERF_COLLECTIONS } from "@/lib/cardCollections";
-import { getCategoryLabel } from "@/lib/nerfCategories";
+// Definitions only. The lookups over the card libraries (collection
+// membership, the nerf category map) arrive with the libraries themselves in
+// the async chunk below, so the route's initial JS carries neither.
+import { BUFF_COLLECTIONS, NERF_COLLECTIONS, type BuffCollection } from "@/lib/cardCollectionDefs";
+import { getCategoryLabel } from "@/lib/nerfCategoryDefs";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 import { BUFF_CATEGORY_DEFS, FilterControls } from "./FilterControls";
 import { FilterSheet } from "./FilterSheet";
@@ -46,6 +50,8 @@ import { SearchInput } from "@/components/ui/SearchInput";
 const BATCH = 60;
 
 type EngineData = {
+  lookups: NerfLookups;
+  buffCollection: (b: Pick<Buff, "id" | "category">) => BuffCollection;
   nerfs: Nerf[];
   buffs: Buff[];
   hexes: Buff[];
@@ -66,7 +72,12 @@ function sortBuffs(list: Buff[], sort: CodexFilters["sort"]): Buff[] {
   return out;
 }
 
-function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour): Buff[] {
+function filterBuffs(
+  source: Buff[],
+  filters: CodexFilters,
+  behaviour: Behaviour,
+  buffCollection: EngineData["buffCollection"],
+): Buff[] {
   // Same instant search as the nerf library: every token must be a substring
   // of name/description/category OR a fuzzy subsequence of the name, so a
   // near-miss spelling still finds the card.
@@ -129,11 +140,18 @@ export function CodexBrowser({ counts, tiers, initial, shell = false }: CodexBro
   useEffect(() => {
     if (shell) return;
     let cancelled = false;
-    Promise.all([import("@/engine/nerfs/library"), import("@/engine/buffs/library")])
-      .then(([nerfs, buffs]) => {
+    Promise.all([
+      import("@/engine/nerfs/library"),
+      import("@/engine/buffs/library"),
+      import("@/lib/nerfCategories"),
+      import("@/lib/cardCollections"),
+    ])
+      .then(([nerfs, buffs, cats, collections]) => {
         if (cancelled) return;
         const all = buffs.ALL_BUFFS.filter((b) => !isRetired(b.id));
         setEngine({
+          lookups: { categoriesOf: cats.categoriesOf, nerfCollection: collections.nerfCollection },
+          buffCollection: collections.buffCollection,
           nerfs: nerfs.ALL_NERFS.filter((n) => !isRetired(n.id)),
           buffs: all.filter((b) => !isHexCard(b) && !isBoonCard(b)),
           hexes: all.filter(isHexCard),
@@ -202,9 +220,9 @@ export function CodexBrowser({ counts, tiers, initial, shell = false }: CodexBro
   const entries = useMemo<CodexEntry[]>(() => {
     if (!engine) return [];
     if (tab === "rules") {
-      return filterAndSortNerfs(nerfSource, filters).map((card) => ({ kind: "nerf", card }) as const);
+      return filterAndSortNerfs(nerfSource, filters, engine.lookups).map((card) => ({ kind: "nerf", card }) as const);
     }
-    return filterBuffs(buffFamilies[tab], filters, behaviour).map(
+    return filterBuffs(buffFamilies[tab], filters, behaviour, engine.buffCollection).map(
       (card) => ({ kind: "buff", card }) as const,
     );
   }, [engine, tab, filters, behaviour, nerfSource, buffFamilies]);
@@ -535,6 +553,9 @@ export function CodexBrowser({ counts, tiers, initial, shell = false }: CodexBro
                           copy={copied?.id === id ? (copied.ok ? "copied" : "failed") : "idle"}
                           onCopy={() => copyLink(entryPath(entry), id)}
                           onCollapse={() => setExpandedId(null)}
+                          nerfCategories={
+                            entry.kind === "nerf" ? engine?.lookups.categoriesOf(entry.card.id) : undefined
+                          }
                         />
                       </div>
                     )}

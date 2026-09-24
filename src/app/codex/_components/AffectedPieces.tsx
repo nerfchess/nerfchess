@@ -1,5 +1,6 @@
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
+import { categoriesOf } from "@/lib/nerfCategories";
 import { affectedLine } from "./affected";
 
 // Server-rendered "affected pieces" strip for the card detail pages. Renders
@@ -8,7 +9,7 @@ import { affectedLine } from "./affected";
 // so it sits inside the same reading column as the detail body (never below the
 // site footer), matching the InfoSection plates above it.
 export function AffectedPieces({ kind, card }: { kind: "buff" | "nerf"; card: Buff | Nerf }) {
-  const line = affectedLine(kind, card);
+  const line = affectedLine(kind, card, kind === "nerf" ? categoriesOf(card.id) : []);
   if (!line) return null;
   return (
     <div className="plate flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">

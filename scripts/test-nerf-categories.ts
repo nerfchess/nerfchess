@@ -121,7 +121,7 @@ const NO_LINE = [
   "wn_equalizer",
 ];
 for (const id of NO_LINE) {
-  const line = affectedLine("nerf", nerf(id));
+  const line = affectedLine("nerf", nerf(id), categoriesOf(id));
   check(line === null, `${id} must render no affected-pieces line (got ${JSON.stringify(line)})`);
 }
 
@@ -131,7 +131,7 @@ const LINES: [string, string][] = [
   ["wn_deadline_queen", "Affects your queens."],
 ];
 for (const [id, expected] of LINES) {
-  const line = affectedLine("nerf", nerf(id));
+  const line = affectedLine("nerf", nerf(id), categoriesOf(id));
   check(line === expected, `${id} line must be ${JSON.stringify(expected)} (got ${JSON.stringify(line)})`);
 }
 
