@@ -1,0 +1,172 @@
+{
+ "generatedAt": "2026-09-24T15:37:12.928Z",
+ "routes": [
+  {
+   "key": "/mod/house|signed-out",
+   "items": []
+  },
+  {
+   "key": "/mod/house|guest",
+   "items": []
+  },
+  {
+   "key": "/mod/house|user",
+   "items": []
+  },
+  {
+   "key": "/mod/house|mod",
+   "items": []
+  },
+  {
+   "key": "/mod/house|admin",
+   "items": []
+  }
+ ],
+ "warnings": [
+  "/mod/house: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl"
+ ],
+ "apiCallCounts": [
+  {
+   "route": "/mod/house",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/RapidHerald53/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/mod/house",
+   "state": "1280x800|dark|full|guest|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/FuzzyFalcon/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/mod/house",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/mod/house",
+   "state": "1280x800|dark|full|mod|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/mod/house/personas",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_mod/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/mod/house",
+   "state": "1280x800|dark|full|admin|normal",
+   "calls": [
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/mod/house/personas",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_admin/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ]
+   ]
+  }
+ ]
+}

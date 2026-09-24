@@ -1,0 +1,15 @@
+{
+ "slug": "friend",
+ "url": "/friend",
+ "ms": 27983,
+ "findings": [
+  {
+   "route": "/friend",
+   "width": null,
+   "theme": null,
+   "kind": "redirect",
+   "severity": "info",
+   "detail": "redirects to /; not swept separately, the findings for this surface are under /"
+  }
+ ]
+}

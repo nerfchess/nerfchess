@@ -1,0 +1,200 @@
+{
+ "at": "2026-09-24T15:36:37.872Z",
+ "checks": [
+  {
+   "id": "house signed-out: roster requested only for staff, no 4xx",
+   "pass": true,
+   "detail": "{\"personas\":[],\"bad\":[],\"consoleErrors\":[],\"text\":\"nerfchess Play Watch Community Leaderboard Rules Guest CraftyCastle25 · Sign in Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all \"}"
+  },
+  {
+   "id": "house user: roster requested only for staff, no 4xx",
+   "pass": true,
+   "detail": "{\"personas\":[],\"bad\":[],\"consoleErrors\":[],\"text\":\"nerfchess Play Watch Community Leaderboard Rules 9 polish_user Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: huma\"}"
+  },
+  {
+   "id": "house mod: roster requested only for staff, no 4xx",
+   "pass": true,
+   "detail": "{\"personas\":[200],\"bad\":[],\"consoleErrors\":[],\"text\":\"nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans \"}"
+  },
+  {
+   "id": "house admin: roster requested only for staff, no 4xx",
+   "pass": true,
+   "detail": "{\"personas\":[200],\"bad\":[],\"consoleErrors\":[],\"text\":\"nerfchess Play Watch Community Leaderboard Rules polish_admin Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: human\"}"
+  },
+  {
+   "id": "house 503: error with Retry",
+   "pass": true,
+   "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas HOUSE BOTS The engine-driven roster that keeps the lobby warm. Rename a persona, pick a different avatar, or set"
+  },
+  {
+   "id": "house 503: Retry loads the roster",
+   "pass": true,
+   "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas HOUSE BOTS The engine-driven roster that keeps the lobby warm. Rename a persona, pick a different avatar, or set"
+  },
+  {
+   "id": "house 403: denied state with a sign-in link",
+   "pass": true,
+   "detail": "{\"link\":\"/login?next=%2Fmod%2Fhouse\",\"text\":\"nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas HOUSE BOTS The engine-driven roster that keeps the lobby warm. Rename a persona, pick a different avatar, or set\"}"
+  },
+  {
+   "id": "god panel GET 500: error with Retry, switch disabled",
+   "pass": true,
+   "detail": "{\"text\":\"GOD PANEL - Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it. Could not load the god panel setting. Retry\",\"hasRetry\":true,\"disabledWhileFailed\":true,\"gets\":2}"
+  },
+  {
+   "id": "god panel Retry: switch shows Off and is usable",
+   "pass": true,
+   "detail": "{\"text\":\"GOD PANEL Off Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it.\",\"enabledNow\":true,\"gets\":3}"
+  },
+  {
+   "id": "skeleton: a load inside the show-delay never shows it",
+   "pass": true,
+   "detail": "[{\"delayMs\":0,\"answeredMs\":66,\"skeletonInMs\":65,\"visibleAtMs\":null,\"goneMs\":95,\"visibleForMs\":0,\"goneAfterAnswerMs\":29},{\"delayMs\":60,\"answeredMs\":118,\"skeletonInMs\":58,\"visibleAtMs\":null,\"goneMs\":145,\"visibleForMs\":0,\"goneAfterAnswerMs\":27},{\"delayMs\":0,\"answeredMs\":56,\"skeletonInMs\":55,\"visibleAtMs\":null,\"goneMs\":86,\"visibleForMs\":0,\"goneAfterAnswerMs\":30},{\"delayMs\":60,\"answeredMs\":124,\"skeletonInMs\":63,\"visibleAtMs\":null,\"goneMs\":150,\"visibleForMs\":0,\"goneAfterAnswerMs\":26}]"
+  },
+  {
+   "id": "skeleton: once visible it stays about 400ms",
+   "pass": true,
+   "detail": "[{\"delayMs\":260,\"answeredMs\":324,\"skeletonInMs\":64,\"visibleAtMs\":234,\"goneMs\":614,\"visibleForMs\":380,\"goneAfterAnswerMs\":290},{\"delayMs\":260,\"answeredMs\":328,\"skeletonInMs\":67,\"visibleAtMs\":236,\"goneMs\":616,\"visibleForMs\":380,\"goneAfterAnswerMs\":288}]"
+  },
+  {
+   "id": "skeleton: a slow load swaps as soon as it lands",
+   "pass": true,
+   "detail": "[{\"delayMs\":600,\"answeredMs\":662,\"skeletonInMs\":61,\"visibleAtMs\":233,\"goneMs\":689,\"visibleForMs\":456,\"goneAfterAnswerMs\":27},{\"delayMs\":1200,\"answeredMs\":1260,\"skeletonInMs\":58,\"visibleAtMs\":228,\"goneMs\":1289,\"visibleForMs\":1061,\"goneAfterAnswerMs\":29},{\"delayMs\":600,\"answeredMs\":663,\"skeletonInMs\":62,\"visibleAtMs\":231,\"goneMs\":691,\"visibleForMs\":460,\"goneAfterAnswerMs\":28},{\"delayMs\":1200,\"answeredMs\":1257,\"skeletonInMs\":55,\"visibleAtMs\":227,\"goneMs\":1287,\"visibleForMs\":1060,\"goneAfterAnswerMs\":30}]"
+  }
+ ],
+ "data": {
+  "houseRequests": {
+   "signed-out": {
+    "personas": [],
+    "bad": [],
+    "consoleErrors": [],
+    "text": "nerfchess Play Watch Community Leaderboard Rules Guest CraftyCastle25 · Sign in Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all "
+   },
+   "user": {
+    "personas": [],
+    "bad": [],
+    "consoleErrors": [],
+    "text": "nerfchess Play Watch Community Leaderboard Rules 9 polish_user Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: huma"
+   },
+   "mod": {
+    "personas": [
+     200
+    ],
+    "bad": [],
+    "consoleErrors": [],
+    "text": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans "
+   },
+   "admin": {
+    "personas": [
+     200
+    ],
+    "bad": [],
+    "consoleErrors": [],
+    "text": "nerfchess Play Watch Community Leaderboard Rules polish_admin Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: human"
+   }
+  },
+  "godPanelFailed": {
+   "text": "GOD PANEL - Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it. Could not load the god panel setting. Retry",
+   "hasRetry": true,
+   "disabledWhileFailed": true,
+   "gets": 2
+  },
+  "godPanelRecovered": {
+   "text": "GOD PANEL Off Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it.",
+   "enabledNow": true,
+   "gets": 3
+  },
+  "skeletonHold": [
+   {
+    "delayMs": 0,
+    "answeredMs": 66,
+    "skeletonInMs": 65,
+    "visibleAtMs": null,
+    "goneMs": 95,
+    "visibleForMs": 0,
+    "goneAfterAnswerMs": 29
+   },
+   {
+    "delayMs": 60,
+    "answeredMs": 118,
+    "skeletonInMs": 58,
+    "visibleAtMs": null,
+    "goneMs": 145,
+    "visibleForMs": 0,
+    "goneAfterAnswerMs": 27
+   },
+   {
+    "delayMs": 260,
+    "answeredMs": 324,
+    "skeletonInMs": 64,
+    "visibleAtMs": 234,
+    "goneMs": 614,
+    "visibleForMs": 380,
+    "goneAfterAnswerMs": 290
+   },
+   {
+    "delayMs": 600,
+    "answeredMs": 662,
+    "skeletonInMs": 61,
+    "visibleAtMs": 233,
+    "goneMs": 689,
+    "visibleForMs": 456,
+    "goneAfterAnswerMs": 27
+   },
+   {
+    "delayMs": 1200,
+    "answeredMs": 1260,
+    "skeletonInMs": 58,
+    "visibleAtMs": 228,
+    "goneMs": 1289,
+    "visibleForMs": 1061,
+    "goneAfterAnswerMs": 29
+   },
+   {
+    "delayMs": 0,
+    "answeredMs": 56,
+    "skeletonInMs": 55,
+    "visibleAtMs": null,
+    "goneMs": 86,
+    "visibleForMs": 0,
+    "goneAfterAnswerMs": 30
+   },
+   {
+    "delayMs": 60,
+    "answeredMs": 124,
+    "skeletonInMs": 63,
+    "visibleAtMs": null,
+    "goneMs": 150,
+    "visibleForMs": 0,
+    "goneAfterAnswerMs": 26
+   },
+   {
+    "delayMs": 260,
+    "answeredMs": 328,
+    "skeletonInMs": 67,
+    "visibleAtMs": 236,
+    "goneMs": 616,
+    "visibleForMs": 380,
+    "goneAfterAnswerMs": 288
+   },
+   {
+    "delayMs": 600,
+    "answeredMs": 663,
+    "skeletonInMs": 62,
+    "visibleAtMs": 231,
+    "goneMs": 691,
+    "visibleForMs": 460,
+    "goneAfterAnswerMs": 28
+   },
+   {
+    "delayMs": 1200,
+    "answeredMs": 1257,
+    "skeletonInMs": 55,
+    "visibleAtMs": 227,
+    "goneMs": 1287,
+    "visibleForMs": 1060,
+    "goneAfterAnswerMs": 30
+   }
+  ]
+ }
+}

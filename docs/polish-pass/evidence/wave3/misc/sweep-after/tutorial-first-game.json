@@ -1,0 +1,3580 @@
+{
+ "slug": "tutorial-first-game",
+ "url": "/tutorial/first-game",
+ "ms": 133510,
+ "findings": [
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "dark",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "dark",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "dark",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "dark",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "dark",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "dark",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.min-h-screen > div.mx-auto.w-full.max-w-[1200px] > div.mb-2.flex.flex-wrap > span",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Loading the game…\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.text-[12px].uppercase.tracking-[0.06em]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Buff mode\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.min-w-0.truncate.text-[12px]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Casual · vs bot\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't move\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Movement limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't capture\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Sight limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Slowed\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't be captured\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Gained powers\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Enemy can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"You can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dies soon\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trap\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.hidden.min-h-0.overflow-hidden > div.zen-hide.flex.items-center > label.flex.items-center.gap-2 > span.min-w-[3rem].shrink-0.whitespace-nowrap",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Normal\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.min-w-0.shrink > div.flex.items-center.gap-2 > div.min-w-0.leading-none > div.truncate.text-[12px].font-semibold",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening your draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > button.vault-shell.mx-auto.block > span.vault-caption > span.vault-caption__band",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"Slate vault\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > button.vault-shell.mx-auto.block > span.vault-caption > span.vault-caption__label",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > button.vault-shell.mx-auto.block > span.vault-caption > span.vault-caption__hint",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"Tap to open\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.text-[12px].uppercase.tracking-[0.06em]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Buff mode\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.min-w-0.truncate.text-[12px]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Casual · vs bot\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't move\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Movement limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't capture\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Sight limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Slowed\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't be captured\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Gained powers\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Enemy can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"You can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dies soon\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trap\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > div.flex.items-center.gap-2",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent drafted Tower Warden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal",
+   "detail": "body copy, in <p>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"The first time an enemy piece attacks one of your \""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal > span.relative.z-[1].inline > span.cursor-help.underline.decoration-dotted",
+   "detail": "the operable name of a control, in <span>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"One use\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.hidden.min-h-0.overflow-hidden > div.zen-hide.flex.items-center > label.flex.items-center.gap-2 > span.min-w-[3rem].shrink-0.whitespace-nowrap",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Normal\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.min-w-0.shrink > div.flex.items-center.gap-2 > div.min-w-0.leading-none > div.truncate.text-[12px].font-semibold",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening your draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > button.vault-shell.mx-auto.block > span.vault-caption > span.vault-caption__band",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"Slate vault\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > button.vault-shell.mx-auto.block > span.vault-caption > span.vault-caption__label",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > div.flex.items-center.gap-2",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent drafted Tower Warden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal",
+   "detail": "body copy, in <p>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"The first time an enemy piece attacks one of your \""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal > span.relative.z-[1].inline > span.cursor-help.underline.decoration-dotted",
+   "detail": "the operable name of a control, in <span>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"One use\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.mt-2.flex.flex-col > section.px-2 > div.flex.items-baseline.justify-between > span.font-mono.text-[12px].tabular-nums",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"None yet\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.min-w-0.shrink > div.flex.items-center.gap-2 > div.min-w-0.leading-none > div.truncate.text-[12px].font-semibold",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dealing the cards\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_3_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_5_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > div.flex.items-center.gap-2",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent drafted Tower Warden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal",
+   "detail": "body copy, in <p>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"The first time an enemy piece attacks one of your \""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal > span.relative.z-[1].inline > span.cursor-help.underline.decoration-dotted",
+   "detail": "the operable name of a control, in <span>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"One use\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.mt-2.flex.flex-col > section.px-2 > div.flex.items-baseline.justify-between > span.font-mono.text-[12px].tabular-nums",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"None yet\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_3_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_5_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > div.flex.items-center.gap-2",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent drafted Tower Warden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.relative.mx-auto.sm:mx-0 > div.pointer-events-none.absolute.inset-x-0 > div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal",
+   "detail": "body copy, in <p>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"The first time an enemy piece attacks one of your \""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-13",
+   "severity": "medium",
+   "selector": "div.m-toast.glass-chip.max-w-[min(20rem,calc(100vw-1.5rem))] > p.mt-0.5.text-[12px].font-normal > span.relative.z-[1].inline > span.cursor-help.underline.decoration-dotted",
+   "detail": "the operable name of a control, in <span>, renders at 12px; the 13px floor applies (12px is captions and labels only). Text: \"One use\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.mt-2.flex.flex-col > section.px-2 > div.flex.items-baseline.justify-between > span.font-mono.text-[12px].tabular-nums",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"None yet\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_3_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_5_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "midnight",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.text-[12px].uppercase.tracking-[0.06em]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Buff mode\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.min-w-0.truncate.text-[12px]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Casual · vs bot\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't move\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Movement limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't capture\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Sight limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Slowed\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't be captured\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Gained powers\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Enemy can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"You can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dies soon\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trap\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.hidden.min-h-0.overflow-hidden > div.zen-hide.flex.items-center > label.flex.items-center.gap-2 > span.min-w-[3rem].shrink-0.whitespace-nowrap",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Normal\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.min-w-0.shrink > div.flex.items-center.gap-2 > div.min-w-0.leading-none > div.truncate.text-[12px].font-semibold",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dealing the cards\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_2_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_4_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1920,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.text-[12px].uppercase.tracking-[0.06em]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Buff mode\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.min-w-0.truncate.text-[12px]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Casual · vs bot\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't move\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Movement limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't capture\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Sight limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Slowed\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't be captured\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Gained powers\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Enemy can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"You can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dies soon\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trap\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.hidden.min-h-0.overflow-hidden > div.zen-hide.flex.items-center > label.flex.items-center.gap-2 > span.min-w-[3rem].shrink-0.whitespace-nowrap",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Normal\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_2_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_4_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1440,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.text-[12px].uppercase.tracking-[0.06em]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Buff mode\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.match-grid.grid.min-h-0 > aside.rail-panel.hidden.min-h-0 > div.relative.flex.items-center > span.min-w-0.truncate.text-[12px]",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Casual · vs bot\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't move\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Movement limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't capture\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Sight limited\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Slowed\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Can't be captured\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Gained powers\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Enemy can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"You can't enter\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Dies soon\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "details.group.border-t.border-[color:var(--edge)] > div.board-key.mt-2 > div.board-key__row > span.board-key__label",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trap\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.hidden.min-h-0.overflow-hidden > div.zen-hide.flex.items-center > label.flex.items-center.gap-2 > span.min-w-[3rem].shrink-0.whitespace-nowrap",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Normal\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_2_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_4_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 1024,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "main.flex.min-h-dvh.flex-col > nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"playing\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "nav.site-nav.relative.z-[60] > div.ml-auto.flex.min-w-0 > span.zen-hide.hidden.sm:inline > span.text-mode-buffGlow",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"buff\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.mt-2.flex.flex-col > section.px-2 > div.flex.items-baseline.justify-between > span.font-mono.text-[12px].tabular-nums",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"None yet\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_2_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_4_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 768,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.mt-2.flex.flex-col > section.px-2 > div.flex.items-baseline.justify-between > span.font-mono.text-[12px].tabular-nums",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"None yet\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_2_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_4_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 390,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"8\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"7\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"6\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"5\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"4\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"3\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"2\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"a\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"b\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"c\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"d\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"e\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"f\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"g\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.grid.grid-cols-8.grid-rows-8[data-testid=\"true\"] > div.contents > div.relative.flex.items-center > span.absolute.text-[12px].font-mono",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"h\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.mt-2.flex.flex-col > section.px-2 > div.flex.items-baseline.justify-between > span.font-mono.text-[12px].tabular-nums",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"None yet\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1 > button.flex.min-h-[44px].flex-1 > span.tabular.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px inside a control, but it is one fragment of that control rather than its name (a chip, count, keycap or badge), so the 12px caption allowance may well cover it. Judge it by eye. Text: \"1\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.flex.items-center.justify-between > div.flex.min-w-0.items-center > span.truncate.text-[12px].text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opening pick\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.pointer-events-none.shrink-0 > div.flex.items-center.gap-2 > div.font-mono.text-lg.font-bold > span.ml-0.5.text-xs.font-semibold",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"s\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Free action\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_2_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.items-center.gap-1",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Item\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.relative.flex.items-start > div.min-w-0 > div.mt-0.5.flex.flex-wrap > span.inline-flex.shrink-0.items-center",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Instant\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div#_r_4_ > div.rule-ornament.my-2.5.text-[12px] > span.font-display",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Trivial\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "div.plate.max-h-[78dvh].w-full > div.mt-4.border-t.border-[color:var(--edge)] > div.mb-1.5.flex.items-center > span.text-[12px].tracking-wide.text-parchment-400",
+   "detail": "<span> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"Opponent's draft is hidden\""
+  },
+  {
+   "route": "/tutorial/first-game",
+   "width": 360,
+   "theme": "light",
+   "kind": "type-floor-12",
+   "severity": "low",
+   "selector": "body.no-tap-highlight.font-body > div.pointer-events-none.fixed.inset-x-0 > div.plate.max-w-md.border > div.text-[12px].text-gold-leaf",
+   "detail": "<div> renders at 12px, inside the 12px caption allowance. Only a defect if this is body or interactive text. Text: \"your first draft\""
+  }
+ ]
+}
