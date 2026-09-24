@@ -1,0 +1,91 @@
+{
+ "id": "hard_reset",
+ "url": "/dev/plays?id=hard_reset&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hard_reset",
+  "name": "Hard Reset",
+  "tier": 3,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hard_reset",
+  "anchor": "aim",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2344,
+  "cssEndMs": 3417,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 21,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 172,
+  "maxGapMs": 281.7
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 55,
+  "totalBlockingMs": 1,
+  "entries": [
+   {
+    "atMs": -49,
+    "duration": 55,
+    "blocking": 1,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  284,
+  724,
+  1251,
+  1845,
+  2494
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/hard_reset.png",
+ "pngBytes": 10914,
+ "off": {
+  "url": "/dev/plays?id=hard_reset&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0003,
+  "endRegions": [
+   {
+    "x": 48,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/hard_reset.off.png"
+ }
+}

@@ -1,0 +1,84 @@
+{
+ "id": "double_step_army",
+ "url": "/dev/plays?id=double_step_army&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "double_step_army",
+  "name": "Battering Line",
+  "tier": 3,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:double_step_army",
+  "anchor": "board",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2513,
+  "cssEndMs": 3457,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 58,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 214,
+  "maxGapMs": 63.5
+ },
+ "raf": {
+  "frames": 205,
+  "medianMs": 16.7,
+  "maxMs": 116.7,
+  "dropped": 16
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 105,
+  "totalBlockingMs": 80,
+  "entries": [
+   {
+    "atMs": -74,
+    "duration": 85,
+    "blocking": 27,
+    "scripts": []
+   },
+   {
+    "atMs": 53,
+    "duration": 105,
+    "blocking": 53,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  303,
+  773,
+  1336,
+  1970,
+  2663
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/before/double_step_army.png",
+ "pngBytes": 14393
+}

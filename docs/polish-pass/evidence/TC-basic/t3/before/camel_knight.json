@@ -1,0 +1,126 @@
+{
+ "id": "camel_knight",
+ "url": "/dev/plays?id=camel_knight&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "camel_knight",
+  "name": "Camel Knight",
+  "tier": 3,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:camel_knight",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "b1",
+  "targets": [
+   "b1"
+  ],
+  "picks": [
+   "b1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2515,
+  "cssEndMs": 3430,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 41,
+  "infiniteAnimations": 4
+ },
+ "screencast": {
+  "framesInWindow": 188,
+  "maxGapMs": 322.3
+ },
+ "raf": {
+  "frames": 171,
+  "medianMs": 16.7,
+  "maxMs": 166.7,
+  "dropped": 49
+ },
+ "longAnimationFrames": {
+  "count": 7,
+  "worstMs": 153,
+  "totalBlockingMs": 204,
+  "entries": [
+   {
+    "atMs": -50,
+    "duration": 55,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 39,
+    "duration": 153,
+    "blocking": 102,
+    "scripts": []
+   },
+   {
+    "atMs": 1763,
+    "duration": 65,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1848,
+    "duration": 93,
+    "blocking": 15,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "http://localhost:3000/_next/static/webpack/webpack.bdb050b5ba9bff9b.hot-update.j...",
+      "source": "/_next/static/webpack/webpack.bdb050b5ba9bff9b.hot-update.js"
+     }
+    ]
+   },
+   {
+    "atMs": 2055,
+    "duration": 121,
+    "blocking": 71,
+    "scripts": []
+   },
+   {
+    "atMs": 2231,
+    "duration": 59,
+    "blocking": 7,
+    "scripts": []
+   },
+   {
+    "atMs": 2295,
+    "duration": 60,
+    "blocking": 4,
+    "scripts": [
+     {
+      "duration": 15,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  303,
+  774,
+  1337,
+  1972,
+  2665
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/before/camel_knight.png",
+ "pngBytes": 11985
+}

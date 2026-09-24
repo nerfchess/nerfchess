@@ -1,0 +1,142 @@
+{
+ "id": "hobbled_cavalry",
+ "url": "/dev/plays?id=hobbled_cavalry&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hobbled_cavalry",
+  "name": "Hobbled Cavalry",
+  "tier": 3,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hobbled_cavalry",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, walnut diff",
+  "castSq": "b8",
+  "targets": [
+   "b8",
+   "g8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2476,
+  "cssEndMs": 3429,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 38,
+  "infiniteAnimations": 2
+ },
+ "screencast": {
+  "framesInWindow": 201,
+  "maxGapMs": 325
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 17
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 95,
+  "totalBlockingMs": 32,
+  "entries": [
+   {
+    "atMs": -63,
+    "duration": 71,
+    "blocking": 17,
+    "scripts": []
+   },
+   {
+    "atMs": 38,
+    "duration": 95,
+    "blocking": 15,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  299,
+  762,
+  1318,
+  1943,
+  2626
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/hobbled_cavalry.png",
+ "pngBytes": 11897,
+ "off": {
+  "url": "/dev/plays?id=hobbled_cavalry&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.002,
+  "endRegions": [
+   {
+    "x": 88,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 10
+   },
+   {
+    "x": 376,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 8
+   },
+   {
+    "x": 400,
+    "y": 8,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 400,
+    "y": 56,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 120,
+    "y": 8,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 72,
+    "y": 56,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 56,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/hobbled_cavalry.off.png"
+ }
+}

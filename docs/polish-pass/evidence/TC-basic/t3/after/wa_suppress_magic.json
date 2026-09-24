@@ -1,0 +1,76 @@
+{
+ "id": "wa_suppress_magic",
+ "url": "/dev/plays?id=wa_suppress_magic&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_suppress_magic",
+  "name": "Suppress Magic",
+  "tier": 3,
+  "category": "draft",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wa_suppress_magic",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2322,
+  "cssEndMs": 3446,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 17,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 302
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  281,
+  718,
+  1240,
+  1829,
+  2472
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/wa_suppress_magic.png",
+ "pngBytes": 10008,
+ "off": {
+  "url": "/dev/plays?id=wa_suppress_magic&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/wa_suppress_magic.off.png"
+ }
+}

@@ -1,0 +1,96 @@
+{
+ "id": "counterstep",
+ "url": "/dev/plays?id=counterstep&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "counterstep",
+  "name": "Counterstep",
+  "tier": 3,
+  "category": "tempo",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:counterstep",
+  "anchor": "aim",
+  "source": "rally",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, rally diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2446,
+  "cssEndMs": 3442,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 58,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 182,
+  "maxGapMs": 306.1
+ },
+ "raf": {
+  "frames": 191,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 28
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 77,
+  "totalBlockingMs": 7,
+  "entries": [
+   {
+    "atMs": -54,
+    "duration": 61,
+    "blocking": 7,
+    "scripts": []
+   },
+   {
+    "atMs": 2482,
+    "duration": 77,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2804,
+    "duration": 75,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2880,
+    "duration": 72,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  296,
+  754,
+  1303,
+  1921,
+  2596
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/before/counterstep.png",
+ "pngBytes": 13675
+}

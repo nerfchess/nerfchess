@@ -1,0 +1,80 @@
+{
+ "id": "blink_army",
+ "url": "/dev/plays?id=blink_army&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "blink_army",
+  "name": "Blink Army",
+  "tier": 3,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:blink_army",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "e2"
+  ],
+  "picks": [
+   "d2",
+   "e2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2381,
+  "cssEndMs": 3518,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 38,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 247.3
+ },
+ "raf": {
+  "frames": 208,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 10
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 66,
+  "totalBlockingMs": 16,
+  "entries": [
+   {
+    "atMs": 17,
+    "duration": 66,
+    "blocking": 16,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  288,
+  735,
+  1270,
+  1873,
+  2531
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/before/blink_army.png",
+ "pngBytes": 13463
+}

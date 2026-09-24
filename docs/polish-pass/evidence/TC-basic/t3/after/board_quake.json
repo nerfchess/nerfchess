@@ -1,0 +1,87 @@
+{
+ "id": "board_quake",
+ "url": "/dev/plays?id=board_quake&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "board_quake",
+  "name": "Board Quake",
+  "tier": 3,
+  "category": "attack",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:board_quake",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, removal diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2359,
+  "cssEndMs": 3417,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 171,
+  "maxGapMs": 294.8
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 52,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -47,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  286,
+  728,
+  1259,
+  1856,
+  2509
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/board_quake.png",
+ "pngBytes": 11616,
+ "off": {
+  "url": "/dev/plays?id=board_quake&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/board_quake.off.png"
+ }
+}

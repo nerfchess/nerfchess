@@ -1,0 +1,88 @@
+{
+ "id": "wall",
+ "url": "/dev/plays?id=wall&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wall",
+  "name": "Wall",
+  "tier": 3,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wall",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2188,
+  "cssEndMs": 3462,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 30,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 253
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  266,
+  679,
+  1173,
+  1730,
+  2338
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/wall.png",
+ "pngBytes": 10921,
+ "off": {
+  "url": "/dev/plays?id=wall&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0005,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 240,
+    "w": 8,
+    "h": 64,
+    "cells": 8
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/wall.off.png"
+ }
+}

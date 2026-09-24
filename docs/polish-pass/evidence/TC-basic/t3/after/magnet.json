@@ -1,0 +1,80 @@
+{
+ "id": "magnet",
+ "url": "/dev/plays?id=magnet&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "magnet",
+  "name": "Magnet",
+  "tier": 3,
+  "category": "item",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:magnet",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7"
+  ],
+  "picks": [
+   "d7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2200,
+  "cssEndMs": 3453,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 25,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 167,
+  "maxGapMs": 246.2
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  268,
+  682,
+  1179,
+  1739,
+  2350
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/magnet.png",
+ "pngBytes": 10628,
+ "off": {
+  "url": "/dev/plays?id=magnet&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/magnet.off.png"
+ }
+}

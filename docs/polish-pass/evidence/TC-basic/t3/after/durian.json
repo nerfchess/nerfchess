@@ -1,0 +1,80 @@
+{
+ "id": "durian",
+ "url": "/dev/plays?id=durian&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "durian",
+  "name": "Durian",
+  "tier": 3,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:durian",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2231,
+  "cssEndMs": 3473,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 171,
+  "maxGapMs": 326.5
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  271,
+  691,
+  1195,
+  1762,
+  2381
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t3/after/durian.png",
+ "pngBytes": 11053,
+ "off": {
+  "url": "/dev/plays?id=durian&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t3/after/durian.off.png"
+ }
+}
