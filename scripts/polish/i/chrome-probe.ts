@@ -14,6 +14,8 @@
 //         (before: height / width transitions)
 //   F009  html reserves the scrollbar gutter
 //   F199  the settings picker chevron turns on the shared .m-chevron
+//   F194  (review round 1) a landed row never replays its entrance when a
+//         later prop change swaps its classes (flash moving on, burst ending)
 //
 //   scripts/polish/heavy.sh ./node_modules/.bin/tsx scripts/polish/i/chrome-probe.ts [label]
 //
@@ -39,6 +41,11 @@ async function open(mode: "normal" | "off"): Promise<{ page: Page; close: () => 
   }, mode);
   const page = await ctx.newPage();
   await page.goto(`${BASE}/dev/motion`, { timeout: 300_000 });
+  await page.locator("[data-testid=dock-add]").waitFor({ timeout: 300_000 });
+  // The dev server can reload the page once right after the first paint
+  // (HMR handshake); settle past it so no click lands on the dying document.
+  await page.waitForLoadState("networkidle", { timeout: 60_000 }).catch(() => {});
+  await page.waitForTimeout(1500);
   await page.locator("[data-testid=dock-add]").waitFor({ timeout: 300_000 });
   await page.waitForFunction(
     `document.documentElement.getAttribute("data-anim") === ${JSON.stringify(mode)} || ${JSON.stringify(mode)} === "normal"`,
@@ -72,6 +79,62 @@ async function probe(mode: "normal" | "off"): Promise<Check[]> {
     push("F194 one dock entrance", dock.names.length === 1 && dock.names[0] === "dock-arrive" && !dock.inlineTransform, dock);
   } else {
     push("F194 dock row settled with motion off", dock.opacity === "1" && !dock.inlineTransform, dock);
+  }
+
+  // F194 review round 1: a row that has landed never replays its entrance.
+  // Two prop changes after mount used to swap the row's animation-name back
+  // to an entrance (CSS restarts an animation whose name changes): the
+  // previous newest row losing `flash` (dock-arrive -> m-enter) and a row
+  // whose use burst ends (dock-used-burst -> m-enter). Sample every frame for
+  // 600ms after each change and fail on any running entrance or opacity < 1.
+  if (mode === "normal") {
+    const watch = (pick: string) => `new Promise((res) => {
+      const row = (${pick})();
+      const seen = [];
+      const t0 = performance.now();
+      const tick = () => {
+        const names = row.getAnimations().filter((a) => a.playState === "running").map((a) => a.animationName);
+        const op = parseFloat(getComputedStyle(row).opacity);
+        if (names.some((n) => n === "m-enter" || n === "dock-arrive") || op < 1) seen.push({ t: Math.round(performance.now() - t0), names, op });
+        if (performance.now() - t0 < 600) requestAnimationFrame(tick); else res(seen);
+      };
+      tick();
+    })`;
+    const rowsSel = `() => [...document.querySelectorAll("[data-clip=dock] .dock-card")]`;
+    // Let the newest row land, then draft another so it loses `flash`.
+    await page.waitForTimeout(1200);
+    const prevIdx = (await page.evaluate(`(${rowsSel})().length - 1`)) as number;
+    // Sample the settled row across the draft: from just before the click
+    // until 600ms after it. (After the fix its classes may not change at all,
+    // since the entrance class is already gone, so do not wait on a mutation.)
+    const flashOff = page.evaluate(`new Promise((res) => {
+      const el = (${rowsSel})()[${prevIdx}];
+      const n0 = (${rowsSel})().length;
+      setTimeout(() => ${watch(`() => el`)}.then((seen) => {
+        const grew = (${rowsSel})().length === n0 + 1;
+        res(grew ? seen : [{ error: "the dock did not grow" }].concat(seen));
+      }), 0);
+    })`);
+    await page.click("[data-testid=dock-add]");
+    const replayFlash = (await flashOff) as unknown[];
+    push("F194 no entrance replay when flash moves on", replayFlash.length === 0, replayFlash);
+
+    // Burst on a settled row, then let the burst class drop.
+    await page.waitForTimeout(1200);
+    await page.click("[data-testid=dock-use]");
+    await page.waitForFunction(`(${rowsSel})()[0].classList.contains("dock-used-burst")`, null, { timeout: 5_000 });
+    const burstOff = page.evaluate(`new Promise((res) => {
+      const el = (${rowsSel})()[0];
+      const mo = new MutationObserver(() => {
+        if (el.classList.contains("dock-used-burst")) return;
+        mo.disconnect();
+        ${watch(`() => el`)}.then(res);
+      });
+      setTimeout(() => { mo.disconnect(); res([{ error: "no settled read: burst class never dropped or the sampler threw" }]); }, 4000);
+      mo.observe(el, { attributes: true, attributeFilter: ["class"] });
+    })`);
+    const replayBurst = (await burstOff) as unknown[];
+    push("F194 no entrance replay after a use burst", replayBurst.length === 0, replayBurst);
   }
 
   // F190 / F197: the searching dot.

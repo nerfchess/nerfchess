@@ -89,6 +89,14 @@ export function MotionHarness() {
           <button type="button" data-testid="dock-add" className={btn} onClick={() => setRows((r) => [...r, inst(r.length + 5)])}>
             Card lands in the dock
           </button>
+          <button
+            type="button"
+            data-testid="dock-use"
+            className={btn}
+            onClick={() => setRows((r) => r.map((x, i) => (i === 0 ? { ...x, usedActivation: true } : x)))}
+          >
+            Use the first card
+          </button>
         </div>
         <div data-clip="dock" className="w-80 space-y-1">
           {rows.map((r, i) => (

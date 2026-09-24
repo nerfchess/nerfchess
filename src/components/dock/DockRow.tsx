@@ -71,6 +71,15 @@ export function DockRow({
   const [prevStatus, setPrevStatus] = useState(status);
   const [burst, setBurst] = useState(0);
   const [bursting, setBursting] = useState(false);
+  // The entrance is a mount-only beat. It is picked once, from the props the
+  // row mounted with, and the class comes off for good the moment it ends (or
+  // a use burst supersedes it). Without that, any later class change swaps
+  // the row's animation-name back to the entrance and CSS restarts it: the
+  // previous newest row losing `flash` (dock-arrive to m-enter) and a burst
+  // ending (dock-used-burst to m-enter) both replayed the slide from opacity
+  // 0 on a row that had long since landed.
+  const [entrance] = useState<"dock-arrive" | "m-enter">(() => (flash ? "dock-arrive" : "m-enter"));
+  const [entered, setEntered] = useState(false);
   if (prevDead !== dead || prevStatus !== status) {
     setPrevDead(dead);
     setPrevStatus(status);
@@ -80,6 +89,7 @@ export function DockRow({
     if ((!prevDead && dead) || (prevStatus != null && status != null && prevStatus !== status)) {
       setBurst((b) => b + 1);
       setBursting(true);
+      setEntered(true);
     }
   }
   // The burst layer unmounts itself after its animation; the timer callback
@@ -106,10 +116,14 @@ export function DockRow({
       // other row that mounts (an opponent's reveal, a row moving to Used)
       // gets the shared list enter from the left. Both stand down under
       // data-anim="off" through the globals.css backstop.
-      style={flash ? undefined : ({ "--m-dx": "-8px", "--m-dy": "0px" } as CSSProperties)}
+      // The entrance class is mount-only (see `entrance` above).
+      style={entrance === "m-enter" ? ({ "--m-dx": "-8px", "--m-dy": "0px" } as CSSProperties) : undefined}
+      onAnimationEnd={(e) => {
+        if (e.target === e.currentTarget && e.animationName === entrance) setEntered(true);
+      }}
       className={
         "dock-card relative w-full overflow-hidden rounded-[1px] border transition-colors " +
-        (flash ? "dock-arrive " : "m-enter ") +
+        (entered ? "" : entrance + " ") +
         (bursting ? "dock-used-burst " : "") +
         (inEffect ? "dock-live " : "") +
         (dead
@@ -127,7 +141,7 @@ export function DockRow({
       {!canUse && !dead && <span aria-hidden className={`dock-tier-edge tier-bg-${inst.tier}`} />}
       {/* Arrival sheen: a tier-coloured band crosses the row once as it lands.
           Its own layer, so it plays over usable and idle rows alike. */}
-      {flash && <span aria-hidden className={`dock-arrive-sheen tier-bg-${inst.tier}`} />}
+      {flash && entrance === "dock-arrive" && <span aria-hidden className={`dock-arrive-sheen tier-bg-${inst.tier}`} />}
       {/* Use burst: a bright ring that blooms and fades the moment the card
           fires. Mounted only for the burst so nothing idles. */}
       {bursting && <span aria-hidden className={`dock-used-ring tier-bg-${inst.tier}`} />}

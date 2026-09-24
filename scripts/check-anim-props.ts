@@ -44,8 +44,6 @@ const BASELINE = new Set([
   "src/components/DraftOverlay.css::bank-pulse",
   "src/components/DraftOverlay.css::draft-timer-announce",
   "src/components/DraftOverlay.css::dock-pocket-flash",
-  "src/components/effects/fruition/fruition.css::frx-frame",
-  "src/components/effects/fruition/fruition.css::frx-frame-release",
 ]);
 
 // Per-file offense counts for the transition / TSX gate. Shrink-only.
