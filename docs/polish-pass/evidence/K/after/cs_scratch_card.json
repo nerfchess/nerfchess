@@ -1,0 +1,109 @@
+{
+ "id": "cs_scratch_card",
+ "url": "/dev/plays?id=cs_scratch_card&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "cs_scratch_card",
+  "name": "Scratch Card",
+  "tier": 3,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:cs_scratch_card",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2613,
+  "cssEndMs": 3418,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 182,
+  "maxGapMs": 82.6
+ },
+ "raf": {
+  "frames": 193,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 26
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 120,
+  "totalBlockingMs": 71,
+  "entries": [
+   {
+    "atMs": -64,
+    "duration": 80,
+    "blocking": 16,
+    "scripts": []
+   },
+   {
+    "atMs": 56,
+    "duration": 54,
+    "blocking": 2,
+    "scripts": []
+   },
+   {
+    "atMs": 645,
+    "duration": 120,
+    "blocking": 53,
+    "scripts": [
+     {
+      "duration": 100,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   },
+   {
+    "atMs": 790,
+    "duration": 91,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  200,
+  509,
+  880,
+  1298,
+  1754,
+  2244,
+  2763
+ ],
+ "png": "docs/polish-pass/evidence/K/after/cs_scratch_card.png",
+ "pngBytes": 25070,
+ "off": {
+  "url": "/dev/plays?id=cs_scratch_card&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/K/after/cs_scratch_card.off.png"
+ }
+}

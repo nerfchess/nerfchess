@@ -1,4 +1,4 @@
-// Regression check for slice K (gamblingPlays outcome tags off the board).
+// Regression check for slice K (plugin scene text drawn off the board).
 //
 // Plays each card on the /dev/plays single-card stage and samples every SVG
 // <text> inside a gambling scene (.gsp) while the scene runs. A text that is
@@ -14,10 +14,14 @@ import { chromium } from "@playwright/test";
 const BASE = process.env.POLISH_BASE ?? "http://localhost:3000";
 const ids = (process.argv[2] ?? "gm_the_house,gm_martingale,gm_the_last_bet,gm_gacha_banner").split(",");
 
+// Scene roots of the plugin modules that share the 14-cell Wide/Framed canvas.
+const SEL = process.env.SCENE_TEXT ?? ".gsp text, .csp text, .fnp text, .mnp text, .prk text, .pnp text";
+
 const PROBE = `(() => {
+  const SEL = ${JSON.stringify(SEL)};
   const board = document.querySelector("[data-card-stage]").getBoundingClientRect();
   const out = [];
-  for (const t of document.querySelectorAll(".gsp text")) {
+  for (const t of document.querySelectorAll(SEL)) {
     let el = t, op = 1;
     while (el && el !== document.body) { op *= Number(getComputedStyle(el).opacity || 1); el = el.parentElement; }
     if (op < 0.5) continue;

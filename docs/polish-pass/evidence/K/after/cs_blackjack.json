@@ -1,0 +1,78 @@
+{
+ "id": "cs_blackjack",
+ "url": "/dev/plays?id=cs_blackjack&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "cs_blackjack",
+  "name": "Blackjack",
+  "tier": 4,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:cs_blackjack",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3095,
+  "cssEndMs": 3714,
+  "settled": true,
+  "windowMs": 3964,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 324.2
+ },
+ "raf": {
+  "frames": 238,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  235,
+  598,
+  1034,
+  1524,
+  2060,
+  2635,
+  3245
+ ],
+ "png": "docs/polish-pass/evidence/K/after/cs_blackjack.png",
+ "pngBytes": 25095,
+ "off": {
+  "url": "/dev/plays?id=cs_blackjack&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/K/after/cs_blackjack.off.png"
+ }
+}

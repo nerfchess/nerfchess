@@ -1,0 +1,78 @@
+{
+ "id": "cs_let_it_ride",
+ "url": "/dev/plays?id=cs_let_it_ride&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "cs_let_it_ride",
+  "name": "Let It Ride",
+  "tier": 2,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:cs_let_it_ride",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3105,
+  "cssEndMs": 3460,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 30,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 202,
+  "maxGapMs": 306.8
+ },
+ "raf": {
+  "frames": 210,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  235,
+  600,
+  1037,
+  1529,
+  2067,
+  2643,
+  3255
+ ],
+ "png": "docs/polish-pass/evidence/K/after/cs_let_it_ride.png",
+ "pngBytes": 21579,
+ "off": {
+  "url": "/dev/plays?id=cs_let_it_ride&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/K/after/cs_let_it_ride.off.png"
+ }
+}
