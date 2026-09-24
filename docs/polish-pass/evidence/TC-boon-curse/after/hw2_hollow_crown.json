@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2457,
-  "cssEndMs": 3464,
+  "visualMs": 2452,
+  "cssEndMs": 3458,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 33,
+  "cssAnimations": 29,
   "infiniteAnimations": 0
  },
  "screencast": {
   "framesInWindow": 167,
-  "maxGapMs": 336.9
+  "maxGapMs": 317
  },
  "raf": {
-  "frames": 215,
+  "frames": 216,
   "medianMs": 16.7,
   "maxMs": 33.4,
-  "dropped": 3
+  "dropped": 1
  },
  "longAnimationFrames": {
   "count": 0,
@@ -58,12 +58,21 @@
   0,
   188,
   480,
-  831,
-  1225,
-  1655,
-  2117,
-  2607
+  829,
+  1222,
+  1652,
+  2113,
+  2602
  ],
- "png": "docs/polish-pass/evidence/TC-boon-curse/before/hw2_hollow_crown.png",
- "pngBytes": 32550
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/hw2_hollow_crown.png",
+ "pngBytes": 29005,
+ "off": {
+  "url": "/dev/plays?id=hw2_hollow_crown&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/hw2_hollow_crown.off.png"
+ }
 }

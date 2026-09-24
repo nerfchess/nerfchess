@@ -1683,68 +1683,82 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- The Hollow Crown: a throne rises, the great crown lowers onto it and
-   hollows to a shell, and the whole court bows into mourning. -------------- */
+/* --- The Hollow Crown: the rule, drawn as a chart on their side of the
+   middle (clear of the cast banner over their back ranks). Their king steps
+   off his square and a crown comes down on him and hollows; at once a veil
+   is drawn over the court beside him and it bows in mourning (their rook,
+   bishop, queen and knight may not move on their next turn), while two
+   pawns and the king himself are shown the only steps left; one pip for
+   the one turn, and an infinity mark because it wakes after every king move
+   for the rest of the game. ---------------------------------------------- */
 const HOLLOW: Palette = ["#2b1218", "#e8b04b", "#8a94a8"];
+/** A chessman on file `f` of the caster's rank `r` (BoardFrame %). */
+function hcMan(f: number, r: number): CSSProperties {
+  return { left: `${f * 12.5 + 1.8}%`, top: `calc(${rankTop(r)} + 1%)`, width: "8.9%", height: "10.5%" };
+}
 function HollowCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = HOLLOW;
   if (role === "entrance") return <EntranceCut palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
+  const court = [
+    { k: "r" as const, f: 0, d: 0 },
+    { k: "b" as const, f: 2, d: 70 },
+    { k: "q" as const, f: 3, d: 140 },
+    { k: "n" as const, f: 6, d: 210 },
+  ];
   return (
-    // FLAGSHIP: the hall shudders the instant the crown hollows
-    <Stage quakeAtMs={delayMs + 1040}>
-      <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={42} top={30} />
-      {/* gold light hammers the empty seat; the blast rolls off the dais */}
-      <ImpactCell spec={{ l: 44, t: 26, s: 13, at: 1040, laser: true, shock: true }} rgb="232 176 75" delayMs={delayMs} />
-      {/* the throne, shouldering up mid-board */}
-      <span className="cwp-rise absolute block" style={{ left: "39%", top: "30%", width: "22%", height: "34%", animationDelay: `${delayMs + 160}ms` }}>
-        <svg viewBox="0 0 22 34" className="block h-full w-full" aria-hidden="true">
-          <path d="M4 32 V6 L7 9.5 V15 H15 V9.5 L18 6 V32 Z" fill={tint(p0, 0.9)} stroke={tint(p1, 0.85)} strokeWidth="1" {...SJ} />
-          <path d="M2 32 H20" stroke={tint(p1, 0.85)} strokeWidth="1.2" strokeLinecap="round" />
-          <path d="M7 20 H15 M7 24 H15" stroke={tint(p2, 0.5)} strokeWidth="0.6" strokeLinecap="round" />
-        </svg>
-      </span>
-      {/* the crown lowers onto the empty seat... */}
-      <span className="cwp-drop absolute block" style={{ left: "43.5%", top: "22%", width: "13%", height: "10%", animationDelay: `${delayMs + 520}ms` }}>
-        <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill={tint(p1, 0.95)} stroke="#8a6a3a" strokeWidth="0.6" {...SJ} />
-          <circle cx="7" cy="6" r="0.9" fill="#c94a5a" />
-        </svg>
-      </span>
-      {/* ...and HOLLOWS: the solid crown gives way to a bare outline */}
-      <span className="cwp-facein absolute block" style={{ left: "43.5%", top: "31.5%", width: "13%", height: "10%", animationDelay: `${delayMs + 1040}ms` }}>
-        <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.7" strokeDasharray="1.6 1.1" {...SJ} />
-        </svg>
-      </span>
-      {/* the court bows low on either side of the throne */}
-      {[
-        { k: "q" as const, l: 29, t: 52, d: 0, flip: false },
-        { k: "b" as const, l: 35, t: 55, d: 130, flip: false },
-        { k: "n" as const, l: 62, t: 54, d: 260, flip: true },
-        { k: "r" as const, l: 68, t: 52, d: 390, flip: true },
-      ].map((v, i) => (
-        <span
-          key={i}
-          className="cwp-bow absolute block"
-          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "8%", animationDelay: `${delayMs + 820 + v.d}ms`, ...(v.flip ? { scale: "-1 1" } : {}) }}
-        >
-          <Man kind={v.k} fill={tint(p2, 0.85)} stroke={p0} />
+    <Stage>
+      <BoardFrame>
+        {/* tell: their king steps off his square (any king move wakes it) */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(4, 5), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -119%)", animationDelay: dm(delayMs, 0), animationDuration: "calc(1500ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="k" fill={p0} stroke={p1} />
         </span>
-      ))}
-      {/* mourning veils drift across the hall */}
-      {[
-        { t: 44, a: 0.3, d: 0, tx: "30%" },
-        { t: 50, a: 0.45, d: 220, tx: "24%" },
-      ].map((v, i) => (
-        <span
-          key={`v${i}`}
-          className="cwp-sweep absolute block"
-          style={{ left: "24%", top: `${v.t}%`, width: "50%", height: "3.5%", borderRadius: "40%", background: tint(p0, v.a), "--tx": v.tx, animationDelay: `${delayMs + 900 + v.d}ms` } as CSSProperties}
-        />
-      ))}
-      <SettlePair color={tint(p1, 0.65)} delayMs={delayMs + 1350} />
+        {/* the crown comes down on him... */}
+        <span className="cwp-drop absolute block" style={{ left: "52.5%", top: `calc(${rankTop(5)} - 3%)`, width: "7.5%", height: "5.5%", animationDelay: dm(delayMs, 340) }}>
+          <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill={p1} stroke={p0} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+        {/* ...and hollows to a bare outline */}
+        <span className="cwp-facein absolute block" style={{ left: "52.5%", top: `calc(${rankTop(5)} - 3%)`, width: "7.5%", height: "5.5%", animationDelay: dm(delayMs, 760), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 8.4 V2.4 L4.4 4.8 L7 1 L9.6 4.8 L12.4 2.4 V8.4 Z" fill={p0} stroke={p2} strokeWidth="0.8" strokeDasharray="1.6 1" {...SJ} />
+          </svg>
+        </span>
+        {/* strike: a mourning veil is drawn along the court's rank... */}
+        <span className="cwp-beam absolute block" style={{ left: 0, width: "100%", top: rankTop(6), height: "12.5%", background: tint(p0, 0.62), animationDelay: dm(delayMs, 480), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }} />
+        {/* ...and the court bows under it: these may not move next turn */}
+        {court.map((v) => (
+          <span key={v.f} className="cwp-bow absolute block" style={{ ...hcMan(v.f, 6), animationDelay: dm(delayMs, 600 + v.d), animationDuration: "calc(1250ms * var(--fx-dur, 1))" }}>
+            <Man kind={v.k} fill={tint(p2, 0.9)} stroke={p0} />
+          </span>
+        ))}
+        {/* only the pawns and the king may go: two pawns stand ready... */}
+        {[2, 5].map((f, i) => (
+          <span key={f} className="cwp-facein absolute block" style={{ ...hcMan(f, 5), animationDelay: dm(delayMs, 760 + i * 80), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+            <Man kind="p" fill={p0} stroke={p1} />
+          </span>
+        ))}
+        {/* ...and each of them and the king is shown its step */}
+        {[2, 4, 5].map((f, i) => (
+          <span key={f} className="absolute block" style={{ left: `${f * 12.5 + 4.25}%`, width: "4%", top: `calc(${rankTop(4)} + 2%)`, height: "8.5%", scale: "1 var(--fx-side, 1)" }}>
+            <span className="cwp-rise absolute inset-0 block" style={{ animationDelay: dm(delayMs, 920 + i * 60) }}>
+              <svg viewBox="0 0 4 9" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 0.6 V7.4 M0.6 5.8 L2 8.4 L3.4 5.8" fill="none" stroke={p1} strokeWidth="0.6" {...SJ} />
+              </svg>
+            </span>
+          </span>
+        ))}
+        {/* settle: one pip (their one mourning turn) and the infinity mark:
+            it wakes after every king move for the rest of the game */}
+        <span className="cwp-pop absolute block" style={{ left: "2%", top: `calc(${rankTop(4)} + 2.5%)`, width: "14%", height: "8%", animationDelay: dm(delayMs, 1120) }}>
+          <svg viewBox="0 0 14 8" className="block h-full w-full" aria-hidden="true">
+            <circle cx="2.8" cy="4" r="1.9" fill={p1} stroke={p0} strokeWidth="0.5" />
+            <path d="M9.6 4 C8.6 2.2 6.6 2.2 6.6 4 C6.6 5.8 8.6 5.8 9.6 4 C10.6 2.2 12.6 2.2 12.6 4 C12.6 5.8 10.6 5.8 9.6 4 Z" fill="none" stroke={p1} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+        <SettlePair color={tint(p1, 0.65)} delayMs={delayMs + 1350} />
+      </BoardFrame>
     </Stage>
   );
 }

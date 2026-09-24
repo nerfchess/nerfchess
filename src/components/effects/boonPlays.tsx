@@ -1971,41 +1971,6 @@ function MartyrdomScene({ lead, role, delayMs }: SceneProps) {
 
 
 
-/** The Homecoming — under a mustering tent-banner, a veteran major and minor
- * march back to the home rank. */
-function HomecomingScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#6a5a3a", "#ffe9b0", "#2a2216"]} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#6a5a3a", "#ffe9b0", "#2a2216"]} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 1000}>
-      <Wash color="rgba(42,34,22,0.34)" delayMs={delayMs} />
-      {/* THE VETERANS' STAMP: the returning pair halt at the home rank and
-          ground their arms in one drill-square boom */}
-      <Impact atMs={delayMs + 1000} left={50} top={56} rgb="#ffe9b0" size={8.5} />
-      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
-      <AimLeg color="rgba(255,233,176,0.85)" delayMs={delayMs + 300} />
-      <span className="bwp-drop absolute block" style={{ left: "36%", top: "26%", width: "28%", height: "14%", animationDelay: `${delayMs + 220}ms` }}>
-        <svg viewBox="0 0 28 14" className="block h-full w-full" aria-hidden="true">
-          <path d="M2 13 L14 2 L26 13 Z" fill="rgba(106,90,58,0.55)" stroke="#ffe9b0" strokeWidth="0.6" {...SJ} />
-          <path d="M14 2 V13" stroke="#ffe9b0" strokeWidth="0.4" strokeLinecap="round" />
-        </svg>
-      </span>
-      {(["r", "n"] as (keyof typeof CHESSMAN)[]).map((k, i) => (
-        <span key={k} className="bwp-march absolute block" style={{ left: "34%", top: "52%", width: "5.5%", height: "8.5%", "--dx": `${120 + i * 40}%`, animationDelay: `${delayMs + 620 + i * 160}ms` } as CSSProperties}>
-          <Man kind={k} fill="#ffe9b0" stroke="#2a2216" />
-        </span>
-      ))}
-      <span className="bwp-beam absolute block" style={{ left: "30%", top: "62%", width: "40%", height: "1.2%", background: "rgba(255,233,176,0.9)", transformOrigin: "0% 50%", animationDelay: `${delayMs + 760}ms` }} />
-      {[40, 54].map((l, i) => (
-        <Glint key={l} delayMs={delayMs + 1080 + i * 100} color="#ffe9b0" left={l} top={40} size={2.4} />
-      ))}
-      <Ring delayMs={delayMs + 1020} color="rgba(255,233,176,0.85)" />
-      <Ring delayMs={delayMs + 1240} color="rgba(106,90,58,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1100} color="rgba(255,233,176,0.36)" />
-    </Stage>
-  );
-}
-
 /** Turn the Tide — the whole pawn front surges forward one rank as a single
  * wave. */
 function TurnTheTideScene({ lead, role, delayMs }: SceneProps) {
@@ -2731,6 +2696,70 @@ function ShadowReserveScene({ lead, role, delayMs }: SceneProps) {
           </svg>
         </span>
       ))}
+    </Stage>
+  );
+}
+
+/** The Homecoming: a lamp is lit on two empty squares of the caster's home
+ * rank (the empty squares nearest it), the best major (a rook) and the best
+ * minor (a knight) walk in along that rank from either side of the board to
+ * their lit squares, and the price is paid: two draft cards struck (the two
+ * skipped drafts). */
+const HOMECOMING: Palette = ["#6a5a3a", "#ffe9b0", "#2a2216"];
+function HomecomingScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = HOMECOMING;
+  if (role === "entrance") return <EntranceCut palette={HOMECOMING} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={HOMECOMING} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
+  const walkers = [
+    { k: "r" as const, from: -11, dx: "425%", d: 360 },
+    { k: "n" as const, from: 102, dx: "-424%", d: 460 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: a lamp is lit on each empty square waiting on the home rank */}
+        {[2, 5].map((f, i) => (
+          <span key={f} className="bwp-hold absolute block" style={{ ...cellBox(f, 1), animationDelay: dm(delayMs, i * 90), animationDuration: "calc(1800ms * var(--fx-dur, 1))" }}>
+            <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill={tint(p0, 0.35)} stroke={p1} strokeWidth="0.55" strokeDasharray="1.6 1.1" />
+              <path d="M9.2 1.2 V2.2" stroke={p1} strokeWidth="0.4" strokeLinecap="round" />
+              <path d="M8.2 2.2 H10.2 L10 4.6 H8.4 Z" fill={p1} stroke={p2} strokeWidth="0.3" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {/* strike: the major and the minor walk in along the home rank */}
+        {walkers.map((v) => (
+          <span key={v.k} className="bwp-march absolute block" style={{ ...manBox(0, 1), left: `${v.from}%`, "--dx": v.dx, animationDelay: dm(delayMs, v.d), animationDuration: "calc(1350ms * var(--fx-dur, 1))" } as CSSProperties}>
+            <Man kind={v.k} fill={p1} stroke={p2} />
+          </span>
+        ))}
+        {/* ...and are home: each lit square takes its piece */}
+        {[2, 5].map((f, i) => (
+          <span key={f} className="bwp-stamp absolute block" style={{ ...cellBox(f, 1), animationDelay: dm(delayMs, 1040 + i * 100) }}>
+            <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+              <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill="none" stroke={p1} strokeWidth="0.8" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: the price, two draft cards struck out */}
+        <span className="bwp-facein absolute block" style={{ left: "75%", width: "25%", top: `calc(${rankTop(3)} + 1.5%)`, height: "9.5%", animationDelay: dm(delayMs, 1160), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+            {[1, 6.4].map((x) => (
+              <g key={x}>
+                <rect x={x} y="0.8" width="4.6" height="6.4" rx="0.6" fill={tint(p0, 0.9)} stroke={p1} strokeWidth="0.4" />
+                <path d={`M${x + 0.8} 1.8 L${x + 3.8} 6.2 M${x + 3.8} 1.8 L${x + 0.8} 6.2`} stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+              </g>
+            ))}
+          </svg>
+        </span>
+        {[2, 5].map((f, i) => (
+          <span key={f} className="bwp-glint absolute block" style={{ left: `${f * 12.5 + 8.4}%`, top: `calc(${rankTop(1)} + 1%)`, width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1260 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
     </Stage>
   );
 }

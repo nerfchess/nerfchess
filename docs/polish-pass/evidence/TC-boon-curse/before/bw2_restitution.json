@@ -1,17 +1,17 @@
 {
- "id": "bw3_the_homecoming",
- "url": "/dev/plays?id=bw3_the_homecoming&bare=1",
+ "id": "bw2_restitution",
+ "url": "/dev/plays?id=bw2_restitution&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "bw3_the_homecoming",
-  "name": "The Homecoming",
+  "id": "bw2_restitution",
+  "name": "Restitution",
   "tier": 7,
   "category": "pieces",
   "mechanic": "instant",
   "retired": false,
   "art": "plugin",
-  "visual": "x:bw3_the_homecoming",
+  "visual": "x:bw2_restitution",
   "anchor": "aim",
   "source": "summon",
   "hasLead": true,
@@ -31,46 +31,39 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2511,
-  "cssEndMs": 3494,
+  "visualMs": 2421,
+  "cssEndMs": 3460,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 27,
+  "cssAnimations": 32,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 151,
-  "maxGapMs": 365.6
+  "framesInWindow": 170,
+  "maxGapMs": 311.2
  },
  "raf": {
-  "frames": 197,
+  "frames": 216,
   "medianMs": 16.7,
-  "maxMs": 50,
-  "dropped": 21
+  "maxMs": 33.3,
+  "dropped": 1
  },
  "longAnimationFrames": {
-  "count": 1,
-  "worstMs": 51,
+  "count": 0,
+  "worstMs": 0,
   "totalBlockingMs": 0,
-  "entries": [
-   {
-    "atMs": -51,
-    "duration": 51,
-    "blocking": 0,
-    "scripts": []
-   }
-  ]
+  "entries": []
  },
  "tiles": [
   0,
-  192,
-  490,
-  848,
-  1250,
-  1690,
-  2161,
-  2661
+  186,
+  474,
+  819,
+  1208,
+  1632,
+  2088,
+  2571
  ],
- "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw3_the_homecoming.png",
- "pngBytes": 33163
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw2_restitution.png",
+ "pngBytes": 33111
 }
