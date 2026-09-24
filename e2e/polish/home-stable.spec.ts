@@ -26,9 +26,9 @@ const LOBBY = { players: [{ name: "polish_lobby_a", rating: 1500, status: "onlin
 
 const BOXES = [
   // The ways in: title row, buttons, rejoin slot, live counter, modes, blurb.
-  "main > section:nth-of-type(1) > div.order-2 > *",
+  "main > section:nth-of-type(1) > div:nth-child(2) > *",
   // The Latest games rows.
-  "main > section:nth-of-type(1) > div.order-3 li",
+  "main > section:nth-of-type(1) > div:nth-child(3) li",
   // The section under the fold, which everything above pushes.
   "main > section:nth-of-type(2) > *",
 ];

@@ -29,18 +29,15 @@ export default function HomePage() {
       <SiteHeader />
 
       <section className="mx-auto flex w-full max-w-[1300px] flex-col px-3 pt-4 sm:px-5 lg:grid lg:grid-cols-[250px_minmax(0,1fr)_320px] lg:gap-6">
-        {/* Feed: what happened lately. Last on phones, first on desktop. */}
-        <div className="order-3 mt-6 lg:order-1 lg:mt-0">
-          <HomeFeed />
-        </div>
-
-        {/* The board. */}
-        <div className="order-1 lg:order-2">
+        {/* The board. Every column is placed by line, not by order: a slow
+            load paints the HTML parsed so far, and auto placement would drop
+            the board into the feed's column until the rest arrived. */}
+        <div className="lg:col-start-2 lg:row-start-1">
           <HeroTv />
         </div>
 
         {/* The ways in. */}
-        <div className="order-2 mt-4 lg:order-3 lg:mt-0">
+        <div className="mt-4 lg:col-start-3 lg:row-start-1 lg:mt-0">
           <div className="flex items-start justify-between gap-3">
             {/* The page's H1. The sr-only tail gives search engines the "chess
                 with power-ups" target phrase without changing the visible hero. */}
@@ -98,6 +95,15 @@ export default function HomePage() {
             onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
             mode you start with a secret handicap and curse your opponent. Capture the king to win.
           </p>
+        </div>
+
+        {/* Feed: what happened lately. Last on phones, first on desktop. It
+            comes last in the source too: a slow first paint shows the HTML
+            parsed so far, and a feed parsed ahead of the board and the ways
+            in sat on screen until they arrived and pushed it off the fold
+            (0.04 to 0.25 CLS at 390x844, throttled). */}
+        <div className="mt-6 lg:col-start-1 lg:row-start-1 lg:mt-0">
+          <HomeFeed />
         </div>
       </section>
 
@@ -592,7 +598,10 @@ function SiteFooter() {
         {/* The team credit, same as the shared footer (brief section 18). */}
         <Link
           href={`/about#${TEAM_ANCHOR}`}
-          className="text-[13px] no-underline transition-colors hover:text-parchment-100"
+          // 19.5px tall on a finger: the same coarse-pointer 44px floor as
+          // the shared footer's credit, with the margin taking it back so
+          // the row does not grow.
+          className="-my-3 inline-flex min-h-[44px] items-center text-[13px] no-underline transition-colors hover:text-parchment-100 [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0"
         >
           Made by the Nerf Chess team
         </Link>

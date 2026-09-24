@@ -42,8 +42,8 @@ async function heroGeometry(page: Page, withReplay: boolean): Promise<Geometry> 
   return page.evaluate(() => {
     const frame = document.querySelector(".tv-frame")!.getBoundingClientRect();
     // The hero column and the column that follows it (the ways in on a phone).
-    const hero = document.querySelector("main section > div.order-1")!.getBoundingClientRect();
-    const next = document.querySelector("main section > div.order-2")!.getBoundingClientRect();
+    const hero = document.querySelector("main section > div:nth-child(1)")!.getBoundingClientRect();
+    const next = document.querySelector("main section > div:nth-child(2)")!.getBoundingClientRect();
     return { frameY: Math.round(frame.y), frameH: Math.round(frame.height), heroH: Math.round(hero.height), nextY: Math.round(next.y) };
   });
 }
