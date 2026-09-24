@@ -1,0 +1,78 @@
+{
+ "id": "hx4_reapers_due",
+ "url": "/dev/plays?id=hx4_reapers_due&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_reapers_due",
+  "name": "Reaper's Due",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_reapers_due",
+  "anchor": "aim",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 70,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2446,
+  "cssEndMs": 3423,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 44,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 294.1
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 53,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  296,
+  754,
+  1303,
+  1921,
+  2596
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/hx4_reapers_due.png",
+ "pngBytes": 13025
+}

@@ -1,0 +1,135 @@
+{
+ "id": "hx4_grave_chill",
+ "url": "/dev/plays?id=hx4_grave_chill&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_grave_chill",
+  "name": "Grave Chill",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_grave_chill",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2412,
+  "cssEndMs": 3450,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 71,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 329.2
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 73,
+  "totalBlockingMs": 17,
+  "entries": [
+   {
+    "atMs": -62,
+    "duration": 73,
+    "blocking": 17,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  185,
+  472,
+  816,
+  1204,
+  1627,
+  2081,
+  2562
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/hx4_grave_chill.png",
+ "pngBytes": 16301,
+ "off": {
+  "url": "/dev/plays?id=hx4_grave_chill&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0024,
+  "endRegions": [
+   {
+    "x": 232,
+    "y": 16,
+    "w": 16,
+    "h": 56,
+    "cells": 9
+   },
+   {
+    "x": 336,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 272,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 392,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 48,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 160,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 456,
+    "y": 16,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-g/after/hx4_grave_chill.off.png"
+ }
+}

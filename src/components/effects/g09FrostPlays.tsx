@@ -2906,6 +2906,169 @@ function withImpact(Base: SigPlugin["Render"], imp: G09Imp): SigPlugin["Render"]
   return ImpactLead;
 }
 
+/** Centre of file `c` counted from the caster's left (the board turns half a
+ *  circle with the side, so a scene reads the same from either seat). */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** A frost cuff: a snowflake badge on a frozen piece's corner. */
+function Flake({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="8.6" fill={c.deep} />
+      <path d="M10 3v14M4 6.5l12 7M4 13.5l12-7" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+      <path d="M8.4 4.4L10 6l1.6-1.6M8.4 15.6L10 14l1.6 1.6" fill="none" stroke={c.core} strokeWidth="1.1" {...SJ} />
+    </svg>
+  );
+}
+
+/** The corner of square (col, r) where a badge sits. */
+const badge = (col: number, r: number): [string, string] => [`calc(${fc(col)} + 3%)`, `calc(${rk(r)} - 3%)`];
+
+/* --- hx4_frozen_reserves -----------------------------------------------------------
+   "The reserves never got the mobilization order: every enemy piece standing
+   on their own back rank, except pawns and the king, is frozen for 2 of their
+   turns." A sealed order is sent up the board toward their back rank and
+   drops short at their pawn line; their back rank ices over from the flanks
+   in, and a frost badge settles on each of the six officers there; their
+   king's square is left clear and ringed; two turn pips. */
+const C_FRR = { core: "#9ec6d8", glow: "#f2f6f4", deep: "#12242e" };
+
+function FrozenReservesRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <FrozenReservesScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_FRR;
+  const d = delayMs;
+  const officers = [0, 1, 2, 3, 5, 6, 7];
+  return (
+    <Brd>
+      <Q x={fc(4)} y={rk(3)} w={6} h={4.4} cls="g09-r-go" delayMs={d + 30} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${-2.4 * fileIn(4.4)}%)` }}>
+        <svg viewBox="0 0 20 14" className="block h-full w-full" aria-hidden="true">
+          <rect x="1" y="1" width="18" height="12" rx="1.4" fill={c.glow} stroke={c.deep} strokeWidth="1.2" />
+          <path d="M1 1.6l9 6.4 9-6.4" fill="none" stroke={c.deep} strokeWidth="1.1" {...SJ} />
+          <circle cx="10" cy="8" r="2" fill="#b0463c" />
+        </svg>
+      </Q>
+      <Q x={fc(4)} y={rk(5.4)} w={6} h={4.4} cls="g09-r-part" delayMs={d + 560} v={{ "--gd": "0.7s", "--tx1": "40%", "--ty1": "calc(var(--fx-side, 1) * 120%)", "--r1": "50deg" }}>
+        <svg viewBox="0 0 20 14" className="block h-full w-full" aria-hidden="true">
+          <rect x="1" y="1" width="18" height="12" rx="1.4" fill={c.glow} stroke={c.deep} strokeWidth="1.2" />
+          <circle cx="10" cy="8" r="2" fill="#b0463c" />
+        </svg>
+      </Q>
+      {officers.map((col, i) => (
+        <Tint key={`t${col}`} x={fc(col)} y={rk(7)} color="rgba(158,198,216,0.42)" delayMs={d + 520 + Math.abs(col - 3.5) * -60 + 240} gd="1.9s" />
+      ))}
+      {officers.map((col, i) => {
+        const [x, y] = badge(col, 7);
+        return (
+          <Q key={`f${col}`} x={x} y={y} w={5} h={5} cls="g09-r-pip" delayMs={d + 760 + i * 40} v={{ "--gd": "1.6s" }}>
+            <Flake c={c} />
+          </Q>
+        );
+      })}
+      <Q x={fc(4)} y={rk(7)} w={12.5} h={12.5} cls="g09-r-in" delayMs={d + 820} v={{ "--gd": "1.4s", "--s0": "1.2" }} style={{ border: `2px dashed ${c.glow}`, borderRadius: "50%" }} />
+      <Pips n={2} r={3.5} x0={47} x1={53} color={c.glow} delayMs={d + 1050} gd="1.2s" />
+      <Q x="50%" y={rk(6.4)} w={60} h={1.4} cls="g09-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(158,198,216,0.45)" }} />
+    </Brd>
+  );
+}
+
+/* --- hx4_reapers_due ---------------------------------------------------------------
+   "The reaper collects from the front line: your opponent's 3 most advanced
+   pieces (never the king) are frozen for 2 of their turns. The most
+   advanced of them may make one move before it freezes." A scythe sweeps
+   their front line and marks three of it (c7, d7 and e7 here); the foremost of the three takes
+   its one last step, e7 to e5, and only then does the frost take it; the
+   other two freeze where they stand; two turn pips. */
+const C_RDR = { core: "#8fc0c6", glow: "#f2f4ee", deep: "#10262a" };
+
+function ReapersDueRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ReapersDueScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_RDR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(0.5)} y={rk(6)} w={12} h={12} cls="g09-r-go" delayMs={d + 30} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${6 * fileIn(12)}%)`, "--ty1": "0%" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 19L13 3" stroke={c.deep} strokeWidth="2.4" {...SJ} />
+          <path d="M13 3c-4-1-9 1-11 5 3-2 7-2.6 10-1.6z" fill={c.glow} stroke={c.deep} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      {[2, 3, 4].map((col, i) => (
+        <Tint key={`m${col}`} x={fc(col)} y={rk(6)} color="rgba(143,192,198,0.42)" delayMs={d + 200 + i * 110} gd="0.8s" />
+      ))}
+      <Q x={fc(4)} y={rk(6)} w={11} h={11} cls="g09-r-go" delayMs={d + 520} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="p" fill={c.deep} stroke={c.glow} />
+      </Q>
+      {([[2, 6], [3, 6], [4, 4]] as Array<[number, number]>).map(([col, r], i) => {
+        const [x, y] = badge(col, r);
+        return (
+          <Q key={`f${col}`} x={x} y={y} w={5.4} h={5.4} cls="g09-r-pip" delayMs={d + (i < 2 ? 700 + i * 60 : 1040)} v={{ "--gd": "1.5s" }}>
+            <Flake c={c} />
+          </Q>
+        );
+      })}
+      <Tint x={fc(4)} y={rk(4)} color="rgba(143,192,198,0.4)" delayMs={d + 1040} gd="1.2s" />
+      <Pips n={2} r={3} x0={47} x1={53} color={c.glow} delayMs={d + 1160} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_spiders_parlor ------------------------------------------------------------
+   "Invisible webs stretch between the armies: for your opponent's next 3
+   turns, any piece of theirs that ends a move adjacent to one of your pieces
+   is snared and frozen for 1 of their turns. Kings tear free." Silk threads
+   stretch across the rank in front of the caster's pawns, the squares any
+   enemy would have to stand on to touch them; three turn pips; their knight
+   jumps in from d5 to c3, the web wraps it and a frost badge seals it for
+   one turn. */
+const C_SPR = { core: "#b0d6e4", glow: "#f6f4ee", deep: "#152832" };
+
+function Web({ c }: { c: typeof C_SPR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M10 1v18M1 10h18M3.6 3.6l12.8 12.8M16.4 3.6L3.6 16.4" stroke={c.glow} strokeWidth="0.7" {...SJ} />
+      <path d="M10 4.6l3.8 1.6 1.6 3.8-1.6 3.8-3.8 1.6-3.8-1.6-1.6-3.8 1.6-3.8zM10 7.4l1.8.8.8 1.8-.8 1.8-1.8.8-1.8-.8-.8-1.8.8-1.8z" fill="none" stroke={c.core} strokeWidth="0.8" {...SJ} />
+    </svg>
+  );
+}
+
+function SpidersParlorRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SpidersParlorScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SPR;
+  const d = delayMs;
+  return (
+    <Brd>
+      {Array.from({ length: 8 }, (_, col) => (
+        <Q key={`w${col}`} x={fc(col)} y={rk(2)} w={12} h={12} cls="g09-r-in" delayMs={d + 40 + col * 45} v={{ "--gd": "2s", "--s0": "0.4" }}>
+          <Web c={c} />
+        </Q>
+      ))}
+      <Q x="50%" y={rk(2.5)} w={100} h={0.6} cls="g09-r-draw" delayMs={d + 60} v={{ "--gd": "1.8s" }} style={{ background: c.glow }} />
+      <Pips n={3} r={3.8} x0={45} x1={55} color={c.glow} delayMs={d + 520} gd="1.4s" />
+      <Q x={fc(3)} y={rk(4)} w={11} h={11} cls="g09-r-go" delayMs={d + 640} v={{ "--gd": "1.3s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={3} r0={4} c1={2} r1={2} color={c.glow} delayMs={d + 660} gd="0.8s" />
+      <Q x={fc(2)} y={rk(2)} w={12.5} h={12.5} cls="g09-r-stamp" delayMs={d + 1000} v={{ "--gd": "1s" }}>
+        <Web c={c} />
+      </Q>
+      <Q x={badge(2, 2)[0]} y={badge(2, 2)[1]} w={5.4} h={5.4} cls="g09-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }}>
+        <Flake c={c} />
+      </Q>
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- the season arriving: washes and garrisons ---
   bn4_long_winter: S(LongWinterRule, {
@@ -2970,7 +3133,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 65, victims: ["q", "r"], hasLead: true,
     sound: "petrify", source: "frozen", anchor: "board",
   }),
-  hx4_frozen_reserves: S(FrozenReservesScene, {
+  hx4_frozen_reserves: S(FrozenReservesRule, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
     sound: "massfreeze", source: "frozen", anchor: "board",
   }),
@@ -2984,7 +3147,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
     sound: "massfreeze", source: "frozen", anchor: "board",
   }),
-  hx4_reapers_due: S(ReapersDueScene, {
+  hx4_reapers_due: S(ReapersDueRule, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true,
     sound: "massfreeze", source: "frozen", anchor: "aim",
   }),
@@ -3006,7 +3169,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true,
     sound: "petrify", source: "frozen", anchor: "cast",
   }),
-  hx4_spiders_parlor: S(SpidersParlorScene, {
+  hx4_spiders_parlor: S(SpidersParlorRule, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
     sound: "massfreeze", source: "frozen", anchor: "cast",
   }),

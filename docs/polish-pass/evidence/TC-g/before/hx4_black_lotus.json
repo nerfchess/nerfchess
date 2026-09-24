@@ -1,0 +1,74 @@
+{
+ "id": "hx4_black_lotus",
+ "url": "/dev/plays?id=hx4_black_lotus&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_black_lotus",
+  "name": "Black Lotus",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_black_lotus",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2467,
+  "cssEndMs": 3449,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 61,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 132,
+  "maxGapMs": 310.1
+ },
+ "raf": {
+  "frames": 199,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 20
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 68,
+  "totalBlockingMs": 12,
+  "entries": [
+   {
+    "atMs": -57,
+    "duration": 68,
+    "blocking": 12,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  298,
+  760,
+  1313,
+  1936,
+  2617
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/hx4_black_lotus.png",
+ "pngBytes": 13020
+}

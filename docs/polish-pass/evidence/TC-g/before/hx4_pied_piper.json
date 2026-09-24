@@ -1,0 +1,78 @@
+{
+ "id": "hx4_pied_piper",
+ "url": "/dev/plays?id=hx4_pied_piper&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_pied_piper",
+  "name": "Pied Piper",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_pied_piper",
+  "anchor": "cast",
+  "source": "blindfold",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, blindfold diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2382,
+  "cssEndMs": 3427,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 52,
+  "infiniteAnimations": 6
+ },
+ "screencast": {
+  "framesInWindow": 209,
+  "maxGapMs": 296.5
+ },
+ "raf": {
+  "frames": 218,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 59,
+  "totalBlockingMs": 5,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 59,
+    "blocking": 5,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  288,
+  735,
+  1270,
+  1873,
+  2532
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/hx4_pied_piper.png",
+ "pngBytes": 14073
+}

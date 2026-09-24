@@ -1646,6 +1646,219 @@ function withImpact(Base: SigPlugin["Render"], imp: G10Imp): SigPlugin["Render"]
   return ImpactLead;
 }
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g10-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g10-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g10-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A frost cuff: a snowflake badge on a frozen piece's corner. */
+function Flake({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="8.6" fill={c.deep} />
+      <path d="M10 3v14M4 6.5l12 7M4 13.5l12-7" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+      <path d="M8.4 4.4L10 6l1.6-1.6M8.4 15.6L10 14l1.6 1.6" fill="none" stroke={c.core} strokeWidth="1.1" {...SJ} />
+    </svg>
+  );
+}
+
+/** The corner of square (col, r) where a badge sits. */
+const badge = (col: number, r: number): [string, string] => [`calc(${fc(col)} + 3%)`, `calc(${rk(r)} - 3%)`];
+
+/* --- hx4_black_lotus ---------------------------------------------------------------
+   "The lotus blooms once over their army: one random pawn, knight, bishop,
+   rook and queen of theirs (one of each they still have) is frozen for 2 of
+   their turns." A black bud shoots up in the middle of the board and opens, five petals
+   one after another; each petal carries one piece type (pawn, knight,
+   bishop, rook, queen) and is blown off toward their army, where the frost
+   picks its one piece of that kind; two turn pips. */
+const C_BLR = { core: "#f0b46a", glow: "#fff2de", deep: "#1a1016" };
+const BL_KINDS = ["p", "n", "b", "r", "q"] as const;
+
+function BlackLotusRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <BlackLotusScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_BLR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={`calc(${rk(3.6)} - 2%)`} w={3} h={5} cls="g10-r-up" delayMs={d + 60} v={{ "--gd": "0.6s" }}>
+        <svg viewBox="0 0 10 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 16C2 12 2 6 5 1c3 5 3 11 0 15z" fill={c.deep} stroke={c.core} strokeWidth="0.8" {...SJ} />
+        </svg>
+      </Q>
+      {BL_KINDS.map((k, i) => (
+        <Q key={`p${k}`} x="50%" y={`calc(${rk(3.6)} - 4%)`} w={4} h={8} cls="g10-r-in" delayMs={d + 40 + i * 90} v={{ "--gd": "1.5s" }} style={{ rotate: `${-72 + i * 36}deg`, transformOrigin: "50% 100%" }}>
+          <svg viewBox="0 0 10 16" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 16C1 12 0 6 5 0c5 6 4 12 0 16z" fill={c.deep} stroke={c.core} strokeWidth="0.8" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      {BL_KINDS.map((k, i) => (
+        <Q key={`k${k}`} x={fc(1.5 + i)} y={rk(4.2)} w={6} h={6} cls="g10-r-go" delayMs={d + 560 + i * 80} v={{ "--gd": "1.2s", "--tx0": `calc(var(--fx-side, 1) * ${Math.round((2 - i) * 100)}%)`, "--ty0": "calc(var(--fx-side, 1) * 60%)", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${-Math.round(1.8 * fileIn(6))}%)` }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.8" fill={c.deep} stroke={c.core} strokeWidth="0.6" />
+            <g transform="translate(1.6 1.4) scale(0.68)">
+              <path d={MEN[k]} fill={c.glow} />
+            </g>
+          </svg>
+        </Q>
+      ))}
+      <Q x="50%" y={rk(3.6)} w={4} h={4} cls="g10-r-pip" delayMs={d + 480} v={{ "--gd": "1.4s" }} style={{ background: c.core, borderRadius: "50%" }} />
+      <Pips n={2} r={2.6} x0={47} x1={53} color={c.glow} delayMs={d + 1150} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_grave_chill ---------------------------------------------------------------
+   "A chill rises from below: every enemy piece standing on a dark square is
+   frozen for 1 of their turns. Their king shivers but stays free." Frost
+   rises up through their half on the dark squares only; a frost badge
+   settles on every piece of theirs that stands on one (b8, d8, f8, h8 and the
+   a, c, e and g pawns); their king on e8, a light square, only shivers; one
+   turn pip. */
+const C_GCR = { core: "#c8e6ea", glow: "#f6f6f0", deep: "#14262a" };
+
+function GraveChillRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GraveChillScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GCR;
+  const d = delayMs;
+  const dark: Array<[number, number]> = [[1, 7], [3, 7], [5, 7], [7, 7], [0, 6], [2, 6], [4, 6], [6, 6]];
+  return (
+    <Brd>
+      <Q x="50%" y={rk(5.5)} w={100} h={50} cls="g10-r-up" delayMs={d + 30} v={{ "--gd": "2s" }} style={{ background: "repeating-conic-gradient(rgba(200,230,234,0.5) 0 25%, transparent 0 50%)", backgroundSize: "25% 50%" }} />
+      {dark.map(([col, r], i) => {
+        const [x, y] = badge(col, r);
+        return (
+          <Q key={`f${col}-${r}`} x={x} y={y} w={5} h={5} cls="g10-r-pip" delayMs={d + 560 + i * 45} v={{ "--gd": "1.4s" }}>
+            <Flake c={c} />
+          </Q>
+        );
+      })}
+      {[-1, 1].map((s) => (
+        <Q key={`s${s}`} x={`calc(${fc(4)} + ${s * 5.6}%)`} y={rk(7)} w={2} h={6} cls="g10-r-wave" delayMs={d + 760} v={{ "--gd": "0.9s" }}>
+          <svg viewBox="0 0 4 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 1q2 1.6 0 3.3t0 3.4 0 3.3" fill="none" stroke={c.glow} strokeWidth="1" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      <Pips n={1} r={3.5} x0={50} x1={50} color={c.glow} delayMs={d + 1000} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- ov_frost_wyrm -----------------------------------------------------------------
+   "An ice dragon sweeps a chosen rank: every enemy piece on it (king excluded)
+   is frozen for 2 turns, and its empty squares become ice walls your
+   opponent cannot enter for their next turn." The wyrm's head flies the width
+   of the board with its breath trailing behind it and rime settling in its
+   wake (the frozen pieces take their frost in their own cuts, on the real
+   rank); then the two counts it leaves: a frost badge with two pips for the
+   frozen pieces, and an ice wall with one pip for the walled squares. */
+const C_FWR = { core: "#8fd4ea", glow: "#f4f8f4", deep: "#10222c" };
+
+function FrostWyrmRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <FrostWyrmScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_FWR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="-6%" y="50%" w={10} h={9} cls="g10-r-go" delayMs={d + 30} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "0%", "--tx1": "1120%", "--ty1": "0%" }}>
+        <svg viewBox="0 0 20 18" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 9c3-5 9-7 14-5l4 3-3 1 3 2-4 2c-5 2-11 1-14-3z" fill={c.core} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+          <path d="M8 4l2-3 1 3.4M11 4.2l2.4-2.6.4 3.4" fill={c.glow} stroke={c.deep} strokeWidth="0.8" {...SJ} />
+          <circle cx="14" cy="7" r="1" fill={c.deep} />
+        </svg>
+      </Q>
+      <Q x="50%" y="50%" w={100} h={3} cls="g10-r-draw" delayMs={d + 80} v={{ "--gd": "1.3s" }} style={{ background: `linear-gradient(90deg, transparent, ${c.glow})`, borderRadius: "999px" }} />
+      {Array.from({ length: 6 }, (_, i) => (
+        <Q key={`r${i}`} x={`${10 + i * 16}%`} y="50%" w={1.6} h={1.6} cls="g10-r-lean" delayMs={d + 260 + i * 110} v={{ "--gd": "1s" }} style={{ background: c.glow, borderRadius: "30%", rotate: "45deg" }} />
+      ))}
+      <Q x="41%" y="58%" w={5} h={5} cls="g10-r-pip" delayMs={d + 900} v={{ "--gd": "1.3s" }}>
+        <Flake c={c} />
+      </Q>
+      <Pips n={2} r={2.9} x0={45} x1={48} color={c.glow} delayMs={d + 960} gd="1.2s" />
+      <Q x="56%" y="58%" w={5} h={5} cls="g10-r-up" delayMs={d + 1040} v={{ "--gd": "1.2s" }} style={{ background: "rgba(143,212,234,0.55)", border: `1.5px solid ${c.glow}`, borderRadius: "2px" }} />
+      <Pips n={1} r={2.9} x0={60} x1={60} color={c.core} delayMs={d + 1100} gd="1.1s" />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_winter_orders: {
     config: { ordering: "radial", staggerMs: 90, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
@@ -1665,7 +1878,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_black_lotus: {
     config: { ordering: "radial", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
-    Render: BlackLotusScene,
+    Render: BlackLotusRule,
   },
   hx4_gale_warning: {
     config: { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", source: "slow", anchor: "cast" },
@@ -1677,7 +1890,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_grave_chill: {
     config: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "frozen", anchor: "board" },
-    Render: GraveChillScene,
+    Render: GraveChillRule,
   },
   hx4_hundred_year_nap: {
     config: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "snooze", source: "frozen", anchor: "cast" },
@@ -1705,7 +1918,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   ov_frost_wyrm: {
     config: { ordering: "sweep", staggerMs: 80, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
-    Render: FrostWyrmScene,
+    Render: FrostWyrmRule,
   },
   bn4_flash_frost: {
     config: { ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },

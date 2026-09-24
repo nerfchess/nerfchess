@@ -2312,6 +2312,275 @@ function withImpact(Base: SigPlugin["Render"], imp: G05Imp): SigPlugin["Render"]
   return ImpactLead;
 }
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g05-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g05-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g05-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g05-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
+
+/** Centre row of the cast square (the rank the card was aimed at), in board
+ *  percent: the board frame sits -row cells from it, less the stage edge clamp. */
+const CAST_Y = "calc((0.5 - var(--fx-board-dy, -3.5) - var(--fx-anchor-dy, 0)) * 12.5%)";
+
+/** A barred move: a cross stamped where it would have landed. */
+function Bar({ c }: { c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/** `n` ranks from the cast rank toward the opponent (negative: toward the caster). */
+const castRank = (n: number): string => `calc(${CAST_Y} - var(--fx-side, 1) * ${n * 12.5}%)`;
+
+/* --- hx4_pied_piper ----------------------------------------------------------------
+   "Your opponent's next move passes freely. Then the pipe plays and the
+   infantry follows: for their next 2 turns, if any pawn move is available
+   they must move a pawn." One grey pip, and their knight hops g8 to f6
+   freely; then a pipe plays at the board's edge and its notes drift over
+   their pawn rank, which lights; their queen reaches for h4 and is barred,
+   and their e-pawn steps to e6 instead. Two turn pips. */
+const C_PPR = { core: "#7fd0c0", glow: "#fff4e0", deep: "#12302b" };
+
+function PiedPiperRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <PiedPiperHexScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PPR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Pips n={1} r={3.5} x0={50} x1={50} color="rgba(255,244,224,0.5)" delayMs={d + 30} gd="0.9s" />
+      <Q x={fc(6)} y={rk(7)} w={11} h={11} cls="g05-r-go" delayMs={d + 40} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(0.2)} y={rk(4.5)} w={12} h={5} cls="g05-r-in" delayMs={d + 420} v={{ "--gd": "1.8s", "--r0": "-20deg" }}>
+        <svg viewBox="0 0 30 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 8L27 3" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M2 8L27 3" stroke={c.core} strokeWidth="2.6" {...SJ} />
+          <circle cx="10" cy="6.4" r="0.9" fill={c.deep} />
+          <circle cx="15" cy="5.4" r="0.9" fill={c.deep} />
+          <circle cx="20" cy="4.4" r="0.9" fill={c.deep} />
+        </svg>
+      </Q>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Q key={`n${i}`} x={fc(1 + i * 1.4)} y={rk(5.2 + (i % 2) * 0.3)} w={3.2} h={4} cls="g05-r-lean" delayMs={d + 520 + i * 80} v={{ "--gd": "1.1s" }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M4 10V2.4l5-1.2" fill="none" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+            <ellipse cx="2.8" cy="10" rx="2.2" ry="1.6" fill={c.glow} />
+          </svg>
+        </Q>
+      ))}
+      <Tint x="50%" y={rk(6)} w={100} color="rgba(127,208,192,0.3)" delayMs={d + 620} gd="1.6s" />
+      <Q x={fc(3)} y={rk(7)} w={11} h={11} cls="g05-r-dim" delayMs={d + 820} v={{ "--gd": "1s" }}>
+        <Man kind="q" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={3} r0={7} c1={6.6} r1={3.4} color={c.glow} delayMs={d + 880} gd="0.7s" />
+      <Q x={fc(7)} y={rk(3)} w={7} h={7} cls="g05-r-stamp" delayMs={d + 1020} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(6)} w={11} h={11} cls="g05-r-go" delayMs={d + 1100} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)` }}>
+        <Man kind="p" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Pips n={2} r={3.5} x0={47} x1={53} color={c.glow} delayMs={d + 1160} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- ov_cloud_serpent --------------------------------------------------------------
+   "A serpent coils a chosen rank: enemy pieces cannot enter or cross it for
+   your opponent's next 5 turns (yours can). As it lands it may crush one enemy
+   pawn on an adjacent rank." A cloud serpent draws itself along the chosen
+   rank, head to tail, its coils rolling; five turn pips. An enemy rook two
+   ranks off comes down the file and is stopped at the coil with a cross,
+   while the caster's knight leaps clean over it. */
+const C_CSR = { core: "#a6c6e8", glow: "#f6f2e8", deep: "#162538" };
+
+function CloudSerpentRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <CloudSerpentScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CSR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={CAST_Y} w={100} h={9} cls="g05-r-draw" delayMs={d + 40} v={{ "--gd": "2.2s" }}>
+        <svg viewBox="0 0 160 14" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 7q10-7 20 0t20 0 20 0 20 0 20 0 20 0 20 0 14 0" fill="none" stroke={c.deep} strokeWidth="6" {...SJ} />
+          <path d="M2 7q10-7 20 0t20 0 20 0 20 0 20 0 20 0 20 0 14 0" fill="none" stroke={c.core} strokeWidth="3.4" {...SJ} />
+          <path d="M2 7q10-7 20 0t20 0 20 0 20 0 20 0 20 0 20 0 14 0" fill="none" stroke={c.glow} strokeWidth="0.9" strokeDasharray="2 4" {...SJ} />
+        </svg>
+      </Q>
+      <Q x="96%" y={CAST_Y} w={6} h={7} cls="g05-r-stamp" delayMs={d + 620} v={{ "--gd": "1.6s" }}>
+        <svg viewBox="0 0 12 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 7c0-4 3-6 6-6 3 0 4 3 4 6s-1 6-4 6c-3 0-6-2-6-6z" fill={c.core} stroke={c.deep} strokeWidth="1.3" />
+          <circle cx="7.6" cy="5.4" r="1" fill={c.deep} />
+          <path d="M11 7l1 0" stroke={c.deep} strokeWidth="1" />
+        </svg>
+      </Q>
+      <Pips n={5} r={3.5} x0={43} x1={57} color={c.glow} delayMs={d + 700} gd="1.4s" />
+      <Q x={fc(2)} y={castRank(2)} w={11} h={11} cls="g05-r-in" delayMs={d + 760} v={{ "--gd": "1.2s" }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(2)} y={castRank(1)} w={1} h={12} cls="g05-r-grow" delayMs={d + 860} v={{ "--gd": "0.8s" }} style={{ background: `repeating-linear-gradient(0deg, ${c.glow} 0 4px, transparent 4px 7px)`, transformOrigin: "50% calc(50% - var(--fx-side, 1) * 50%)" }} />
+      <Q x={fc(2)} y={CAST_Y} w={7} h={7} cls="g05-r-stamp" delayMs={d + 1000} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(5)} y={castRank(-1)} w={11} h={11} cls="g05-r-go" delayMs={d + 1060} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)` }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- ov_locust_swarm ---------------------------------------------------------------
+   "Choose a rank: every pawn on it, yours and theirs, is devoured." A dark
+   haze gathers at the board edge, a swarm of locusts pours out of it and
+   splits in two behind two leaders, half diving toward the caster's
+   pawns and half toward the opponent's, since the
+   swarm eats both colours alike; on the chosen rank itself each pawn is
+   gnawed down in its own cut (the target cuts, on the real squares), and a
+   few husks drift off after. */
+const C_LSR = { core: "#b6c24a", glow: "#f6f0d2", deep: "#232608" };
+
+function Locust({ c }: { c: typeof C_LSR }) {
+  return (
+    <svg viewBox="0 0 16 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 5.4c2.6-2 7-2.4 11-1.2 1.4.4 1.4 2 0 2.4-4 1.2-8.4.8-11-1.2z" fill={c.core} stroke={c.deep} strokeWidth="0.9" {...SJ} />
+      <path d="M5 4.4L9 1l2 3M6 6.6L4 9M9 6.6l2 2.6" fill="none" stroke={c.deep} strokeWidth="0.9" {...SJ} />
+    </svg>
+  );
+}
+
+function LocustSwarmRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <LocustSwarmScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_LSR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="3%" y="50%" w={8} h={14} cls="g05-r-in" delayMs={d + 20} v={{ "--gd": "0.8s", "--tx0": "-60%" }} style={{ background: "rgba(35,38,8,0.4)", borderRadius: "40%" }} />
+      {[1, -1].map((dir) => (
+        <Q key={`k${dir}`} x="50%" y="50%" w={7} h={4.4} cls="g05-r-go" delayMs={d + 560} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${dir * 380}%)` }}>
+          <Locust c={c} />
+        </Q>
+      ))}
+      {Array.from({ length: 10 }, (_, i) => (
+        <Q key={`l${i}`} x="-4%" y={`calc(50% + ${((i * 37) % 9) - 4}%)`} w={5} h={3.2} cls="g05-r-go" delayMs={d + 20 + i * 40} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `${600 + ((i * 29) % 5) * 180}%`, "--ty1": `${((i * 53) % 5) * 40 - 80}%` }}>
+          <Locust c={c} />
+        </Q>
+      ))}
+      {Array.from({ length: 8 }, (_, i) => (
+        <Q key={`s${i}`} x={cl(1 + (i % 4) * 2)} y="50%" w={4.4} h={2.8} cls="g05-r-go" delayMs={d + 560 + i * 45} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `${(i % 3) * 40 - 40}%`, "--ty1": `calc(var(--fx-side, 1) * ${i < 4 ? 520 : -520}%)` }}>
+          <Locust c={c} />
+        </Q>
+      ))}
+      {[0, 1, 2, 3].map((i) => (
+        <Q key={`c${i}`} x={cl(1 + i * 2)} y={i % 2 ? rk(1.6) : rk(5.4)} w={1.4} h={1.4} cls="g05-r-part" delayMs={d + 1200} v={{ "--gd": "0.7s", "--tx1": `${(i - 1.5) * 120}%`, "--ty1": "calc(var(--fx-side, 1) * 240%)" }} style={{ background: c.core, borderRadius: "30%" }} />
+      ))}
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- the reserves: rolls, gates, satchels, stretchers ---
   bn4_endless_militia: S(EndlessMilitiaScene, {
@@ -2402,7 +2671,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- the line is told what to do ---
-  hx4_pied_piper: S(PiedPiperHexScene, {
+  hx4_pied_piper: S(PiedPiperRule, {
     ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true,
     sound: "shades", source: "blindfold", anchor: "cast",
   }),
@@ -2424,11 +2693,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- the line is broken by something bigger ---
-  ov_cloud_serpent: S(CloudSerpentScene, {
+  ov_cloud_serpent: S(CloudSerpentRule, {
     ordering: "line", staggerMs: 60, victims: "all", hasLead: true,
-    sound: "colossus", anchor: "board",
+    sound: "colossus", anchor: "cast",
   }),
-  ov_locust_swarm: S(LocustSwarmScene, {
+  ov_locust_swarm: S(LocustSwarmRule, {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true,
     sound: "extinction", anchor: "board",
   }),

@@ -1,0 +1,121 @@
+{
+ "id": "hx4_frozen_reserves",
+ "url": "/dev/plays?id=hx4_frozen_reserves&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_frozen_reserves",
+  "name": "Frozen Reserves",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_frozen_reserves",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2450,
+  "cssEndMs": 3455,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 72,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 334.7
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 83,
+  "totalBlockingMs": 27,
+  "entries": [
+   {
+    "atMs": -70,
+    "duration": 83,
+    "blocking": 27,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  188,
+  479,
+  828,
+  1221,
+  1651,
+  2112,
+  2600
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/hx4_frozen_reserves.png",
+ "pngBytes": 15473,
+ "off": {
+  "url": "/dev/plays?id=hx4_frozen_reserves&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0018,
+  "endRegions": [
+   {
+    "x": 232,
+    "y": 16,
+    "w": 16,
+    "h": 56,
+    "cells": 9
+   },
+   {
+    "x": 336,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 392,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 56,
+    "y": 16,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 456,
+    "y": 16,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-g/after/hx4_frozen_reserves.off.png"
+ }
+}

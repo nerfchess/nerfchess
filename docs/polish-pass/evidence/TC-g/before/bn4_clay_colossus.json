@@ -1,0 +1,71 @@
+{
+ "id": "bn4_clay_colossus",
+ "url": "/dev/plays?id=bn4_clay_colossus&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_clay_colossus",
+  "name": "Clay Colossus",
+  "tier": 6,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_clay_colossus",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s) (position: sparse-midgame)",
+  "castSq": "e1",
+  "targets": [
+   "e1"
+  ],
+  "picks": [
+   "e1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2417,
+  "cssEndMs": 3475,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 42,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 175,
+  "maxGapMs": 252.3
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  292,
+  745,
+  1288,
+  1899,
+  2567
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_clay_colossus.png",
+ "pngBytes": 11992
+}
