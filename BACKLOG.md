@@ -405,7 +405,7 @@ Ranked findings from the MEGA_AUDIT passes. `MEGA_AUDIT.md` is the checklist; th
 - **Evidence:** npm run -s test:sitemap-dates exits 1 here. A fresh git clone --depth 50 file:// of HEAD 1582cf7 (the CI depth) also exits 1 with the same 16 routes moving from 09-23 to 09-24. Cause: shallow-boundary commits (.git/shallow lists 44b39101, which shows 5353 files added) make git log -1 -- <files> return the boundary date. bf5805d regenerated the file after 44b39101, so the committed dates are probably right under full history. The auditor's 'regenerate the file' fix would write wrong dates. guard.mjs:34 includes it and guards.yml:27 sets fetch-depth: 50.
 - **Verifier:** The auditor called this real staleness, not a shallow-clone artefact. That is wrong: it is exactly a shallow-clone artefact, which I proved with a depth-50 clone. The defect is the guard's dependence on clone depth, and CI's depth 50 reproduces it. Retitled and changed the fix.
 - **Files:** `scripts/gen-sitemap-dates.ts`, `.github/workflows/guards.yml`, `scripts/polish/guard.mjs`
-- **Size** XS · **Kind** bug · **Section** 13 · **Repro** yes · **Ralph** none · **Status** TODO
+- **Size** XS · **Kind** bug · **Section** 13 · **Repro** yes · **Ralph** none · **Status** PARTIAL: CI now clones full history (guards.yml fetch-depth 0); the shallow-clone skip in gen-sitemap-dates.ts is still TODO
 - **Scripts:** `docs/audit/2026-10-02/repro/a11y-npe-copy/`, `docs/audit/2026-10-02/repro/quality/`
 - **Merged in:** Make test:sitemap-dates shallow-clone safe: detect `git rev-parse --is-shallow-repository` and skip routes whose newest commit is a graft boundary (or fail with a 'fetch more history' message) (P2, from quality)
 
