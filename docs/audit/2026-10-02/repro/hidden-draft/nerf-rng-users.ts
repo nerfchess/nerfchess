@@ -24,7 +24,7 @@ for (const n of pool) {
     const r2 = new CountingRNG(777);
     try {
       // minimal ctx; most nerfs only read the board lazily
-      st = n.onTurnStart(st, { board: { pieces: [], turn: "w", history: [] } as never, me: "w", opponentLastMove: null, myLastMove: null, moveNumber: 1, capturedByMe: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 }, capturedFromMe: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 } }, r2);
+      n.onTurnStart(st, { board: { pieces: [], turn: "w", history: [] } as never, me: "w", opponentLastMove: null, myLastMove: null, moveNumber: 1, capturedByMe: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 }, capturedFromMe: { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 } }, r2);
     } catch {}
     b = r2.draws;
   }

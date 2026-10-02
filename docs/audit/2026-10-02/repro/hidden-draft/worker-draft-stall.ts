@@ -83,11 +83,10 @@ async function main() {
   await msg(W, "dtPick", { index: 0 });
   await msg(B, "dtPick", { index: 0 });
   // Play until a cadence offer appears.
-  let offerSeen = false;
-  for (let i = 0; i < 40 && !offerSeen; i++) {
+  for (let i = 0; i < 40; i++) {
     const cur: any = store.get(key);
     const g = server.gameFromMatch(cur);
-    if (g.buffs.players.w.offer || g.buffs.players.b.offer) { offerSeen = true; break; }
+    if (g.buffs.players.w.offer || g.buffs.players.b.offer) break;
     const ws = g.board.turn === "w" ? W : B;
     const lm = legalMoves(g);
     await msg(ws, "move", { u: moveToUCI(lm[0]), ply: cur.moves.length });

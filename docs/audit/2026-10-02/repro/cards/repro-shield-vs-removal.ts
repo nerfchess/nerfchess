@@ -12,7 +12,6 @@ for (const def of cards) {
   enableDraftMode(g, 4, { mode: "buff" });
   g.buffs!.players.w.offer = null; g.buffs!.players.b.offer = null;
   const rng = new RNG(5);
-  for (const u of [12, 52, 11, 51]) { /* open a bit */ }
   for (let i = 0; i < 6; i++) g = playMove(g, rng.pick(legalMoves(g)));
   if (g.board.turn !== "w") continue;
   g.buffs!.effects.push({ kind: "shield", owner: "b", squares: null, turns: 5 });

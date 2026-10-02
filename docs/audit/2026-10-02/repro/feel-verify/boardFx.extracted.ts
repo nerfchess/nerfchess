@@ -2,7 +2,6 @@
 import { FILE, RANK, type BoardState, type Color, type Square } from "../../../../../src/engine/types.ts";
 type PieceAnim = { dxCells: number; dyCells: number };
 interface BoardFx { kind: "morph" | "summon" | "detonate"; crown?: boolean; key: number; sig?: string; sigOrder?: number; sigRole?: "lead" | "target"; sigGeo?: unknown }
-const resolveSignature = (_id: string): any => undefined;
 function orderSignature(..._a: any[]): any { return { targets: [], leadSq: null, legs: [], casterColor: null }; }
 export function computeAnims(
   prev: BoardState["pieces"],
@@ -65,7 +64,8 @@ export function computeBoardFx(
   casterHint: Color | null,
 ): Map<Square, BoardFx> {
   const fx = new Map<Square, BoardFx>();
-  const sig = signatureId ? resolveSignature(signatureId) ?? null : null;
+  // Signature scenes are out of scope for this extraction (resolveSignature is not ported), so sig is always null.
+  const sig: { geo?: unknown } | null = null;
   let appeared = 0;
   let vanishedCount = 0;
   const lostColor: Record<Color, boolean> = { w: false, b: false };

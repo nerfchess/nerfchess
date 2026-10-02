@@ -17,7 +17,7 @@ for (const seed of [1, 7, 42]) {
     if (ply % 20 === 0) {
       const bits: any = { gameId: "x".repeat(12), replayVersion: 1, stateRevision: ply, lastSeq: ply, cursor: 0, capturedAtMs: Date.now(), mode: null, rated: true,
         players: { w: { name: "playerone", rating: 1500 }, b: { name: "playertwo", rating: 1500 } }, clocks: { w: 1, b: 1 }, timeSec: 300, incrementSec: 3, timerState: {} as any, revealedNerfs: { w: null, b: null }, draftActions: [] };
-      let pub = "n/a"; try { pub = sz(toPublicSnapshot(game, bits)); } catch (e) { pub = "threw " + (e as Error).message.slice(0, 60); }
+      let pub: string; try { pub = sz(toPublicSnapshot(game, bits)); } catch (e) { pub = "threw " + (e as Error).message.slice(0, 60); }
       console.log(`seed ${seed} ply ${ply}: buffs(dtState-ish) ${sz(game.buffs)} | serializeGame ${sz(serializeGame(game))} | publicSnapshot ${pub} | moves[] ${sz(uci)}`);
     }
     const ms = legalMoves(game);

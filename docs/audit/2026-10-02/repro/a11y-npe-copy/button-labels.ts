@@ -45,7 +45,6 @@ function textOf(node: ts.Node, sf: ts.SourceFile): { text: string; dynamic: bool
       }
     } else if (ts.isJsxElement(n) || ts.isJsxSelfClosingElement(n)) {
       // skip icon children and sr-only spans are still text
-      const tag = ts.isJsxElement(n) ? n.openingElement.tagName.getText(sf) : n.tagName.getText(sf);
       if (ts.isJsxSelfClosingElement(n)) return; // icon or void element
       n.children.forEach(visit);
       return;

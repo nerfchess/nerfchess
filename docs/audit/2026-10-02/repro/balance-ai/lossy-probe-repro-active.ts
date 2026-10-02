@@ -5,7 +5,7 @@
 // the holder's next move forfeits the charge. Two replicas that differ only in
 // whether they called gameInCheck end in different card states.
 import { BUFF_BY_ID } from "../../../../../src/engine/buffs/library";
-import { acquireBuff, enableDraftMode, gameInCheck, legalMoves, newGame, playMove, serializeGame, UNRESTRICTED_NERF } from "../../../../../src/engine/game";
+import { acquireBuff, enableDraftMode, gameInCheck, legalMoves, newGame, playMove, UNRESTRICTED_NERF } from "../../../../../src/engine/game";
 import { moveToUCI } from "../../../../../src/engine/board";
 import { pickHouseMove } from "../../../../../src/lib/server/bots";
 import { desyncFingerprint } from "../../../../../src/engine/desync";
