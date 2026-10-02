@@ -14,10 +14,8 @@ function walk(d, out = []) {
 }
 // utility-[value] where utility is a tailwind-ish token, optionally negative, optionally with variants before
 const RE = /(?<![\w\[-])-?([a-z]+(?:-[a-z]+)*)-\[([^\]\s"'`]+)\]/g;
-const byUtil = new Map(), byFile = new Map(), byVal = new Map(), byPx = new Map();
+const byUtil = new Map(), byFile = new Map(), byVal = new Map();
 let total = 0, pxTotal = 0, colorTotal = 0, varTotal = 0;
-const excludeDirs = [/\/dev\//];
-let excludedCount = 0;
 for (const f of walk(SRC)) {
   const txt = readFileSync(f, "utf8");
   const rel = relative(ROOT, f);

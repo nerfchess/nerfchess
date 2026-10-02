@@ -12,7 +12,7 @@ for (const f of walk(SRC)) {
   const rel = relative(ROOT, f), txt = readFileSync(f, "utf8");
   let m; RE.lastIndex = 0;
   while ((m = RE.exec(txt))) {
-    const [_, util, val] = m; if (!OK.test(util)) continue;
+    const [, util, val] = m; if (!OK.test(util)) continue;
     if (isEffects(rel)) { stats.effects.total++; continue; }
     const c = stats.chrome; c.total++;
     if (/var\(/.test(val)) c.tokenVar++;

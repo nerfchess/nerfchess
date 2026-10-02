@@ -20,7 +20,7 @@ console.log("theme        dot/light dot/dark  ring/light ring/dark  last/light l
 let low = 0, total = 0;
 for (const t of themes) {
   const row = [];
-  for (const [k, c] of Object.entries(hints)) for (const sq of [t.light, t.dark]) {
+  for (const c of Object.values(hints)) for (const sq of [t.light, t.dark]) {
     const bg = hex(sq); const v = cr(over(c, bg), bg); total++; if (v < 3) low++;
     row.push((v.toFixed(2) + (v < 1.5 ? "!!" : v < 3 ? "! " : "  ")).padStart(10));
   }

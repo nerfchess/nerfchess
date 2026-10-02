@@ -43,7 +43,6 @@ const res = await esbuild.build({
 });
 fs.writeFileSync(path.join(OUT, "meta.json"), JSON.stringify(res.metafile));
 const outs = res.metafile.outputs;
-const rel = (p) => path.relative(ROOT, p);
 const gz = (file) => zlib.gzipSync(fs.readFileSync(path.join(ROOT, file))).length;
 function walk(start, kinds) {
   const seen = new Set();
