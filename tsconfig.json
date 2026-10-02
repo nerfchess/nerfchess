@@ -76,6 +76,9 @@
     "node_modules",
     ".next/dev/types",
     ".next-wp/dev/types",
-    ".next-fx/dev/types"
+    ".next-fx/dev/types",
+    // Audit repro scripts (BACKLOG.md): run by hand with tsx, kept as evidence,
+    // not part of the app or the guard suite.
+    "docs/audit"
   ]
 }

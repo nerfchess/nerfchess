@@ -1,0 +1,24 @@
+import { ALL_NERFS, PLAYABLE_NERFS } from "../../../../../src/engine/nerfs/library";
+import { ALL_BUFFS } from "../../../../../src/engine/buffs/library";
+import { RETIRED, isRetired } from "../../../../../src/engine/retired";
+const nerfIds = ALL_NERFS.map(n=>n.id), buffIds = ALL_BUFFS.map(b=>b.id);
+const dup = (a:string[]) => { const s=new Set<string>(), d:string[]=[]; for(const x of a){ if(s.has(x)) d.push(x); s.add(x);} return d; };
+console.log("nerfs total", ALL_NERFS.length, "implemented", PLAYABLE_NERFS.length, "stubs", ALL_NERFS.filter(n=>!n.implemented).length);
+console.log("buffs total", ALL_BUFFS.length, "implemented", ALL_BUFFS.filter(b=>b.implemented).length);
+console.log("dup nerf ids", dup(nerfIds)); console.log("dup buff ids", dup(buffIds));
+console.log("nerf/buff id collisions", nerfIds.filter(i=>buffIds.includes(i)));
+const nameDup = dup([...ALL_NERFS.map(n=>n.name.toLowerCase()), ...ALL_BUFFS.map(b=>b.name.toLowerCase())]);
+console.log("dup names", nameDup.length, nameDup.slice(0,40));
+const retired = Object.keys(RETIRED);
+console.log("retired entries", retired.length);
+const liveN = ALL_NERFS.filter(n=>n.implemented && !isRetired(n.id));
+const liveB = ALL_BUFFS.filter(b=>b.implemented && !isRetired(b.id));
+console.log("live nerfs", liveN.length, "live buffs", liveB.length, "live total", liveN.length+liveB.length);
+console.log("retired nerfs", ALL_NERFS.filter(n=>isRetired(n.id)).length, "(implemented:", ALL_NERFS.filter(n=>n.implemented&&isRetired(n.id)).length, ") retired buffs", ALL_BUFFS.filter(b=>isRetired(b.id)).length);
+const byCat: Record<string,number> = {}; for(const b of liveB) byCat[b.category]=(byCat[b.category]??0)+1; console.log("live buffs by category", byCat);
+const byKind: Record<string,number> = {}; for(const b of liveB) byKind[b.kind]=(byKind[b.kind]??0)+1; console.log("live buffs by kind", byKind);
+const byTier: Record<string,number> = {}; for(const b of liveB) byTier[b.tier]=(byTier[b.tier]??0)+1; console.log("live buffs by tier", byTier);
+const nTier: Record<string,number> = {}; for(const b of liveN) nTier[b.tier]=(nTier[b.tier]??0)+1; console.log("live nerfs by tier", nTier);
+// id format
+const bad = [...nerfIds, ...buffIds].filter(i=>!/^[a-z0-9_]+$/.test(i)); console.log("non snake ids", bad);
+require("fs").writeFileSync(__dirname+"/live-ids.json", JSON.stringify({nerfs: liveN.map(n=>n.id), buffs: liveB.map(b=>b.id), retiredNerfs: ALL_NERFS.filter(n=>isRetired(n.id)).map(n=>n.id), retiredBuffs: ALL_BUFFS.filter(b=>isRetired(b.id)).map(b=>b.id)}, null, 1));

@@ -1,0 +1,10 @@
+import { newGame, enableDraftMode, acquireBuff, UNRESTRICTED_NERF, legalMoves } from "../../../../../src/engine/game";
+import { moveToUCI } from "../../../../../src/engine/board";
+import { fenToBoard } from "../../../../../src/lib/fen";
+const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 2);
+enableDraftMode(g, 2, { mode: "buff" });
+g.board = fenToBoard("4k3/1P6/8/8/8/8/8/4K3 w - - 0 1")!;
+g.buffs!.players.w.offer = null; g.buffs!.players.b.offer = null;
+acquireBuff(g, "w", "warp_step", 3 as any);
+const lm = legalMoves(g).filter(m => m.from === 49 && m.to === 57);
+console.log(lm.map(m => moveToUCI(m) + "/" + (m.promotion ?? "none") + "/" + (m.via ?? "base")).join(" "));
