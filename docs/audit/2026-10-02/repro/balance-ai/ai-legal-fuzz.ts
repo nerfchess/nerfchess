@@ -5,13 +5,12 @@
 //
 //   ./node_modules/.bin/tsx ai-legal-fuzz.ts --games 40 --plies 80 --seed 1 [--secs 200]
 
-import { ALL_BUFFS, BUFF_BY_ID } from "../../../../../src/engine/buffs/library";
+import { ALL_BUFFS } from "../../../../../src/engine/buffs/library";
 import { PLAYABLE_NERFS } from "../../../../../src/engine/nerfs/library";
 import { isRetired } from "../../../../../src/engine/retired";
 import {
   acquireBuff,
   activateBuff,
-  aiActivateBuffs,
   aiChooseBuffActivation,
   aiDraftChoice,
   bankDraft,

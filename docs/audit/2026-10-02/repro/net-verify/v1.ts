@@ -37,7 +37,6 @@ async function dupMove() {
   const id = a.last("created").d.id;
   const b = connect(gs, {}, "B");
   await msg(gs, b, "join", { id });
-  const st = a.last("start")?.d ?? a.last("created")?.d;
   const white = a.last("start")?.d?.color === "b" ? b : a;
   const black = white === a ? b : a;
   white.clear();

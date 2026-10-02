@@ -9,7 +9,6 @@
 // steps take the first candidate). After the effect two quiet plies are played
 // so deferred effects (swap after the opponent's reply...) fire.
 import { newGame, enableDraftMode, acquireBuff, activateBuff, makeBuffApi, legalMoves, playMove, UNRESTRICTED_NERF } from "../../../../../src/engine/game";
-import { moveToUCI } from "../../../../../src/engine/board";
 import { ALL_BUFFS } from "../../../../../src/engine/buffs/library";
 import { isRetired } from "../../../../../src/engine/retired";
 import { fenToBoard } from "../../../../../src/lib/fen";

@@ -1,7 +1,7 @@
 // Brute-force a legal-looking position where the side to move has ZERO pseudo-legal moves.
 import { generateMoves } from "../../../../../src/engine/board";
 import { boardToFen, fenToBoard } from "../../../../../src/lib/fen";
-import type { BoardState, PieceType } from "../../../../../src/engine/types";
+import type { PieceType } from "../../../../../src/engine/types";
 let s = 12345;
 const r = () => ((s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 const types: PieceType[] = ["p", "p", "p", "b", "n", "r"];

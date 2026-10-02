@@ -84,7 +84,6 @@ async function main() {
   await msg(B, "join", { id });
   await msg(S, "watch", { id });
   const startW = W.frames.filter((f) => f.t === "start").at(-1);
-  const startB = B.frames.filter((f) => f.t === "start").at(-1);
   const report: Record<string, unknown> = { mode, id };
   report.preStart_white_frame_has_nerfDraft = !!startW?.d?.nerfDraft;
   report.preStart_white_sees_black_options = startW?.d?.nerfDraft?.options?.b ?? null;

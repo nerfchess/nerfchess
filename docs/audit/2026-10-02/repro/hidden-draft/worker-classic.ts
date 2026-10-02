@@ -65,9 +65,6 @@ const ctx = {
 
 const env: any = {};
 const server: any = new GameServer(ctx as any, env);
-const W = fakeWs("white");
-const B = fakeWs("black");
-const S = fakeWs("spectator");
 const msg = (ws: any, t: string, d?: unknown) => server.webSocketMessage(ws, JSON.stringify(d === undefined ? { t } : { t, d }));
 
 async function main() {

@@ -4,9 +4,9 @@
 // attributed to that single card.
 import { RNG } from "../../../../../src/engine/rng";
 import { UNRESTRICTED_NERF, newGame, enableDraftMode, legalMoves, playMove, pickDraftCard, buffNextTarget, activateBuff, NerfGame } from "../../../../../src/engine/game";
-import { ALL_BUFFS, BUFF_BY_ID } from "../../../../../src/engine/buffs/library";
+import { ALL_BUFFS } from "../../../../../src/engine/buffs/library";
 import { isRetired } from "../../../../../src/engine/retired";
-import { Color, Move, RANK } from "../../../../../src/engine/types";
+import { Color, RANK } from "../../../../../src/engine/types";
 import fs from "node:fs";
 const SEEDS = Number(process.argv[2] ?? 6);
 const PLIES = Number(process.argv[3] ?? 36);

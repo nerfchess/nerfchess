@@ -1,6 +1,6 @@
 // Minimal hand-built false threefold: an extra move makes the engine key the
 // position with the wrong side to move.
-import { NerfGame, UNRESTRICTED_NERF, enableDraftMode, legalMoves, newGame, playMove } from "../../../../../src/engine/game";
+import { UNRESTRICTED_NERF, enableDraftMode, legalMoves, newGame, playMove } from "../../../../../src/engine/game";
 import { moveToUCI, positionKey } from "../../../../../src/engine/board";
 import type { Color } from "../../../../../src/engine/types";
 let g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);

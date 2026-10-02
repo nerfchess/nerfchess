@@ -1,7 +1,7 @@
 // Detail every buff-granted pawn move that lands on rank 1/8 without promotion:
 // forward (onto the promotion rank) vs backward (onto its own back rank), and
 // whether a promoting twin with the same from/to exists in the same list.
-import { newGame, enableDraftMode, acquireBuff, legalMoves, playMove, UNRESTRICTED_NERF, makeBuffApi, activateBuff } from "../../../../../src/engine/game";
+import { newGame, enableDraftMode, acquireBuff, legalMoves, UNRESTRICTED_NERF, makeBuffApi, activateBuff } from "../../../../../src/engine/game";
 import { moveToUCI } from "../../../../../src/engine/board";
 import { ALL_BUFFS } from "../../../../../src/engine/buffs/library";
 import { fenToBoard } from "../../../../../src/lib/fen";

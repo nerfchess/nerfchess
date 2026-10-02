@@ -2,7 +2,7 @@
 // as if the other side were to move? Compare the engine's verdict with a count
 // of TRUE positions (placement + real side to move + castling + ep), recorded
 // after playMove's turn handover.
-import { NerfGame, UNRESTRICTED_NERF, enableDraftMode, legalMoves, newGame, playMove } from "../../../../../src/engine/game";
+import { UNRESTRICTED_NERF, enableDraftMode, legalMoves, newGame, playMove } from "../../../../../src/engine/game";
 import { moveToUCI, positionKey } from "../../../../../src/engine/board";
 import type { Color } from "../../../../../src/engine/types";
 function mulberry(seed: number) { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }

@@ -12,7 +12,7 @@ import {
   playMove,
   buffNextTarget,
 } from "../../../../../src/engine/game";
-import { generateMoves, moveToUCI, positionKey, countRepetitions, initialBoard } from "../../../../../src/engine/board";
+import { generateMoves, moveToUCI, positionKey, countRepetitions } from "../../../../../src/engine/board";
 import { fenToBoard } from "../../../../../src/lib/fen";
 import type { Color, Move } from "../../../../../src/engine/types";
 

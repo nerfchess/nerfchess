@@ -36,4 +36,4 @@ for (const t of targets) {
 }
 for (const [k, v] of Object.entries(res)) console.log(k, "total", v.total, "with-nearby-comment", v.justified);
 console.log("---");
-for (const [k, v] of Object.entries(res)) for (const h of v.hits) console.log(h);
+for (const v of Object.values(res)) for (const h of v.hits) console.log(h);

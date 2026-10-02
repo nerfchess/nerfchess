@@ -1,6 +1,6 @@
 // Per-tier draft pool sizes by mode (code-defined pools, no overrides), plus
 // truncated/skipped offers over simulated games.
-import { BUFF_POOL_BY_TIER, BUFF_BY_ID } from "../../../../../src/engine/buffs/library";
+import { BUFF_POOL_BY_TIER } from "../../../../../src/engine/buffs/library";
 import { isRetired } from "../../../../../src/engine/retired";
 import { isBoon } from "../../../../../src/engine/buff";
 import { NERF_REVEAL, openerPool } from "../../../../../src/engine/draft";

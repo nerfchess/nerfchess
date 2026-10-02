@@ -2,7 +2,6 @@ import fs from "node:fs";
 import { ALL_NERFS } from "../../../../../src/engine/nerfs/library";
 import { ALL_BUFFS } from "../../../../../src/engine/buffs/library";
 import { isRetired } from "../../../../../src/engine/retired";
-import { GLOSSARY_ENTRIES, GLOSSARY_REGEX } from "../../../../../src/lib/glossary";
 type C = { kind: string; id: string; name: string; description: string; tip?: string; flavor?: string; tier: number; icon?: string; category?: string; ckind?: string };
 const cards: C[] = [
   ...ALL_NERFS.filter(n=>n.implemented && !isRetired(n.id)).map(n=>({kind:"nerf", id:n.id, name:n.name, description:n.description, tip:n.tip, flavor:n.flavor, tier:n.tier, icon:n.icon})),
@@ -37,7 +36,6 @@ P(`cards using both "N moves" and "turns": ${ambiguous.length} e.g. ${ambiguous.
 const bareTurns = cards.filter(c => /\bfor (\d+|one|two|three|four|five|six|seven|eight) turns?\b/i.test(c.description));
 P(`cards with bare "for N turns" (whose turns unstated): ${bareTurns.length} e.g. ${bareTurns.slice(0,12).map(c=>c.id).join(", ")}`);
 // ---- 2. Piece name capitalisation
-const pieces = ["Pawn","Knight","Bishop","Rook","Queen","King"];
 const capMid: Record<string, string[]> = {};
 for (const c of cards) {
   const text = [c.description, c.tip ?? ""].join(" ");

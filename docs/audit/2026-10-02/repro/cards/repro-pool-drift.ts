@@ -4,12 +4,11 @@
 // resolves to for the same seed.
 import { newGame, enableDraftMode, legalMoves, playMove, UNRESTRICTED_NERF } from "../../../../../src/engine/game";
 import { setDraftPoolOverrides } from "../../../../../src/engine/draft";
-import { RNG } from "../../../../../src/engine/rng";
 function offersAfter(plies: number) {
   const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 5);
   enableDraftMode(g, 1234, { mode: "buff" });
   g.buffs!.players.w.offer = null; g.buffs!.players.b.offer = null;
-  const rng = new RNG(1); let G = g;
+  let G = g;
   const seen: string[] = [];
   for (let p = 0; p < plies; p++) {
     for (const c of ["w", "b"] as const) { const o = G.buffs!.players[c].offer; if (o) { seen.push(`${c}#${o.index}:` + o.cards.map((x) => x.id).join("|")); G.buffs!.players[c].offer = null; } }
