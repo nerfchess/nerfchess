@@ -23,8 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # test:sitemap-dates and the build stamp read recent git history.
-          fetch-depth: 50
+          # test:sitemap-dates and the build stamp read git history. Full
+          # history, because a route whose last change is older than the
+          # clone depth gets a different date in a shallow clone and the
+          # guard fails on every PR (BACKLOG MA-039).
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22

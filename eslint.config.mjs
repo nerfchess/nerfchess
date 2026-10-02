@@ -14,6 +14,8 @@ const eslintConfig = [
       "**/dist/**",
       "arena-service/**",
       "engine-service/**",
+      // Audit repro scripts, run by hand and kept as evidence (BACKLOG.md).
+      "docs/audit/**",
     ],
   },
   ...nextCoreWebVitals,

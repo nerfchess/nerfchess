@@ -1,0 +1,14 @@
+import { newGame, enableDraftMode, acquireBuff, activateBuff, legalMoves, playMove, UNRESTRICTED_NERF } from "../../../../../src/engine/game";
+import { moveToUCI } from "../../../../../src/engine/board";
+import { fenToBoard, boardToFen } from "../../../../../src/lib/fen";
+import { parseSquare } from "../../../../../src/engine/types";
+const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 5);
+enableDraftMode(g, 5, { mode: "buff" });
+g.board = fenToBoard("r3k3/8/8/8/8/8/3P4/R3K2R w KQq - 0 1")!;
+for (const c of ["w", "b"] as const) g.buffs!.players[c].offer = null;
+acquireBuff(g, "w", "escape_hatch", 1);
+const idx = g.buffs!.players.w.buffs.findIndex((b) => b.id === "escape_hatch");
+console.log("activate:", activateBuff(g, "w", idx, [{ square: parseSquare("d2") }]), "turn", g.board.turn);
+if (g.board.turn === "w") playMove(g, legalMoves(g).find((m) => moveToUCI(m) === "a1a2")!);
+playMove(g, legalMoves(g).find((m) => moveToUCI(m) === "e8d8")!);
+console.log("after swap:", boardToFen(g.board));

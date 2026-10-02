@@ -1,0 +1,10 @@
+const hex=(h)=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mix=(a,b,t)=>a.map((v,i)=>v*t+b[i]*(1-t));
+const lum=(c)=>{const f=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4};const [r,g,b]=c.map(f);return .2126*r+.7152*g+.0722*b};
+const ratio=(a,b)=>{const [x,y]=[lum(a),lum(b)].sort((p,q)=>q-p);return ((x+0.05)/(y+0.05)).toFixed(2)};
+const banner=mix(hex("#0f0e0c"),hex("#f0d9b5"),0.9);
+console.log("light gold-leaf #14589f on bg-ink-950/90 board banner:",ratio(hex("#14589f"),banner));
+console.log("dark gold-leaf #4a9fee on same banner:",ratio(hex("#4a9fee"),banner));
+const tv=mix(hex("#161512"),hex("#edebe9"),0.75);
+const p200=hex("#3d3d3d");
+console.log("light parchment-200 (text-primary) on TV bg-ink-900/75 over light page:",ratio(p200,tv));
